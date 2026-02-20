@@ -1,3 +1,14 @@
 <resources>
-    <string name="app_name">taskhive-webview</string>
+
+    <string name="app_name">TaskHive WebView</string>
+
+    <!-- Base Emulator URL for WebView -->
+    <string name="base_url">http://10.0.2.2:3000</string>
+
+    <!-- Base LAN URL for WebView -->
+    <!-- <string name="base_url">http://192.168.0.132:3000</string> -->
+
+    <!-- Base CLOUD URL for WebView -->
+    <!-- <string name="base_url">https://taskhive.yourdomain.com</string> -->
+
 </resources>
