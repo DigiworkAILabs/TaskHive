@@ -4,15 +4,15 @@ import { LoginResponse, User } from '../types/auth.types';
 
 export const authService = {
     login: async (credentials: any) => {
-        const response = await apiClient.post<LoginResponse>(ENDPOINTS.AUTH.LOGIN, credentials);
-        return response.data;
+        const response = await apiClient.post(ENDPOINTS.AUTH.LOGIN, credentials);
+        return response.data.data;
     },
     logout: async () => {
         return apiClient.post(ENDPOINTS.AUTH.LOGOUT);
     },
     me: async () => {
-        const response = await apiClient.get<User>(ENDPOINTS.AUTH.ME);
-        return response.data;
+        const response = await apiClient.get(ENDPOINTS.AUTH.ME);
+        return response.data.data;
     },
     forgotPassword: async (email: string) => {
         return apiClient.post(ENDPOINTS.AUTH.FORGOT_PASSWORD, { email });
