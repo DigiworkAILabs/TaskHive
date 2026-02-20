@@ -197,7 +197,7 @@ taskhive-backend/
 # DATABASE
 spring.datasource.url=jdbc:postgresql://localhost:5432/taskhive
 spring.datasource.username=taskhive
-spring.datasource.password=your_password
+spring.datasource.password=admin
 spring.jpa.hibernate.ddl-auto=validate
 spring.jpa.show-sql=false
 spring.datasource.hikari.maximum-pool-size=20
@@ -233,8 +233,8 @@ app.auth.lockout-duration=900000
 # MAIL
 spring.mail.host=smtp.gmail.com
 spring.mail.port=587
-spring.mail.username=noreply@taskhive.com
-spring.mail.password=your-smtp-app-password
+spring.mail.username=erwin1410c@gmail.com
+spring.mail.password=ezmmmitmxmklksjg
 spring.mail.properties.mail.smtp.auth=true
 spring.mail.properties.mail.smtp.starttls.enable=true
 
