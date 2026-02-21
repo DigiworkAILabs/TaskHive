@@ -1,0 +1,31 @@
+package com.digiwork.taskhive.common.storage;
+
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+
+/**
+ * Storage service abstraction for file uploads.
+ */
+public interface StorageService {
+
+    /**
+     * Store a file and return the URL/path to access it.
+     *
+     * @param file      the uploaded file
+     * @param directory subdirectory (e.g., "employees/photos")
+     * @param filename  desired filename (without extension)
+     * @return the accessible URL or relative path
+     */
+    String store(MultipartFile file, String directory, String filename) throws IOException;
+
+    /**
+     * Delete a file by its stored path.
+     */
+    void delete(String filePath) throws IOException;
+
+    /**
+     * Get the full URL for a stored file path.
+     */
+    String getUrl(String filePath);
+}

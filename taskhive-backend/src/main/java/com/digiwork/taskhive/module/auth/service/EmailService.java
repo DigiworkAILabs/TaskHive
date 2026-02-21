@@ -2,6 +2,7 @@ package com.digiwork.taskhive.module.auth.service;
 
 import com.digiwork.taskhive.module.auth.event.PasswordChangedEvent;
 import com.digiwork.taskhive.module.auth.event.PasswordResetRequestedEvent;
+import com.digiwork.taskhive.module.employee.event.EmployeeCreatedEvent;
 import com.digiwork.taskhive.module.auth.model.User;
 import com.digiwork.taskhive.module.auth.repository.UserRepository;
 import jakarta.mail.MessagingException;
@@ -61,6 +62,19 @@ public class EmailService {
 
         String htmlContent = templateEngine.process("email/password-changed", context);
         sendEmail(event.getEmail(), "Password Changed - TaskHive", htmlContent);
+    }
+
+    @Async
+    @EventListener
+    public void handleEmployeeCreated(EmployeeCreatedEvent event) {
+        String activationLink = frontendUrl + "/activate-account?token=" + event.getActivationToken();
+
+        Context context = new Context();
+        context.setVariable("firstName", event.getFirstName());
+        context.setVariable("activationLink", activationLink);
+
+        String htmlContent = templateEngine.process("email/account-activation", context);
+        sendEmail(event.getEmail(), "Activate Your Account - TaskHive", htmlContent);
     }
 
     private void sendEmail(String to, String subject, String htmlContent) {

@@ -31,4 +31,13 @@ public final class MessageConstants {
     public static final String VALIDATION_ERROR = "Validation failed";
     public static final String ACCESS_DENIED = "Access denied";
     public static final String REFRESH_TOKEN_MISSING = "Refresh token is missing";
+
+    // Employee
+    public static final String EMPLOYEE_CREATED = "Employee created successfully";
+    public static final String EMPLOYEE_UPDATED = "Employee updated successfully";
+    public static final String EMPLOYEE_DELETED = "Employee deleted successfully";
+    public static final String EMPLOYEE_ACTIVATED = "Employee activated successfully";
+    public static final String EMPLOYEE_DEACTIVATED = "Employee deactivated successfully";
+    public static final String EMPLOYEE_NOT_FOUND = "Employee not found";
+    public static final String EMPLOYEE_ALREADY_EXISTS = "Employee with this email already exists";
 }
