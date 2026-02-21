@@ -1,0 +1,592 @@
+{
+    "info": {
+        "name": "TaskHive - Employee Module",
+        "description": "Complete testing collection for the Employee module.\n\n**Pre-requisite:** Login as Admin first (Step 0).\n\n**Flow:** Login → Create → List → Search → Get → Update → Upload Photo → Get Photo → Activate → Deactivate → Delete",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:8080/api/v1"
+        },
+        {
+            "key": "employeeId",
+            "value": ""
+        }
+    ],
+    "item": [
+        {
+            "name": "0. Login as Admin",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"admin@taskhive.com\",\n    \"password\": \"Admin@123\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/login",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "login"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Login successful', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data).to.have.property('id');",
+                            "    console.log('Admin logged in. Cookies set automatically.');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "1. Create Employee",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"phone\": \"+1234567890\",\n    \"department\": \"Engineering\",\n    \"designation\": \"Software Engineer\",\n    \"joinDate\": \"2024-03-01\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/employees",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "employees"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Employee created (201)', function () {",
+                            "    pm.response.to.have.status(201);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data).to.have.property('id');",
+                            "    pm.expect(json.data.status).to.eql('PENDING');",
+                            "    pm.expect(json.data.email).to.eql('john.doe@example.com');",
+                            "",
+                            "    // Save employeeId for subsequent requests",
+                            "    pm.collectionVariables.set('employeeId', json.data.id);",
+                            "    console.log('Employee ID saved: ' + json.data.id);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "2. Create Employee (Duplicate - expect 409)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"phone\": \"+1234567890\",\n    \"department\": \"Engineering\",\n    \"designation\": \"Software Engineer\",\n    \"joinDate\": \"2024-03-01\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/employees",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "employees"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Duplicate employee returns 409', function () {",
+                            "    pm.response.to.have.status(409);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "3. List Employees (No Filters)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/employees?page=0&size=10",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "employees"
+                    ],
+                    "query": [
+                        {
+                            "key": "page",
+                            "value": "0"
+                        },
+                        {
+                            "key": "size",
+                            "value": "10"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('List employees returns 200', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data).to.have.property('content');",
+                            "    pm.expect(json.data).to.have.property('totalElements');",
+                            "    pm.expect(json.data.content).to.be.an('array');",
+                            "    console.log('Total employees: ' + json.data.totalElements);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "4. List Employees (With Filters)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/employees?department=Engineering&status=PENDING&page=0&size=10&sortBy=firstName&sortDir=asc",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "employees"
+                    ],
+                    "query": [
+                        {
+                            "key": "department",
+                            "value": "Engineering"
+                        },
+                        {
+                            "key": "status",
+                            "value": "PENDING"
+                        },
+                        {
+                            "key": "page",
+                            "value": "0"
+                        },
+                        {
+                            "key": "size",
+                            "value": "10"
+                        },
+                        {
+                            "key": "sortBy",
+                            "value": "firstName"
+                        },
+                        {
+                            "key": "sortDir",
+                            "value": "asc"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Filtered list returns 200', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    json.data.content.forEach(function(emp) {",
+                            "        pm.expect(emp.department).to.eql('Engineering');",
+                            "        pm.expect(emp.status).to.eql('PENDING');",
+                            "    });",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "5. Search Employees",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/employees/search?query=John&page=0&size=10",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "employees",
+                        "search"
+                    ],
+                    "query": [
+                        {
+                            "key": "query",
+                            "value": "John"
+                        },
+                        {
+                            "key": "page",
+                            "value": "0"
+                        },
+                        {
+                            "key": "size",
+                            "value": "10"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Search returns results', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data.totalElements).to.be.above(0);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "6. Get Employee by ID",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/employees/{{employeeId}}",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "employees",
+                        "{{employeeId}}"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Get employee returns 200', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data.id).to.eql(pm.collectionVariables.get('employeeId'));",
+                            "    pm.expect(json.data).to.have.property('userId');",
+                            "    pm.expect(json.data).to.have.property('managerName');",
+                            "    console.log('Employee: ' + json.data.firstName + ' ' + json.data.lastName);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "7. Get Employee (Not Found - expect 404)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/employees/00000000-0000-0000-0000-000000000000",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "employees",
+                        "00000000-0000-0000-0000-000000000000"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Non-existent employee returns 404', function () {",
+                            "    pm.response.to.have.status(404);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "8. Update Employee",
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"designation\": \"Senior Software Engineer\",\n    \"department\": \"Platform Engineering\",\n    \"phone\": \"+0987654321\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/employees/{{employeeId}}",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "employees",
+                        "{{employeeId}}"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Employee updated', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data.designation).to.eql('Senior Software Engineer');",
+                            "    pm.expect(json.data.department).to.eql('Platform Engineering');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "9. Upload Profile Photo",
+            "request": {
+                "method": "POST",
+                "body": {
+                    "mode": "formdata",
+                    "formdata": [
+                        {
+                            "key": "file",
+                            "type": "file",
+                            "description": "Select a JPG/PNG/WebP image (max 5MB)"
+                        }
+                    ]
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/employees/{{employeeId}}/photo",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "employees",
+                        "{{employeeId}}",
+                        "photo"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Photo uploaded', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data).to.include('uploads');",
+                            "    console.log('Photo URL: ' + json.data);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "10. Get Photo URL",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/employees/{{employeeId}}/photo",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "employees",
+                        "{{employeeId}}",
+                        "photo"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Photo URL retrieved', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "11. Activate Employee",
+            "request": {
+                "method": "PATCH",
+                "url": {
+                    "raw": "{{baseUrl}}/employees/{{employeeId}}/activate",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "employees",
+                        "{{employeeId}}",
+                        "activate"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Employee activated', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data.status).to.eql('ACTIVE');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "12. Deactivate Employee",
+            "request": {
+                "method": "PATCH",
+                "url": {
+                    "raw": "{{baseUrl}}/employees/{{employeeId}}/deactivate",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "employees",
+                        "{{employeeId}}",
+                        "deactivate"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Employee deactivated', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data.status).to.eql('INACTIVE');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "13. Soft Delete Employee",
+            "request": {
+                "method": "DELETE",
+                "url": {
+                    "raw": "{{baseUrl}}/employees/{{employeeId}}",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "employees",
+                        "{{employeeId}}"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Employee deleted', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "14. Get Deleted Employee (expect 404)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/employees/{{employeeId}}",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "employees",
+                        "{{employeeId}}"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Deleted employee returns 404', function () {",
+                            "    pm.response.to.have.status(404);",
+                            "    console.log('Soft delete verified - employee no longer accessible');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}
