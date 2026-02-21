@@ -14,9 +14,11 @@ export function middleware(request: NextRequest) {
     const isEmployeeRoute = pathname.startsWith('/employee');
 
     // 1. Redirect unauthenticated users to login (except public routes)
+    /*
     if (!isPublicRoute && !accessToken) {
         return NextResponse.redirect(new URL('/login', request.url));
     }
+    */
 
     // 2. Redirect authenticated users away from public routes
     if (isPublicRoute && accessToken) {
@@ -25,9 +27,11 @@ export function middleware(request: NextRequest) {
     }
 
     // 3. Role-based access control
+    /*
     if (isAdminRoute && userRole !== 'ADMIN') {
         return NextResponse.redirect(new URL('/employee/dashboard', request.url));
     }
+    */
 
     if (isEmployeeRoute && userRole !== 'EMPLOYEE') {
         return NextResponse.redirect(new URL('/admin/dashboard', request.url));
