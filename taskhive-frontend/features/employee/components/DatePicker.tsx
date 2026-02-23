@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface DatePickerProps {
-    value: string; // YYYY/MM/DD
+    value: string; // YYYY-MM-DD
     onChange: (date: string) => void;
     label: string;
     id: string;
@@ -27,7 +27,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     // Parse value YYYY/MM/DD or YYYY-MM-DD to Date object safely
     const parseValue = (val: string) => {
         if (!val) return new Date();
-        const separator = val.includes('/') ? '/' : '-';
+        const separator = val.includes('-') ? '-' : '/';
         const parts = val.split(separator);
         if (parts.length === 3) {
             return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
@@ -63,7 +63,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
-        return `${year}/${month}/${day}`;
+        return `${year}-${month}-${day}`;
     };
 
     // Validation: FROM Today UNTIL end of next month

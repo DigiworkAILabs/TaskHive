@@ -15,7 +15,7 @@ import {
 const navItems = [
     { label: 'Dashboard', icon: LayoutDashboard, href: '/admin/dashboard', enabled: true },
     { label: 'Employees', icon: Users, href: '/admin/employees', enabled: true },
-    { label: 'Task', icon: ClipboardList, href: '#', enabled: false },
+    { label: 'Task', icon: ClipboardList, href: '/admin/tasks', enabled: true },
     { label: 'Reports', icon: BarChart3, href: '#', enabled: false },
     { label: 'Settings', icon: Settings, href: '#', enabled: false },
 ];

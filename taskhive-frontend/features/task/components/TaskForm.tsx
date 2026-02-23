@@ -1,0 +1,303 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { CreateTaskData, UpdateTaskData, Task, TaskPriority } from '../types/task.types';
+import { Loader2, AlertCircle, CheckCircle, Calendar, Tag, AlignLeft, User, Clock } from 'lucide-react';
+import Link from 'next/link';
+
+interface TaskFormProps {
+    mode: 'create' | 'edit';
+    task?: Task | null;
+    onSubmit: (data: CreateTaskData | UpdateTaskData) => Promise<void>;
+    isLoading: boolean;
+    error: string | null;
+    success: boolean;
+    backHref?: string;
+}
+
+// ── Shared input style ────────────────────────────────────────────────────────
+
+const inputBase: React.CSSProperties = {
+    width: '100%',
+    backgroundColor: '#111111',
+    border: '1px solid #2a2a2a',
+    borderRadius: '10px',
+    color: '#ffffff',
+    fontSize: '14px',
+    padding: '12px 16px',
+    outline: 'none',
+    transition: 'border-color 0.2s, box-shadow 0.2s',
+    boxSizing: 'border-box',
+};
+
+function FormField({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+    return (
+        <div>
+            <label style={{ display: 'block', fontSize: '13px', color: '#a1a1aa', marginBottom: '6px', fontWeight: 500 }}>
+                {label} {required && <span style={{ color: '#f97316' }}>*</span>}
+            </label>
+            {children}
+        </div>
+    );
+}
+
+// ── Main Component ────────────────────────────────────────────────────────────
+
+export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoading, error, success, backHref = '/admin/tasks' }) => {
+    const [formData, setFormData] = useState({
+        title: '',
+        description: '',
+        priority: 'MEDIUM' as TaskPriority,
+        assignedTo: '',
+        dueDate: '',
+        estimatedHours: '',
+        tags: '',
+    });
+
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+    const [focusedField, setFocusedField] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (mode === 'edit' && task) {
+            setFormData({
+                title: task.title || '',
+                description: task.description || '',
+                priority: task.priority || 'MEDIUM',
+                assignedTo: task.assignedTo || '',
+                dueDate: task.dueDate ? task.dueDate.slice(0, 10) : '',
+                estimatedHours: task.estimatedHours?.toString() || '',
+                tags: task.tags?.join(', ') || '',
+            });
+        }
+    }, [mode, task]);
+
+    const validate = (): boolean => {
+        const errors: Record<string, string> = {};
+        if (!formData.title.trim()) errors.title = 'Title is required';
+        if (mode === 'create' && !formData.assignedTo.trim()) errors.assignedTo = 'Assignee is required';
+        if (mode === 'create' && !formData.dueDate) errors.dueDate = 'Due date is required';
+        setFieldErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
+
+    const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+        setFormData((prev) => ({ ...prev, [field]: e.target.value }));
+        if (fieldErrors[field]) setFieldErrors((prev) => { const n = { ...prev }; delete n[field]; return n; });
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!validate()) return;
+
+        const tags = formData.tags.split(',').map((t) => t.trim()).filter(Boolean);
+
+        if (mode === 'create') {
+            const payload: CreateTaskData = {
+                title: formData.title.trim(),
+                priority: formData.priority,
+                assignedTo: formData.assignedTo.trim(),
+                dueDate: formData.dueDate,
+            };
+            if (formData.description.trim()) payload.description = formData.description.trim();
+            if (formData.estimatedHours) payload.estimatedHours = parseFloat(formData.estimatedHours);
+            if (tags.length) payload.tags = tags;
+            await onSubmit(payload);
+        } else {
+            const payload: UpdateTaskData = {};
+            if (formData.title.trim()) payload.title = formData.title.trim();
+            if (formData.description.trim()) payload.description = formData.description.trim();
+            payload.priority = formData.priority;
+            if (formData.assignedTo.trim()) payload.assignedTo = formData.assignedTo.trim();
+            if (formData.dueDate) payload.dueDate = formData.dueDate;
+            if (formData.estimatedHours) payload.estimatedHours = parseFloat(formData.estimatedHours);
+            payload.tags = tags;
+            await onSubmit(payload);
+        }
+    };
+
+    const priorityOptions: { value: TaskPriority; label: string; color: string }[] = [
+        { value: 'LOW', label: 'Low', color: '#22c55e' },
+        { value: 'MEDIUM', label: 'Medium', color: '#f59e0b' },
+        { value: 'HIGH', label: 'High', color: '#f97316' },
+        { value: 'CRITICAL', label: 'Critical', color: '#ef4444' },
+    ];
+
+    const inputStyle = (field: string): React.CSSProperties => ({
+        ...inputBase,
+        borderColor: fieldErrors[field] ? '#ef4444' : focusedField === field ? '#f97316' : '#2a2a2a',
+        boxShadow: focusedField === field ? '0 0 0 3px rgba(249,115,22,0.12)' : 'none',
+    });
+
+    return (
+        <div>
+            {/* Error */}
+            {error && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '10px', padding: '12px 16px', marginBottom: '20px', color: '#f87171', fontSize: '13px' }}>
+                    <AlertCircle size={15} style={{ flexShrink: 0 }} />{error}
+                </div>
+            )}
+
+            {/* Success */}
+            {success && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: '10px', padding: '12px 16px', marginBottom: '20px', color: '#22c55e', fontSize: '13px' }}>
+                    <CheckCircle size={15} style={{ flexShrink: 0 }} />
+                    {mode === 'create' ? 'Task created successfully!' : 'Task updated successfully!'}
+                </div>
+            )}
+
+            <div style={{ backgroundColor: '#161616', border: '1px solid #1f1f1f', borderRadius: '16px', padding: '32px' }}>
+                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    {/* Title */}
+                    <FormField label="Task Title" required>
+                        <input
+                            id="title"
+                            placeholder="Enter a clear, descriptive task title…"
+                            value={formData.title}
+                            onChange={handleChange('title')}
+                            onFocus={() => setFocusedField('title')}
+                            onBlur={() => setFocusedField(null)}
+                            style={inputStyle('title')}
+                        />
+                        {fieldErrors.title && <p style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>{fieldErrors.title}</p>}
+                    </FormField>
+
+                    {/* Description */}
+                    <FormField label="Description">
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                            <AlignLeft size={15} color="#52525b" style={{ marginTop: '14px', flexShrink: 0 }} />
+                            <textarea
+                                placeholder="Describe the task, steps, and acceptance criteria…"
+                                value={formData.description}
+                                onChange={handleChange('description')}
+                                onFocus={() => setFocusedField('description')}
+                                onBlur={() => setFocusedField(null)}
+                                rows={4}
+                                style={{
+                                    ...inputStyle('description'),
+                                    resize: 'vertical',
+                                    fontFamily: 'inherit',
+                                    lineHeight: 1.6,
+                                }}
+                            />
+                        </div>
+                    </FormField>
+
+                    {/* Priority + Assigned To */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                        <FormField label="Priority" required>
+                            <select
+                                value={formData.priority}
+                                onChange={handleChange('priority')}
+                                onFocus={() => setFocusedField('priority')}
+                                onBlur={() => setFocusedField(null)}
+                                style={{ ...inputStyle('priority'), cursor: 'pointer' }}
+                            >
+                                {priorityOptions.map((p) => (
+                                    <option key={p.value} value={p.value}>{p.label}</option>
+                                ))}
+                            </select>
+                        </FormField>
+
+                        <FormField label="Assigned To (Employee ID)" required={mode === 'create'}>
+                            <div style={{ position: 'relative' }}>
+                                <User size={14} color="#52525b" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
+                                <input
+                                    placeholder="Employee ID…"
+                                    value={formData.assignedTo}
+                                    onChange={handleChange('assignedTo')}
+                                    onFocus={() => setFocusedField('assignedTo')}
+                                    onBlur={() => setFocusedField(null)}
+                                    style={{ ...inputStyle('assignedTo'), paddingLeft: '36px' }}
+                                />
+                            </div>
+                            {fieldErrors.assignedTo && <p style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>{fieldErrors.assignedTo}</p>}
+                        </FormField>
+                    </div>
+
+                    {/* Due Date + Estimated Hours */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                        <FormField label="Due Date" required={mode === 'create'}>
+                            <div style={{ position: 'relative' }}>
+                                <Calendar size={14} color="#52525b" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+                                <input
+                                    type="date"
+                                    value={formData.dueDate}
+                                    onChange={handleChange('dueDate')}
+                                    onFocus={() => setFocusedField('dueDate')}
+                                    onBlur={() => setFocusedField(null)}
+                                    style={{ ...inputStyle('dueDate'), paddingLeft: '36px', colorScheme: 'dark' }}
+                                />
+                            </div>
+                            {fieldErrors.dueDate && <p style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>{fieldErrors.dueDate}</p>}
+                        </FormField>
+
+                        <FormField label="Estimated Hours">
+                            <div style={{ position: 'relative' }}>
+                                <Clock size={14} color="#52525b" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="0.5"
+                                    placeholder="e.g. 4.5"
+                                    value={formData.estimatedHours}
+                                    onChange={handleChange('estimatedHours')}
+                                    onFocus={() => setFocusedField('estimatedHours')}
+                                    onBlur={() => setFocusedField(null)}
+                                    style={{ ...inputStyle('estimatedHours'), paddingLeft: '36px' }}
+                                />
+                            </div>
+                        </FormField>
+                    </div>
+
+                    {/* Tags */}
+                    <FormField label="Tags (comma-separated)">
+                        <div style={{ position: 'relative' }}>
+                            <Tag size={14} color="#52525b" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
+                            <input
+                                placeholder="e.g. frontend, urgent, bug-fix"
+                                value={formData.tags}
+                                onChange={handleChange('tags')}
+                                onFocus={() => setFocusedField('tags')}
+                                onBlur={() => setFocusedField(null)}
+                                style={{ ...inputStyle('tags'), paddingLeft: '36px' }}
+                            />
+                        </div>
+                    </FormField>
+
+                    {/* Actions */}
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
+                        <Link
+                            href={backHref}
+                            style={{
+                                padding: '12px 24px', borderRadius: '10px', border: '1px solid #2a2a2a',
+                                backgroundColor: 'transparent', color: '#a1a1aa', fontSize: '14px', fontWeight: 500,
+                                textDecoration: 'none', transition: 'border-color 0.2s',
+                            }}
+                            onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#52525b')}
+                            onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#2a2a2a')}
+                        >
+                            Cancel
+                        </Link>
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            style={{
+                                display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 28px',
+                                borderRadius: '10px', border: 'none',
+                                background: isLoading ? '#7c3e10' : 'linear-gradient(135deg, #f97316 0%, #ea6c10 100%)',
+                                color: '#ffffff', fontSize: '14px', fontWeight: 600,
+                                cursor: isLoading ? 'not-allowed' : 'pointer',
+                                boxShadow: '0 4px 20px rgba(249,115,22,0.3)', transition: 'opacity 0.2s',
+                            }}
+                            onMouseEnter={(e) => !isLoading && ((e.currentTarget as HTMLButtonElement).style.opacity = '0.88')}
+                            onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.opacity = '1')}
+                        >
+                            {isLoading && <Loader2 size={16} className="animate-spin" />}
+                            {isLoading ? (mode === 'create' ? 'Creating…' : 'Saving…') : (mode === 'create' ? 'Create Task' : 'Save Changes')}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
