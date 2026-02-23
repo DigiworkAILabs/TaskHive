@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { CreateEmployeeData, UpdateEmployeeData, Employee } from '../types/employee.types';
 import { ArrowLeft, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
+import { DatePicker } from './DatePicker';
 
 interface EmployeeFormProps {
     mode: 'create' | 'edit';
@@ -288,22 +289,15 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
                         />
                     </div>
 
-                    {/* Row: Join Date + Manager ID */}
+                    {/* Row: Join Date */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                        <FormInput
+                        <DatePicker
                             id="joinDate"
                             label="Join Date"
-                            type="date"
                             value={formData.joinDate}
-                            onChange={handleChange('joinDate')}
+                            onChange={(date) => setFormData(prev => ({ ...prev, joinDate: date }))}
                         />
-                        <FormInput
-                            id="managerId"
-                            label="Manager ID"
-                            placeholder="Manager UUID (optional)"
-                            value={formData.managerId}
-                            onChange={handleChange('managerId')}
-                        />
+                        <div /> {/* Spacer to maintain layout since Manager ID is removed */}
                     </div>
 
                     {/* Actions */}
