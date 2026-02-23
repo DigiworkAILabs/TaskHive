@@ -66,7 +66,7 @@ GET    /api/v1/tasks/search                # Search tasks
 | FR-TASK-07 | High | EMPLOYEE shall update status of their own assigned tasks only |
 | FR-TASK-08 | High | ADMIN shall update status of any task |
 | FR-TASK-09 | Medium | Both ADMIN and EMPLOYEE shall add comments to tasks (comments are immutable) |
-| FR-TASK-10 | Medium | Users shall upload file attachments to tasks |
+| FR-TASK-10 | Medium | Users shall upload file attachments to tasks (image-jpeg, image-png, application-pdf, application-docx)|
 | FR-TASK-11 | High | System shall maintain full status change history (old status, new status, actor, comment, IP, timestamp) |
 | FR-TASK-12 | High | System shall detect and flag overdue tasks via daily scheduled job |
 | FR-TASK-13 | Medium | Overdue escalation: 1 day — warning notification; 3 days — manager notification; 7 days — admin escalation |

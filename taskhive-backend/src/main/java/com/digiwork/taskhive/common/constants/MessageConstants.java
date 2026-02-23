@@ -40,4 +40,14 @@ public final class MessageConstants {
     public static final String EMPLOYEE_DEACTIVATED = "Employee deactivated successfully";
     public static final String EMPLOYEE_NOT_FOUND = "Employee not found";
     public static final String EMPLOYEE_ALREADY_EXISTS = "Employee with this email already exists";
+
+    // Task
+    public static final String TASK_CREATED = "Task created successfully";
+    public static final String TASK_UPDATED = "Task updated successfully";
+    public static final String TASK_DELETED = "Task deleted successfully";
+    public static final String TASK_NOT_FOUND = "Task not found";
+    public static final String TASK_STATUS_UPDATED = "Task status updated successfully";
+    public static final String TASK_ACCESS_DENIED = "You do not have access to this task";
+    public static final String TASK_COMMENT_ADDED = "Comment added successfully";
+    public static final String TASK_ATTACHMENT_UPLOADED = "Attachment uploaded successfully";
 }
