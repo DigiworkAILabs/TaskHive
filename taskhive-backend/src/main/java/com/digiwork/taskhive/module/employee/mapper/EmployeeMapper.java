@@ -1,12 +1,17 @@
 package com.digiwork.taskhive.module.employee.mapper;
 
+import com.digiwork.taskhive.common.storage.StorageService;
 import com.digiwork.taskhive.module.employee.dto.EmployeeListResponse;
 import com.digiwork.taskhive.module.employee.dto.EmployeeResponse;
 import com.digiwork.taskhive.module.employee.model.Employee;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class EmployeeMapper {
+
+    private final StorageService storageService;
 
     public EmployeeResponse toEmployeeResponse(Employee employee, String managerName) {
         return EmployeeResponse.builder()
@@ -21,7 +26,7 @@ public class EmployeeMapper {
                 .managerId(employee.getManagerId() != null ? employee.getManagerId().toString() : null)
                 .managerName(managerName)
                 .joinDate(employee.getJoinDate())
-                .photoUrl(employee.getPhotoUrl())
+                .photoUrl(storageService.getUrl(employee.getPhotoUrl()))
                 .status(employee.getStatus())
                 .createdAt(employee.getCreatedAt())
                 .updatedAt(employee.getUpdatedAt())
@@ -37,7 +42,7 @@ public class EmployeeMapper {
                 .department(employee.getDepartment())
                 .designation(employee.getDesignation())
                 .status(employee.getStatus())
-                .photoUrl(employee.getPhotoUrl())
+                .photoUrl(storageService.getUrl(employee.getPhotoUrl()))
                 .joinDate(employee.getJoinDate())
                 .build();
     }
