@@ -10,7 +10,7 @@ export interface Task {
     status: TaskStatus;
     priority: TaskPriority;
     assignedTo: string;         // employee id
-    assignedToName?: string;    // populated by backend
+    assigneeName?: string;    // populated by backend (matches JSON key from backend)
     dueDate: string;            // ISO date string
     completedAt: string | null;
     estimatedHours: number | null;
@@ -30,7 +30,7 @@ export interface TaskListItem {
     status: TaskStatus;
     priority: TaskPriority;
     assignedTo: string;
-    assignedToName: string;
+    assigneeName: string;
     dueDate: string;
     tags: string[];
     createdAt: string;

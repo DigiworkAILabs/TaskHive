@@ -117,7 +117,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoad
                 title: formData.title.trim(),
                 priority: formData.priority,
                 assignedTo: formData.assignedTo.trim(),
-                dueDate: `${formData.dueDate}T23:59:59`,
+                dueDate: `${formData.dueDate}T17:00:00`,
             };
             if (formData.description.trim()) payload.description = formData.description.trim();
             if (formData.estimatedHours) payload.estimatedHours = parseFloat(formData.estimatedHours);
@@ -130,7 +130,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoad
             payload.priority = formData.priority;
             if (formData.assignedTo.trim()) payload.assignedTo = formData.assignedTo.trim();
             if (formData.dueDate) {
-                payload.dueDate = formData.dueDate.includes('T') ? formData.dueDate : `${formData.dueDate}T23:59:59`;
+                payload.dueDate = formData.dueDate.includes('T') ? formData.dueDate : `${formData.dueDate}T17:00:00`;
             }
             if (formData.estimatedHours) payload.estimatedHours = parseFloat(formData.estimatedHours);
             payload.tags = tags;

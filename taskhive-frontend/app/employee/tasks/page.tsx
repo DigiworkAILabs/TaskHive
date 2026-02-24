@@ -1,18 +1,61 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { useMyTasks } from '@/features/task/hooks/useMyTasks';
 import { TaskCard } from '@/features/task/components/TaskCard';
+import { taskService } from '@/features/task/services/taskService';
 import { useRouter } from 'next/navigation';
-import { Loader2, ClipboardList, AlertCircle, Filter, Search } from 'lucide-react';
-import { TaskStatus, TaskPriority } from '@/features/task/types/task.types';
+import { Loader2, ClipboardList, AlertCircle, Filter, Search, X } from 'lucide-react';
+import { TaskStatus, TaskPriority, TaskListItem } from '@/features/task/types/task.types';
 
 export default function EmployeeTasksPage() {
-    const { tasks, pagination, filters, isLoading, error, updateFilters } = useMyTasks();
+    const { tasks: myTasks, pagination, filters, isLoading: myTasksLoading, error: myTasksError, updateFilters } = useMyTasks();
     const router = useRouter();
 
+    // ── Search state ──────────────────────────────────────────────────────────
+    const [search, setSearch] = useState('');
+    const [searchResults, setSearchResults] = useState<TaskListItem[] | null>(null);
+    const [searchLoading, setSearchLoading] = useState(false);
+    const [searchError, setSearchError] = useState<string | null>(null);
+    const searchRef = useRef(search);
+    searchRef.current = search;   // always up-to-date ref avoids stale closure
+
+    const isSearchActive = searchResults !== null;
+    const tasks = isSearchActive ? searchResults : myTasks;
+    const isLoading = isSearchActive ? searchLoading : myTasksLoading;
+    const error = isSearchActive ? searchError : myTasksError;
+
+    const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value;
+        setSearch(val);
+        if (!val.trim()) { setSearchResults(null); setSearchError(null); }
+    };
+
+    const handleSearchSubmit = async () => {
+        const q = searchRef.current.trim();
+        if (!q) return;
+        setSearchLoading(true);
+        setSearchError(null);
+        try {
+            const data = await taskService.search(q, 0, 50);
+            setSearchResults(data.content);
+        } catch (err: any) {
+            setSearchError(err.response?.data?.message || 'Search failed');
+            setSearchResults([]);
+        } finally {
+            setSearchLoading(false);
+        }
+    };
+
+    const clearSearch = () => { setSearch(''); setSearchResults(null); setSearchError(null); };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') handleSearchSubmit();
+    };
+
+    // ── Stats ─────────────────────────────────────────────────────────────────
     const stats = {
-        total: pagination.totalElements,
+        total: isSearchActive ? searchResults!.length : pagination.totalElements,
         todo: tasks.filter(t => t.status === 'TODO').length,
         inProgress: tasks.filter(t => t.status === 'IN_PROGRESS').length,
         done: tasks.filter(t => t.status === 'DONE').length
@@ -33,7 +76,7 @@ export default function EmployeeTasksPage() {
                 <QuickStat label="Completed" value={stats.done} color="#22c55e" />
             </div>
 
-            {/* Filter Bar */}
+            {/* Filter + Search Bar */}
             <div
                 style={{
                     backgroundColor: '#161616', border: '1px solid #1f1f1f', borderRadius: '14px',
@@ -41,35 +84,78 @@ export default function EmployeeTasksPage() {
                 }}
             >
                 <Filter size={15} color="#71717a" />
-                <select
-                    value={filters.status || ''}
-                    onChange={(e) => updateFilters({ status: e.target.value as TaskStatus || undefined })}
-                    style={{
-                        padding: '8px 12px', borderRadius: '8px', border: '1px solid #2a2a2a',
-                        backgroundColor: '#111111', color: '#ffffff', fontSize: '13px', cursor: 'pointer', outline: 'none',
-                    }}
-                >
-                    <option value="">All Statuses</option>
-                    <option value="TODO">To Do</option>
-                    <option value="IN_PROGRESS">In Progress</option>
-                    <option value="IN_REVIEW">In Review</option>
-                    <option value="DONE">Done</option>
-                </select>
 
-                <select
-                    value={filters.priority || ''}
-                    onChange={(e) => updateFilters({ priority: e.target.value as TaskPriority || undefined })}
-                    style={{
-                        padding: '8px 12px', borderRadius: '8px', border: '1px solid #2a2a2a',
-                        backgroundColor: '#111111', color: '#ffffff', fontSize: '13px', cursor: 'pointer', outline: 'none',
-                    }}
-                >
-                    <option value="">All Priorities</option>
-                    <option value="LOW">Low</option>
-                    <option value="MEDIUM">Medium</option>
-                    <option value="HIGH">High</option>
-                    <option value="CRITICAL">Critical</option>
-                </select>
+                {/* Search Input */}
+                <div style={{ position: 'relative', flex: '1', minWidth: '180px' }}>
+                    <Search size={14} color="#71717a" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                    <input
+                        type="text"
+                        placeholder="Search tasks… (press Enter)"
+                        value={search}
+                        onChange={handleSearchInput}
+                        onKeyDown={handleKeyDown}
+                        style={{
+                            width: '100%', padding: '8px 36px 8px 36px', borderRadius: '8px', boxSizing: 'border-box',
+                            border: `1px solid ${isSearchActive ? 'rgba(249,115,22,0.4)' : '#2a2a2a'}`,
+                            backgroundColor: '#111111', color: '#ffffff', fontSize: '13px', outline: 'none',
+                        }}
+                    />
+                    {search && (
+                        <button
+                            onClick={clearSearch}
+                            style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#71717a', padding: '2px', display: 'flex', alignItems: 'center' }}
+                        >
+                            <X size={12} />
+                        </button>
+                    )}
+                </div>
+
+                {/* Status Filter — hidden when search is active */}
+                {!isSearchActive && (
+                    <>
+                        <select
+                            value={filters.status || ''}
+                            onChange={(e) => updateFilters({ status: e.target.value as TaskStatus || undefined })}
+                            style={{
+                                padding: '8px 12px', borderRadius: '8px', border: '1px solid #2a2a2a',
+                                backgroundColor: '#111111', color: '#ffffff', fontSize: '13px', cursor: 'pointer', outline: 'none',
+                            }}
+                        >
+                            <option value="">All Statuses</option>
+                            <option value="TODO">To Do</option>
+                            <option value="IN_PROGRESS">In Progress</option>
+                            <option value="IN_REVIEW">In Review</option>
+                            <option value="DONE">Done</option>
+                        </select>
+
+                        <select
+                            value={filters.priority || ''}
+                            onChange={(e) => updateFilters({ priority: e.target.value as TaskPriority || undefined })}
+                            style={{
+                                padding: '8px 12px', borderRadius: '8px', border: '1px solid #2a2a2a',
+                                backgroundColor: '#111111', color: '#ffffff', fontSize: '13px', cursor: 'pointer', outline: 'none',
+                            }}
+                        >
+                            <option value="">All Priorities</option>
+                            <option value="LOW">Low</option>
+                            <option value="MEDIUM">Medium</option>
+                            <option value="HIGH">High</option>
+                            <option value="CRITICAL">Critical</option>
+                        </select>
+                    </>
+                )}
+
+                {isSearchActive && (
+                    <button
+                        onClick={clearSearch}
+                        style={{
+                            padding: '8px 14px', borderRadius: '8px', border: '1px solid rgba(249,115,22,0.3)',
+                            backgroundColor: 'rgba(249,115,22,0.08)', color: '#f97316', fontSize: '12px', cursor: 'pointer',
+                        }}
+                    >
+                        Clear Search
+                    </button>
+                )}
             </div>
 
             {/* Error State */}
@@ -88,7 +174,7 @@ export default function EmployeeTasksPage() {
                 ) : tasks.length === 0 ? (
                     <div style={{ padding: '60px', textAlign: 'center', color: '#52525b' }}>
                         <ClipboardList size={40} style={{ margin: '0 auto 12px', opacity: 0.4 }} />
-                        <p style={{ margin: 0 }}>No tasks found</p>
+                        <p style={{ margin: 0 }}>{isSearchActive ? `No tasks matched "${search}"` : 'No tasks found'}</p>
                     </div>
                 ) : (
                     <div style={{ overflowX: 'auto' }}>
@@ -96,7 +182,7 @@ export default function EmployeeTasksPage() {
                             <thead>
                                 <tr style={{ borderBottom: '1px solid #1f1f1f' }}>
                                     <th style={{ padding: '14px 16px', width: '48px' }}></th>
-                                    {['Title', 'Priority', 'Status', 'Assigned To', 'Due Date', ''].map(h => (
+                                    {['Title', 'Priority', 'Status', 'Due Date', ''].map(h => (
                                         <th key={h} style={{ padding: '14px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 600, color: '#f97316', textTransform: 'uppercase' }}>{h}</th>
                                     ))}
                                 </tr>
@@ -109,8 +195,9 @@ export default function EmployeeTasksPage() {
                                         selected={false}
                                         onSelect={() => { }}
                                         onView={(id) => router.push(`/employee/tasks/${id}`)}
-                                        onEdit={() => { }} // Employees can't edit basic task info
-                                        onDelete={() => { }} // Employees can't delete
+                                        onEdit={() => { }}
+                                        onDelete={() => { }}
+                                        hideAssignedTo
                                     />
                                 ))}
                             </tbody>

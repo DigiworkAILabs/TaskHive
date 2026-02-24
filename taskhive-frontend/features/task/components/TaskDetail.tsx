@@ -189,7 +189,7 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ isAdmin = false }) => {
 
                 {/* Meta Grid */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px' }}>
-                    <MetaItem icon={<User size={14} />} label="Assigned To" value={task.assignedToName || task.assignedTo || '—'} />
+                    <MetaItem icon={<User size={14} />} label="Assigned To" value={task.assigneeName || task.assignedTo || '—'} />
                     <MetaItem icon={<Calendar size={14} />} label="Due Date" value={task.dueDate ? new Date(task.dueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—'} valueColor={isOverdue ? '#ef4444' : undefined} />
                     <MetaItem icon={<Clock size={14} />} label="Est. Hours" value={task.estimatedHours != null ? `${task.estimatedHours}h` : '—'} />
                     <MetaItem icon={<Calendar size={14} />} label="Created" value={new Date(task.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })} />

@@ -13,6 +13,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -22,9 +24,10 @@ public class TaskSearchService {
     private final TaskMapper taskMapper;
 
     @Transactional(readOnly = true)
-    public PageResponse<TaskListResponse> searchTasks(String query, int page, int size) {
+    public PageResponse<TaskListResponse> searchTasks(String query, UUID assignedTo, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<Task> taskPage = taskRepository.searchFullText(query, pageable);
+        // Use LIKE search so partial words (e.g. "kk", "front") return results
+        Page<Task> taskPage = taskRepository.searchTasksExtended(query, assignedTo, pageable);
 
         return PageResponse.<TaskListResponse>builder()
                 .content(taskPage.getContent().stream()

@@ -13,9 +13,10 @@ interface TaskCardProps {
     onDelete: (id: string) => void;
     selected: boolean;
     onSelect: (id: string) => void;
+    hideAssignedTo?: boolean;
 }
 
-export const TaskCard: React.FC<TaskCardProps> = ({ task, onView, onEdit, onDelete, selected, onSelect }) => {
+export const TaskCard: React.FC<TaskCardProps> = ({ task, onView, onEdit, onDelete, selected, onSelect, hideAssignedTo = false }) => {
     const [menuOpen, setMenuOpen] = useState(false);
 
     const isOverdue = !['DONE', 'CANCELLED'].includes(task.status) && new Date(task.dueDate) < new Date();
@@ -23,8 +24,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onView, onEdit, onDele
         ? new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
         : '—';
 
-    const initials = task.assignedToName
-        ? task.assignedToName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
+    const initials = task.assigneeName
+        ? task.assigneeName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
         : '?';
 
     return (
@@ -83,23 +84,25 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onView, onEdit, onDele
             </td>
 
             {/* Assigned To */}
-            <td style={{ padding: '14px 16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div
-                        style={{
-                            width: '30px', height: '30px', borderRadius: '50%',
-                            backgroundColor: '#1f1f1f', border: '2px solid #2a2a2a',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: '11px', fontWeight: 700, color: '#f97316', flexShrink: 0,
-                        }}
-                    >
-                        {initials}
+            {!hideAssignedTo && (
+                <td style={{ padding: '14px 16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div
+                            style={{
+                                width: '30px', height: '30px', borderRadius: '50%',
+                                backgroundColor: '#1f1f1f', border: '2px solid #2a2a2a',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                fontSize: '11px', fontWeight: 700, color: '#f97316', flexShrink: 0,
+                            }}
+                        >
+                            {initials}
+                        </div>
+                        <span style={{ color: '#a1a1aa', fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '120px' }}>
+                            {task.assigneeName || '—'}
+                        </span>
                     </div>
-                    <span style={{ color: '#a1a1aa', fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '120px' }}>
-                        {task.assignedToName || '—'}
-                    </span>
-                </div>
-            </td>
+                </td>
+            )}
 
             {/* Due Date */}
             <td style={{ padding: '14px 16px' }}>

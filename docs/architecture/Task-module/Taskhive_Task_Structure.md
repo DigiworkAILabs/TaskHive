@@ -190,7 +190,7 @@ src/
 │       └── tasks/
 │           ├── page.tsx                       # My tasks only
 │           └── [id]/page.tsx
-│
+│  
 └── features/
     └── task/
         ├── components/

@@ -2,6 +2,10 @@ package com.digiwork.taskhive.module.task.controller;
 
 import com.digiwork.taskhive.common.dto.ApiResponse;
 import com.digiwork.taskhive.common.dto.PageResponse;
+import com.digiwork.taskhive.common.exception.BusinessException;
+import com.digiwork.taskhive.module.auth.security.SecurityUtils;
+import com.digiwork.taskhive.module.employee.model.Employee;
+import com.digiwork.taskhive.module.employee.repository.EmployeeRepository;
 import com.digiwork.taskhive.module.task.dto.*;
 import com.digiwork.taskhive.module.task.service.TaskSearchService;
 import com.digiwork.taskhive.module.task.service.TaskService;
@@ -24,6 +28,7 @@ public class TaskController {
 
     private final TaskService taskService;
     private final TaskSearchService taskSearchService;
+    private final EmployeeRepository employeeRepository;
 
     // ─── ADMIN: Create Task ───────────────────────────────────────────────────
 
@@ -85,7 +90,18 @@ public class TaskController {
             @RequestParam String query,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        PageResponse<TaskListResponse> tasks = taskSearchService.searchTasks(query, page, size);
+
+        UUID assignedTo = null;
+        String currentRole = SecurityUtils.getCurrentUserRole();
+
+        if ("EMPLOYEE".equals(currentRole)) {
+            UUID currentUserId = SecurityUtils.getCurrentUserId();
+            Employee employee = employeeRepository.findByUserIdAndIsDeletedFalse(currentUserId)
+                    .orElseThrow(() -> new BusinessException("Employee record not found"));
+            assignedTo = employee.getId();
+        }
+
+        PageResponse<TaskListResponse> tasks = taskSearchService.searchTasks(query, assignedTo, page, size);
         return ResponseEntity.ok(ApiResponse.success("Search results retrieved", tasks));
     }
 

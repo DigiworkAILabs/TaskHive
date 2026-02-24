@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTasks } from '../hooks/useTasks';
 import { TaskCard } from './TaskCard';
 import { taskService } from '../services/taskService';
-import { TaskStatus, TaskPriority } from '../types/task.types';
+import { TaskStatus, TaskPriority, TaskListItem } from '../types/task.types';
 import {
-    Search, Filter, ClipboardList, CheckCircle2, Clock, AlertTriangle, Loader2, AlertCircle, Plus,
+    Search, Filter, ClipboardList, CheckCircle2, Clock, AlertTriangle, Loader2, AlertCircle, Plus, X,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -57,23 +57,68 @@ function FilterSelect({ value, onChange, options, placeholder }: {
 
 export const TaskList: React.FC = () => {
     const router = useRouter();
-    const { tasks, pagination, filters, isLoading, error, fetchTasks, updateFilters, goToPage } = useTasks();
+    const { tasks: listTasks, pagination, filters, isLoading: listLoading, error: listError, fetchTasks, updateFilters, goToPage } = useTasks();
 
     const [search, setSearch] = useState('');
+    const [searchResults, setSearchResults] = useState<TaskListItem[] | null>(null);
+    const [searchLoading, setSearchLoading] = useState(false);
+    const [searchError, setSearchError] = useState<string | null>(null);
+    const [searchTotal, setSearchTotal] = useState(0);
     const [selected, setSelected] = useState<Set<string>>(new Set());
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+    // Determine active data source
+    const isSearchActive = searchResults !== null;
+    const tasks = isSearchActive ? searchResults : listTasks;
+    const isLoading = isSearchActive ? searchLoading : listLoading;
+    const error = isSearchActive ? searchError : listError;
+
     // Stats derived from current page results (simplified)
-    const total = pagination.totalElements;
+    const total = isSearchActive ? searchTotal : pagination.totalElements;
     const done = tasks.filter((t) => t.status === 'DONE').length;
     const inProgress = tasks.filter((t) => t.status === 'IN_PROGRESS').length;
     const overdue = tasks.filter((t) => !['DONE', 'CANCELLED'].includes(t.status) && new Date(t.dueDate) < new Date()).length;
 
-    const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter') {
-            updateFilters({ search: search.trim() || undefined, page: 0 });
+    const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value;
+        setSearch(val);
+        if (!val.trim()) {
+            // Clear search — go back to list
+            setSearchResults(null);
+            setSearchError(null);
         }
+    };
+
+    // Use ref so handleSearchSubmit always reads the LATEST search value (avoids stale closure)
+    const searchRef = useRef(search);
+    searchRef.current = search;
+
+    const handleSearchSubmit = async () => {
+        const q = searchRef.current.trim();
+        if (!q) return;
+        setSearchLoading(true);
+        setSearchError(null);
+        try {
+            const data = await taskService.search(q, 0, 50);
+            setSearchResults(data.content);
+            setSearchTotal(data.totalElements);
+        } catch (err: any) {
+            setSearchError(err.response?.data?.message || 'Search failed');
+            setSearchResults([]);
+        } finally {
+            setSearchLoading(false);
+        }
+    };
+
+    const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') handleSearchSubmit();
+    };
+
+    const clearSearch = () => {
+        setSearch('');
+        setSearchResults(null);
+        setSearchError(null);
     };
 
     const handleSelect = (id: string) => {
@@ -172,14 +217,22 @@ export const TaskList: React.FC = () => {
                         type="text"
                         placeholder="Search tasks… (press Enter)"
                         value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        onKeyDown={handleSearch}
+                        onChange={handleSearchInput}
+                        onKeyDown={handleSearchKeyDown}
                         style={{
-                            width: '100%', padding: '8px 12px 8px 36px', borderRadius: '8px',
-                            border: '1px solid #2a2a2a', backgroundColor: '#111111',
-                            color: '#ffffff', fontSize: '13px', outline: 'none',
+                            width: '100%', padding: '8px 36px 8px 36px', borderRadius: '8px',
+                            border: `1px solid ${isSearchActive ? 'rgba(249,115,22,0.4)' : '#2a2a2a'}`, backgroundColor: '#111111',
+                            color: '#ffffff', fontSize: '13px', outline: 'none', boxSizing: 'border-box',
                         }}
                     />
+                    {search && (
+                        <button
+                            onClick={clearSearch}
+                            style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#71717a', padding: '2px', display: 'flex', alignItems: 'center' }}
+                        >
+                            <X size={12} />
+                        </button>
+                    )}
                 </div>
                 <FilterSelect
                     value={filters.status || ''}
@@ -193,9 +246,9 @@ export const TaskList: React.FC = () => {
                     options={priorityOptions}
                     placeholder="All Priorities"
                 />
-                {(filters.status || filters.priority || filters.search) && (
+                {(filters.status || filters.priority || isSearchActive) && (
                     <button
-                        onClick={() => { setSearch(''); updateFilters({ status: undefined, priority: undefined, search: undefined }); }}
+                        onClick={() => { clearSearch(); updateFilters({ status: undefined, priority: undefined, search: undefined }); }}
                         style={{
                             padding: '8px 14px', borderRadius: '8px', border: '1px solid #2a2a2a',
                             backgroundColor: 'transparent', color: '#71717a', fontSize: '12px', cursor: 'pointer',
