@@ -21,7 +21,7 @@ export const TaskComments: React.FC<TaskCommentsProps> = ({ taskId }) => {
         setError(null);
         try {
             const data = await taskService.getComments(taskId);
-            setComments(data);
+            setComments(Array.isArray(data) ? data : []);
         } catch (err: any) {
             setError(err.response?.data?.message || 'Failed to load comments');
         } finally {
