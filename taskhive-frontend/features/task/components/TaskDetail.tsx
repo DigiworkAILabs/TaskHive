@@ -55,7 +55,7 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ isAdmin = false }) => {
     const [showStatusModal, setShowStatusModal] = useState(false);
     const [targetStatus, setTargetStatus] = useState<TaskStatus | null>(null);
 
-    const backHref = isAdmin ? '/admin/tasks' : '/tasks';
+    const backHref = isAdmin ? '/admin/tasks' : '/employee/tasks';
 
     const handleDelete = async () => {
         setIsDeleting(true);

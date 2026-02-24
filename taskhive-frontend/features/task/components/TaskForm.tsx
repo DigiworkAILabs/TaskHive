@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { CreateTaskData, UpdateTaskData, Task, TaskPriority } from '../types/task.types';
-import { Loader2, AlertCircle, CheckCircle, Calendar, Tag, AlignLeft, User, Clock } from 'lucide-react';
+import { Loader2, AlertCircle, CheckCircle, Calendar, Tag, AlignLeft, User, Clock, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
+import { employeeService } from '@/features/employee/services/employeeService';
+import { EmployeeListItem } from '@/features/employee/types/employee.types';
 
 interface TaskFormProps {
     mode: 'create' | 'edit';
@@ -56,6 +58,8 @@ export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoad
 
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
     const [focusedField, setFocusedField] = useState<string | null>(null);
+    const [employees, setEmployees] = useState<EmployeeListItem[]>([]);
+    const [isFetchingEmployees, setIsFetchingEmployees] = useState(false);
 
     useEffect(() => {
         if (mode === 'edit' && task) {
@@ -70,6 +74,22 @@ export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoad
             });
         }
     }, [mode, task]);
+
+    useEffect(() => {
+        const fetchEmployees = async () => {
+            setIsFetchingEmployees(true);
+            try {
+                // Fetch first 100 active employees
+                const response = await employeeService.list({ page: 0, size: 100, status: 'ACTIVE' });
+                setEmployees(response.content);
+            } catch (err) {
+                console.error('Failed to fetch employees:', err);
+            } finally {
+                setIsFetchingEmployees(false);
+            }
+        };
+        fetchEmployees();
+    }, []);
 
     const validate = (): boolean => {
         const errors: Record<string, string> = {};
@@ -96,7 +116,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoad
                 title: formData.title.trim(),
                 priority: formData.priority,
                 assignedTo: formData.assignedTo.trim(),
-                dueDate: formData.dueDate,
+                dueDate: `${formData.dueDate}T23:59:59`,
             };
             if (formData.description.trim()) payload.description = formData.description.trim();
             if (formData.estimatedHours) payload.estimatedHours = parseFloat(formData.estimatedHours);
@@ -108,7 +128,9 @@ export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoad
             if (formData.description.trim()) payload.description = formData.description.trim();
             payload.priority = formData.priority;
             if (formData.assignedTo.trim()) payload.assignedTo = formData.assignedTo.trim();
-            if (formData.dueDate) payload.dueDate = formData.dueDate;
+            if (formData.dueDate) {
+                payload.dueDate = formData.dueDate.includes('T') ? formData.dueDate : `${formData.dueDate}T23:59:59`;
+            }
             if (formData.estimatedHours) payload.estimatedHours = parseFloat(formData.estimatedHours);
             payload.tags = tags;
             await onSubmit(payload);
@@ -198,17 +220,25 @@ export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoad
                             </select>
                         </FormField>
 
-                        <FormField label="Assigned To (Employee ID)" required={mode === 'create'}>
+                        <FormField label="Assigned To" required={mode === 'create'}>
                             <div style={{ position: 'relative' }}>
-                                <User size={14} color="#52525b" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
-                                <input
-                                    placeholder="Employee ID…"
+                                <User size={14} color="#52525b" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', zIndex: 1, pointerEvents: 'none' }} />
+                                <select
                                     value={formData.assignedTo}
                                     onChange={handleChange('assignedTo')}
                                     onFocus={() => setFocusedField('assignedTo')}
                                     onBlur={() => setFocusedField(null)}
-                                    style={{ ...inputStyle('assignedTo'), paddingLeft: '36px' }}
-                                />
+                                    style={{ ...inputStyle('assignedTo'), paddingLeft: '36px', cursor: 'pointer', appearance: 'none' }}
+                                    disabled={isFetchingEmployees}
+                                >
+                                    <option value="" disabled>{isFetchingEmployees ? 'Loading names…' : 'Select an employee…'}</option>
+                                    {employees.map((emp) => (
+                                        <option key={emp.id} value={emp.id}>
+                                            {emp.firstName} {emp.lastName} ({emp.department})
+                                        </option>
+                                    ))}
+                                </select>
+                                <ChevronDown size={14} color="#52525b" style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
                             </div>
                             {fieldErrors.assignedTo && <p style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>{fieldErrors.assignedTo}</p>}
                         </FormField>

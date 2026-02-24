@@ -108,7 +108,7 @@ export default function EmployeeTasksPage() {
                                         task={task}
                                         selected={false}
                                         onSelect={() => { }}
-                                        onView={(id) => router.push(`/tasks/${id}`)}
+                                        onView={(id) => router.push(`/employee/tasks/${id}`)}
                                         onEdit={() => { }} // Employees can't edit basic task info
                                         onDelete={() => { }} // Employees can't delete
                                     />
