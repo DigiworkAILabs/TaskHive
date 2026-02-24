@@ -1,0 +1,1242 @@
+{
+    "info": {
+        "name": "TaskHive - Task Module",
+        "description": "Complete testing collection for the Task module (Phase 3).\n\n**Pre-requisites:**\n1. Employee module must be set up (at least one ACTIVE employee exists).\n2. Login as Admin first (Step 0).\n\n**Flow:** Login → Create Task → List → Search → Get → Update → Status Transitions → Comments → Attachments → History → My Tasks (Employee) → Overdue → Delete\n\n**Note:** Steps 16-18 require logging in as an Employee. Use the employee's credentials (email + password set during account activation).",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:8080/api/v1"
+        },
+        {
+            "key": "taskId",
+            "value": ""
+        },
+        {
+            "key": "employeeId",
+            "value": "",
+            "description": "ID of an ACTIVE employee to assign tasks to"
+        },
+        {
+            "key": "commentId",
+            "value": ""
+        }
+    ],
+    "item": [
+        {
+            "name": "━━━ ADMIN FLOW ━━━",
+            "item": [],
+            "description": "All requests below require Admin login"
+        },
+        {
+            "name": "0. Login as Admin",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"admin@taskhive.com\",\n    \"password\": \"Admin@123\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/login",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "login"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Admin login successful', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    console.log('Admin logged in. Cookies set automatically.');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "1. List Employees (to get employeeId)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/employees?status=ACTIVE&page=0&size=5",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "employees"
+                    ],
+                    "query": [
+                        {
+                            "key": "status",
+                            "value": "ACTIVE"
+                        },
+                        {
+                            "key": "page",
+                            "value": "0"
+                        },
+                        {
+                            "key": "size",
+                            "value": "5"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Active employees found', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data.content.length).to.be.above(0);",
+                            "    var empId = json.data.content[0].id;",
+                            "    pm.collectionVariables.set('employeeId', empId);",
+                            "    console.log('Using employee: ' + json.data.content[0].firstName + ' ' + json.data.content[0].lastName + ' (ID: ' + empId + ')');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "2. Create Task",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"title\": \"Implement User Dashboard\",\n    \"description\": \"Design and implement the main user dashboard with analytics widgets, recent activity feed, and quick action buttons.\",\n    \"priority\": \"HIGH\",\n    \"dueDate\": \"2026-03-15T17:00:00\",\n    \"assignedTo\": \"{{employeeId}}\",\n    \"estimatedHours\": 24.5,\n    \"tags\": [\"frontend\", \"dashboard\", \"sprint-7\"]\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/tasks",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "tasks"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Task created (201)', function () {",
+                            "    pm.response.to.have.status(201);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data).to.have.property('id');",
+                            "    pm.expect(json.data.status).to.eql('TODO');",
+                            "    pm.expect(json.data.priority).to.eql('HIGH');",
+                            "    pm.expect(json.data.title).to.eql('Implement User Dashboard');",
+                            "    pm.expect(json.data.tags).to.include('frontend');",
+                            "",
+                            "    pm.collectionVariables.set('taskId', json.data.id);",
+                            "    console.log('Task ID saved: ' + json.data.id);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "3. Create Task (Validation Error - expect 400)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"title\": \"\",\n    \"priority\": \"INVALID\",\n    \"dueDate\": null,\n    \"assignedTo\": null\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/tasks",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "tasks"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Validation error returns 400', function () {",
+                            "    pm.response.to.have.status(400);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.false;",
+                            "    console.log('Validation errors: ' + JSON.stringify(json.errors));",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "4. Create Second Task (for testing)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"title\": \"Fix Login Bug\",\n    \"description\": \"The login page throws a 500 error when the user enters special characters in the email field.\",\n    \"priority\": \"CRITICAL\",\n    \"dueDate\": \"2026-03-05T12:00:00\",\n    \"assignedTo\": \"{{employeeId}}\",\n    \"estimatedHours\": 4.0,\n    \"tags\": [\"bugfix\", \"auth\", \"urgent\"]\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/tasks",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "tasks"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Second task created (201)', function () {",
+                            "    pm.response.to.have.status(201);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    console.log('Second task created: ' + json.data.id);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "5. List All Tasks (No Filters)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/tasks?page=0&size=10",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "tasks"
+                    ],
+                    "query": [
+                        {
+                            "key": "page",
+                            "value": "0"
+                        },
+                        {
+                            "key": "size",
+                            "value": "10"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('List tasks returns 200', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data).to.have.property('content');",
+                            "    pm.expect(json.data).to.have.property('totalElements');",
+                            "    pm.expect(json.data.content).to.be.an('array');",
+                            "    pm.expect(json.data.totalElements).to.be.at.least(2);",
+                            "    console.log('Total tasks: ' + json.data.totalElements);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "6. List Tasks (With Filters)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/tasks?status=TODO&priority=HIGH&page=0&size=10&sortBy=dueDate&sortDir=asc",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "tasks"
+                    ],
+                    "query": [
+                        {
+                            "key": "status",
+                            "value": "TODO"
+                        },
+                        {
+                            "key": "priority",
+                            "value": "HIGH"
+                        },
+                        {
+                            "key": "page",
+                            "value": "0"
+                        },
+                        {
+                            "key": "size",
+                            "value": "10"
+                        },
+                        {
+                            "key": "sortBy",
+                            "value": "dueDate"
+                        },
+                        {
+                            "key": "sortDir",
+                            "value": "asc"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Filtered tasks returns 200', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    json.data.content.forEach(function(task) {",
+                            "        pm.expect(task.status).to.eql('TODO');",
+                            "        pm.expect(task.priority).to.eql('HIGH');",
+                            "    });",
+                            "    console.log('Filtered results: ' + json.data.totalElements);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "7. Search Tasks",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/tasks/search?query=dashboard&page=0&size=10",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "tasks",
+                        "search"
+                    ],
+                    "query": [
+                        {
+                            "key": "query",
+                            "value": "dashboard"
+                        },
+                        {
+                            "key": "page",
+                            "value": "0"
+                        },
+                        {
+                            "key": "size",
+                            "value": "10"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Search returns results', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data.totalElements).to.be.above(0);",
+                            "    console.log('Search hits: ' + json.data.totalElements);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "8. Get Task by ID",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/tasks/{{taskId}}",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "tasks",
+                        "{{taskId}}"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Get task returns 200', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data.id).to.eql(pm.collectionVariables.get('taskId'));",
+                            "    pm.expect(json.data).to.have.property('assigneeName');",
+                            "    pm.expect(json.data).to.have.property('tags');",
+                            "    console.log('Task: ' + json.data.title + ' | Status: ' + json.data.status);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "9. Get Task (Not Found - expect 404)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/tasks/00000000-0000-0000-0000-000000000000",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "tasks",
+                        "00000000-0000-0000-0000-000000000000"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Non-existent task returns 404', function () {",
+                            "    pm.response.to.have.status(404);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "10. Update Task",
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"title\": \"Implement User Dashboard v2\",\n    \"description\": \"Updated: Design and implement the main user dashboard with analytics widgets, activity feed, quick actions, and notification center.\",\n    \"priority\": \"CRITICAL\",\n    \"estimatedHours\": 32.0,\n    \"tags\": [\"frontend\", \"dashboard\", \"sprint-7\", \"redesign\"]\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/tasks/{{taskId}}",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "tasks",
+                        "{{taskId}}"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Task updated', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data.title).to.eql('Implement User Dashboard v2');",
+                            "    pm.expect(json.data.priority).to.eql('CRITICAL');",
+                            "    pm.expect(json.data.estimatedHours).to.eql(32.0);",
+                            "    pm.expect(json.data.tags).to.include('redesign');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "11. Update Task Status: TODO → IN_PROGRESS",
+            "request": {
+                "method": "PATCH",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"status\": \"IN_PROGRESS\",\n    \"comment\": \"Starting work on the dashboard implementation\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/tasks/{{taskId}}/status",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "tasks",
+                        "{{taskId}}",
+                        "status"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Status updated to IN_PROGRESS', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data.status).to.eql('IN_PROGRESS');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "12. Update Status: IN_PROGRESS → IN_REVIEW",
+            "request": {
+                "method": "PATCH",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"status\": \"IN_REVIEW\",\n    \"comment\": \"Dashboard implementation complete, ready for review\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/tasks/{{taskId}}/status",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "tasks",
+                        "{{taskId}}",
+                        "status"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Status updated to IN_REVIEW', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.data.status).to.eql('IN_REVIEW');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "13. Invalid Status Transition (IN_REVIEW → TODO - expect 400)",
+            "request": {
+                "method": "PATCH",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"status\": \"TODO\",\n    \"comment\": \"Trying invalid transition\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/tasks/{{taskId}}/status",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "tasks",
+                        "{{taskId}}",
+                        "status"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Invalid transition returns 400', function () {",
+                            "    pm.response.to.have.status(400);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.message).to.include('Invalid status transition');",
+                            "    console.log('Correctly blocked: ' + json.message);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "14. Update Status: IN_REVIEW → DONE",
+            "request": {
+                "method": "PATCH",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"status\": \"DONE\",\n    \"comment\": \"Dashboard approved and deployed to staging\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/tasks/{{taskId}}/status",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "tasks",
+                        "{{taskId}}",
+                        "status"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Status updated to DONE', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.data.status).to.eql('DONE');",
+                            "    pm.expect(json.data.completedAt).to.not.be.null;",
+                            "    console.log('Task completed at: ' + json.data.completedAt);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "15. Add Comment",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"content\": \"Great work on the dashboard! The analytics widgets look fantastic. Just one minor suggestion: consider adding a dark mode toggle.\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/tasks/{{taskId}}/comments",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "tasks",
+                        "{{taskId}}",
+                        "comments"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Comment added (201)', function () {",
+                            "    pm.response.to.have.status(201);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data).to.have.property('id');",
+                            "    pm.expect(json.data).to.have.property('authorName');",
+                            "    pm.expect(json.data.content).to.include('dark mode');",
+                            "    pm.collectionVariables.set('commentId', json.data.id);",
+                            "    console.log('Comment by: ' + json.data.authorName);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "16. Add Second Comment",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"content\": \"Noted! I will add dark mode support in the next sprint.\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/tasks/{{taskId}}/comments",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "tasks",
+                        "{{taskId}}",
+                        "comments"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Second comment added', function () {",
+                            "    pm.response.to.have.status(201);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "17. Get Comments (Paginated)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/tasks/{{taskId}}/comments?page=0&size=10",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "tasks",
+                        "{{taskId}}",
+                        "comments"
+                    ],
+                    "query": [
+                        {
+                            "key": "page",
+                            "value": "0"
+                        },
+                        {
+                            "key": "size",
+                            "value": "10"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Comments retrieved', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data.content).to.be.an('array');",
+                            "    pm.expect(json.data.totalElements).to.be.at.least(2);",
+                            "    json.data.content.forEach(function(c) {",
+                            "        pm.expect(c).to.have.property('authorName');",
+                            "    });",
+                            "    console.log('Total comments: ' + json.data.totalElements);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "18. Upload Attachment",
+            "request": {
+                "method": "POST",
+                "body": {
+                    "mode": "formdata",
+                    "formdata": [
+                        {
+                            "key": "file",
+                            "type": "file",
+                            "description": "Select a file (JPEG, PNG, PDF, or DOCX, max 10MB)"
+                        }
+                    ]
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/tasks/{{taskId}}/attachments",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "tasks",
+                        "{{taskId}}",
+                        "attachments"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Attachment uploaded (201)', function () {",
+                            "    pm.response.to.have.status(201);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data).to.have.property('id');",
+                            "    pm.expect(json.data).to.have.property('fileName');",
+                            "    pm.expect(json.data).to.have.property('fileUrl');",
+                            "    pm.expect(json.data).to.have.property('fileSize');",
+                            "    pm.expect(json.data).to.have.property('mimeType');",
+                            "    console.log('Uploaded: ' + json.data.fileName + ' (' + json.data.fileSize + ' bytes)');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "19. Get Attachments",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/tasks/{{taskId}}/attachments",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "tasks",
+                        "{{taskId}}",
+                        "attachments"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Attachments retrieved', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data).to.be.an('array');",
+                            "    console.log('Total attachments: ' + json.data.length);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "20. Get Status History",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/tasks/{{taskId}}/history",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "tasks",
+                        "{{taskId}}",
+                        "history"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Status history retrieved', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data).to.be.an('array');",
+                            "    pm.expect(json.data.length).to.be.at.least(4);",
+                            "    json.data.forEach(function(h) {",
+                            "        pm.expect(h).to.have.property('newStatus');",
+                            "        pm.expect(h).to.have.property('changedByName');",
+                            "    });",
+                            "    console.log('History entries: ' + json.data.length);",
+                            "    json.data.forEach(function(h) {",
+                            "        console.log('  ' + (h.oldStatus || 'null') + ' → ' + h.newStatus + ' (' + h.comment + ')');",
+                            "    });",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "21. Get Overdue Tasks",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/tasks/overdue?page=0&size=10",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "tasks",
+                        "overdue"
+                    ],
+                    "query": [
+                        {
+                            "key": "page",
+                            "value": "0"
+                        },
+                        {
+                            "key": "size",
+                            "value": "10"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Overdue tasks returns 200', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data).to.have.property('content');",
+                            "    console.log('Overdue tasks: ' + json.data.totalElements);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "━━━ EMPLOYEE FLOW ━━━",
+            "item": [],
+            "description": "Log in as an Employee to test employee-specific endpoints"
+        },
+        {
+            "name": "22. Login as Employee",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"john.doe@example.com\",\n    \"password\": \"YourEmployeePassword123\"\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/login",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "login"
+                    ]
+                },
+                "description": "⚠️ UPDATE the email and password to match an actual activated employee account before running."
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Employee login successful', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    console.log('Logged in as Employee. Cookies updated.');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "23. Get My Tasks (Employee)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/tasks/my-tasks?page=0&size=10&sortBy=dueDate&sortDir=asc",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "tasks",
+                        "my-tasks"
+                    ],
+                    "query": [
+                        {
+                            "key": "page",
+                            "value": "0"
+                        },
+                        {
+                            "key": "size",
+                            "value": "10"
+                        },
+                        {
+                            "key": "sortBy",
+                            "value": "dueDate"
+                        },
+                        {
+                            "key": "sortDir",
+                            "value": "asc"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('My tasks returns assigned tasks', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data.content).to.be.an('array');",
+                            "    pm.expect(json.data.totalElements).to.be.above(0);",
+                            "    console.log('My tasks count: ' + json.data.totalElements);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "24. Employee: Create Task (expect 403)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"title\": \"Employee should not create tasks\",\n    \"priority\": \"LOW\",\n    \"dueDate\": \"2026-04-01T12:00:00\",\n    \"assignedTo\": \"{{employeeId}}\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/tasks",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "tasks"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Employee cannot create tasks (403)', function () {",
+                            "    pm.response.to.have.status(403);",
+                            "    console.log('Access correctly denied for employee');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "25. Employee: Delete Task (expect 403)",
+            "request": {
+                "method": "DELETE",
+                "url": {
+                    "raw": "{{baseUrl}}/tasks/{{taskId}}",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "tasks",
+                        "{{taskId}}"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Employee cannot delete tasks (403)', function () {",
+                            "    pm.response.to.have.status(403);",
+                            "    console.log('Delete correctly denied for employee');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "━━━ CLEANUP (RE-LOGIN AS ADMIN) ━━━",
+            "item": [],
+            "description": "Re-login as Admin for cleanup operations"
+        },
+        {
+            "name": "26. Re-Login as Admin",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"admin@taskhive.com\",\n    \"password\": \"Admin@123\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/login",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "login"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Admin re-login successful', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    console.log('Admin session restored.');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "27. Soft Delete Task",
+            "request": {
+                "method": "DELETE",
+                "url": {
+                    "raw": "{{baseUrl}}/tasks/{{taskId}}",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "tasks",
+                        "{{taskId}}"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Task deleted', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "28. Get Deleted Task (expect 404)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/tasks/{{taskId}}",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "tasks",
+                        "{{taskId}}"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Deleted task returns 404', function () {",
+                            "    pm.response.to.have.status(404);",
+                            "    console.log('Soft delete verified - task no longer accessible');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}

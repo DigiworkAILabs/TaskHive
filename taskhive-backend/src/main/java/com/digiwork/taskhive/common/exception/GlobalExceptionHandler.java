@@ -5,6 +5,8 @@ import com.digiwork.taskhive.common.dto.ErrorResponse;
 import com.digiwork.taskhive.module.auth.exception.*;
 import com.digiwork.taskhive.module.employee.exception.EmployeeAlreadyExistsException;
 import com.digiwork.taskhive.module.employee.exception.EmployeeNotFoundException;
+import com.digiwork.taskhive.module.task.exception.TaskAccessDeniedException;
+import com.digiwork.taskhive.module.task.exception.TaskNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -110,6 +112,20 @@ public class GlobalExceptionHandler {
         public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex, HttpServletRequest request) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                                 .body(ErrorResponse.of(MessageConstants.ACCESS_DENIED, request.getRequestURI()));
+        }
+
+        @ExceptionHandler(TaskNotFoundException.class)
+        public ResponseEntity<ErrorResponse> handleTaskNotFound(TaskNotFoundException ex,
+                        HttpServletRequest request) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                .body(ErrorResponse.of(ex.getMessage(), request.getRequestURI()));
+        }
+
+        @ExceptionHandler(TaskAccessDeniedException.class)
+        public ResponseEntity<ErrorResponse> handleTaskAccessDenied(TaskAccessDeniedException ex,
+                        HttpServletRequest request) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                                .body(ErrorResponse.of(ex.getMessage(), request.getRequestURI()));
         }
 
         @ExceptionHandler(Exception.class)
