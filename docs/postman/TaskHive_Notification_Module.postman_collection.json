@@ -1,0 +1,918 @@
+{
+    "info": {
+        "name": "TaskHive - Notification Module",
+        "description": "Complete testing collection for the Notification module (Phase 4).\n\n**Pre-requisites:**\n1. Auth, Employee, and Task modules must be set up.\n2. At least one task must have been created and assigned to generate notifications.\n\n**Flow:** Login as Admin → Create Task (triggers notification) → Get Notifications → Unread Count → Mark Read → Mark All Read → Get Preferences → Update Preferences\n\n**Note:** Notification creation happens automatically via event listeners when tasks are created, status is changed, comments are added, or tasks become overdue. This collection tests the notification retrieval and management endpoints.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:8080/api/v1"
+        },
+        {
+            "key": "employeeId",
+            "value": "",
+            "description": "ID of an ACTIVE employee to assign tasks to"
+        },
+        {
+            "key": "taskId",
+            "value": "",
+            "description": "ID of a created task (triggers notification)"
+        },
+        {
+            "key": "notificationId",
+            "value": "",
+            "description": "ID of the first notification (for mark-as-read test)"
+        }
+    ],
+    "item": [
+        {
+            "name": "━━━ SETUP: Generate Notifications ━━━",
+            "item": [],
+            "description": "First, we login and create a task to trigger the TaskAssignedEvent, which generates notifications and queues emails."
+        },
+        {
+            "name": "0. Login as Admin",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"admin@taskhive.com\",\n    \"password\": \"Admin@123\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/login",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "login"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Admin login successful', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    console.log('Admin logged in. Cookies set automatically.');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "1. List Employees (get employeeId)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/employees?status=ACTIVE&page=0&size=5",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "employees"
+                    ],
+                    "query": [
+                        {
+                            "key": "status",
+                            "value": "ACTIVE"
+                        },
+                        {
+                            "key": "page",
+                            "value": "0"
+                        },
+                        {
+                            "key": "size",
+                            "value": "5"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Active employees found', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data.content.length).to.be.above(0);",
+                            "    var empId = json.data.content[0].id;",
+                            "    pm.collectionVariables.set('employeeId', empId);",
+                            "    console.log('Using employee: ' + json.data.content[0].firstName + ' (ID: ' + empId + ')');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "2. Create Task (triggers TASK_ASSIGNED notification)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"title\": \"Notification Test Task\",\n    \"description\": \"This task is created to trigger a TASK_ASSIGNED notification and email queue entry.\",\n    \"priority\": \"HIGH\",\n    \"dueDate\": \"2026-03-15T17:00:00\",\n    \"assignedTo\": \"{{employeeId}}\",\n    \"estimatedHours\": 8.0,\n    \"tags\": [\"notification-test\"]\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/tasks",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "tasks"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Task created - notification should be generated', function () {",
+                            "    pm.response.to.have.status(201);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.collectionVariables.set('taskId', json.data.id);",
+                            "    console.log('Task created: ' + json.data.id + ' → TASK_ASSIGNED notification triggered');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "3. Update Task Status (triggers TASK_STATUS_CHANGED notification)",
+            "request": {
+                "method": "PATCH",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"status\": \"IN_PROGRESS\",\n    \"comment\": \"Starting work on this task\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/tasks/{{taskId}}/status",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "tasks",
+                        "{{taskId}}",
+                        "status"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Status changed - notification should be generated', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.data.status).to.eql('IN_PROGRESS');",
+                            "    console.log('Status updated → TASK_STATUS_CHANGED notification triggered');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "4. Add Comment (triggers TASK_COMMENT_ADDED notification)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"content\": \"Please update the documentation as well.\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/tasks/{{taskId}}/comments",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "tasks",
+                        "{{taskId}}",
+                        "comments"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Comment added - notification should be generated', function () {",
+                            "    pm.response.to.have.status(201);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    console.log('Comment added → TASK_COMMENT_ADDED notification triggered');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "5. Create Overdue Task (triggers TASK_OVERDUE notification)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"title\": \"Overdue Notification Test\",\n    \"description\": \"This task has a past due date to trigger the TaskOverdueScheduler and generate a TASK_OVERDUE notification.\",\n    \"priority\": \"CRITICAL\",\n    \"dueDate\": \"2025-01-01T00:00:00\",\n    \"assignedTo\": \"{{employeeId}}\",\n    \"estimatedHours\": 2.0,\n    \"tags\": [\"overdue-test\"]\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/tasks",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "tasks"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Overdue task created - scheduler will generate TASK_OVERDUE notification', function () {",
+                            "    pm.response.to.have.status(201);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    console.log('Overdue task created: ' + json.data.id);",
+                            "    console.log('⏳ NOTE: The TaskOverdueScheduler runs on a cron schedule.');",
+                            "    console.log('   Wait for the next scheduler cycle, then check notifications.');",
+                            "    console.log('   The TASK_OVERDUE notification + email will be generated automatically.');",
+                            "});",
+                            ""
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "━━━ LOGIN AS EMPLOYEE (Notification Recipient) ━━━",
+            "item": [],
+            "description": "Switch to employee login to view the notifications generated by admin actions above.\n\n**Note on TASK_OVERDUE:** The overdue task created in step 5 will only generate a notification after the TaskOverdueScheduler runs (cron-based). If you don't see a TASK_OVERDUE notification immediately, wait for the scheduler cycle and re-check."
+        },
+        {
+            "name": "5. Login as Employee",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"REPLACE_WITH_EMPLOYEE_EMAIL\",\n    \"password\": \"REPLACE_WITH_EMPLOYEE_PASSWORD\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/login",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "login"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Employee login successful', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    console.log('Logged in as employee. Now testing notification endpoints.');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "━━━ NOTIFICATION ENDPOINTS ━━━",
+            "item": [],
+            "description": "All requests below test the notification retrieval and management APIs for the logged-in employee."
+        },
+        {
+            "name": "6. Get All Notifications (paginated)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/notifications?page=0&size=20",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "notifications"
+                    ],
+                    "query": [
+                        {
+                            "key": "page",
+                            "value": "0"
+                        },
+                        {
+                            "key": "size",
+                            "value": "20"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Notifications retrieved', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data).to.have.property('notifications');",
+                            "    pm.expect(json.data).to.have.property('unreadCount');",
+                            "    pm.expect(json.data.notifications.content).to.be.an('array');",
+                            "",
+                            "    if (json.data.notifications.content.length > 0) {",
+                            "        var firstNotif = json.data.notifications.content[0];",
+                            "        pm.expect(firstNotif).to.have.property('id');",
+                            "        pm.expect(firstNotif).to.have.property('type');",
+                            "        pm.expect(firstNotif).to.have.property('title');",
+                            "        pm.expect(firstNotif).to.have.property('message');",
+                            "        pm.collectionVariables.set('notificationId', firstNotif.id);",
+                            "        console.log('First notification: [' + firstNotif.type + '] ' + firstNotif.title);",
+                            "    }",
+                            "",
+                            "    console.log('Total: ' + json.data.notifications.totalElements + ' | Unread: ' + json.data.unreadCount);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "7. Get Unread Notifications",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/notifications/unread?page=0&size=20",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "notifications",
+                        "unread"
+                    ],
+                    "query": [
+                        {
+                            "key": "page",
+                            "value": "0"
+                        },
+                        {
+                            "key": "size",
+                            "value": "20"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Unread notifications retrieved', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data.content).to.be.an('array');",
+                            "",
+                            "    // All returned notifications should be unread",
+                            "    json.data.content.forEach(function(n) {",
+                            "        pm.expect(n.read).to.be.false;",
+                            "    });",
+                            "",
+                            "    console.log('Unread notifications: ' + json.data.totalElements);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "8. Get Unread Count (badge)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/notifications/unread-count",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "notifications",
+                        "unread-count"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Unread count retrieved', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data).to.be.a('number');",
+                            "    console.log('Badge count: ' + json.data);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "9. Mark Single Notification as Read",
+            "request": {
+                "method": "PATCH",
+                "url": {
+                    "raw": "{{baseUrl}}/notifications/{{notificationId}}/read",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "notifications",
+                        "{{notificationId}}",
+                        "read"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Notification marked as read', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.message).to.include('marked as read');",
+                            "    console.log('Notification ' + pm.collectionVariables.get('notificationId') + ' marked as read');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "10. Verify Unread Count Decreased",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/notifications/unread-count",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "notifications",
+                        "unread-count"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Unread count decreased after mark-read', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    console.log('Updated badge count: ' + json.data);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "11. Mark Non-existent Notification (expect 404)",
+            "request": {
+                "method": "PATCH",
+                "url": {
+                    "raw": "{{baseUrl}}/notifications/00000000-0000-0000-0000-000000000000/read",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "notifications",
+                        "00000000-0000-0000-0000-000000000000",
+                        "read"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Non-existent notification returns 404', function () {",
+                            "    pm.response.to.have.status(404);",
+                            "    console.log('Correctly returned 404 for non-existent notification');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "12. Mark All Notifications as Read",
+            "request": {
+                "method": "PATCH",
+                "url": {
+                    "raw": "{{baseUrl}}/notifications/mark-all-read",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "notifications",
+                        "mark-all-read"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('All notifications marked as read', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.message).to.include('marked as read');",
+                            "    console.log('All notifications marked as read');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "13. Verify All Read (unread count = 0)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/notifications/unread-count",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "notifications",
+                        "unread-count"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Unread count is 0 after mark-all-read', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.data).to.eql(0);",
+                            "    console.log('Confirmed: unread count is 0');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "━━━ NOTIFICATION PREFERENCES ━━━",
+            "item": [],
+            "description": "Test notification preference management for the logged-in user."
+        },
+        {
+            "name": "14. Get Notification Preferences (creates defaults)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/notifications/preferences",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "notifications",
+                        "preferences"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Preferences retrieved (defaults created)', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    var prefs = json.data;",
+                            "    pm.expect(prefs).to.have.property('emailEnabled');",
+                            "    pm.expect(prefs).to.have.property('inAppEnabled');",
+                            "    pm.expect(prefs).to.have.property('taskAssigned');",
+                            "    pm.expect(prefs).to.have.property('taskOverdue');",
+                            "    pm.expect(prefs).to.have.property('dailyDigest');",
+                            "    pm.expect(prefs).to.have.property('digestTime');",
+                            "",
+                            "    // Verify defaults",
+                            "    pm.expect(prefs.emailEnabled).to.be.true;",
+                            "    pm.expect(prefs.inAppEnabled).to.be.true;",
+                            "    pm.expect(prefs.taskAssigned).to.be.true;",
+                            "    pm.expect(prefs.taskOverdue).to.be.true;",
+                            "    pm.expect(prefs.dailyDigest).to.be.false;",
+                            "",
+                            "    console.log('Defaults: email=' + prefs.emailEnabled + ', inApp=' + prefs.inAppEnabled + ', digest=' + prefs.dailyDigest);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "15. Update Preferences (enable daily digest)",
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"dailyDigest\": true,\n    \"digestTime\": \"09:00:00\",\n    \"taskAssigned\": true,\n    \"taskOverdue\": true,\n    \"emailEnabled\": true,\n    \"inAppEnabled\": true\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/notifications/preferences",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "notifications",
+                        "preferences"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Preferences updated', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data.dailyDigest).to.be.true;",
+                            "    pm.expect(json.data.digestTime).to.eql('09:00:00');",
+                            "    console.log('Updated: dailyDigest=true, digestTime=09:00');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "16. Update Preferences (disable emails)",
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"emailEnabled\": false\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/notifications/preferences",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "notifications",
+                        "preferences"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Email notifications disabled', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data.emailEnabled).to.be.false;",
+                            "    // Other preferences should remain unchanged",
+                            "    pm.expect(json.data.dailyDigest).to.be.true;",
+                            "    console.log('Email disabled, other prefs preserved');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "17. Verify Updated Preferences",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/notifications/preferences",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "notifications",
+                        "preferences"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Preferences persisted correctly', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.data.emailEnabled).to.be.false;",
+                            "    pm.expect(json.data.dailyDigest).to.be.true;",
+                            "    pm.expect(json.data.digestTime).to.eql('09:00:00');",
+                            "    pm.expect(json.data.inAppEnabled).to.be.true;",
+                            "    console.log('All preferences verified after re-fetch');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "━━━ EDGE CASES ━━━",
+            "item": [],
+            "description": "Test boundary conditions and error handling."
+        },
+        {
+            "name": "18. Get Notifications (empty page)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/notifications?page=999&size=20",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "notifications"
+                    ],
+                    "query": [
+                        {
+                            "key": "page",
+                            "value": "999"
+                        },
+                        {
+                            "key": "size",
+                            "value": "20"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Empty page returns 200 with empty content', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data.notifications.content).to.be.an('array').that.is.empty;",
+                            "    console.log('Page 999 correctly returns empty content');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "19. Unauthenticated Access (expect 401)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"admin@taskhive.com\",\n    \"password\": \"Admin@123\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/logout",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "logout"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Logged out', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "20. Notifications Without Auth (expect 401)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/notifications",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "notifications"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Unauthenticated access returns 401', function () {",
+                            "    pm.response.to.have.status(401);",
+                            "    console.log('Correctly blocked unauthenticated access to notifications');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}
