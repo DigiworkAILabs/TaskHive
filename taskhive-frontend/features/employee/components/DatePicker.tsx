@@ -11,6 +11,8 @@ interface DatePickerProps {
     placeholder?: string;
     error?: string;
     required?: boolean;
+    minDate?: Date | null;
+    maxDate?: Date | null;
 }
 
 export const DatePicker: React.FC<DatePickerProps> = ({
@@ -21,6 +23,8 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     placeholder = 'Select date',
     error,
     required,
+    minDate = null,
+    maxDate = null,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
 
@@ -66,16 +70,23 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         return `${year}-${month}-${day}`;
     };
 
-    // Validation: FROM Today UNTIL end of next month
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const endOfNextMonth = new Date(today.getFullYear(), today.getMonth() + 2, 0);
-    endOfNextMonth.setHours(23, 59, 59, 999);
-
     const isDateDisabled = (year: number, month: number, day: number) => {
         const date = new Date(year, month, day);
-        return date < today || date > endOfNextMonth;
+        date.setHours(0, 0, 0, 0);
+
+        if (minDate) {
+            const min = new Date(minDate);
+            min.setHours(0, 0, 0, 0);
+            if (date < min) return true;
+        }
+
+        if (maxDate) {
+            const max = new Date(maxDate);
+            max.setHours(23, 59, 59, 999);
+            if (date > max) return true;
+        }
+
+        return false;
     };
 
     const handleDateClick = (day: number) => {

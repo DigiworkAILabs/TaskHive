@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { CreateEmployeeData, UpdateEmployeeData, Employee } from '../types/employee.types';
-import { ArrowLeft, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Loader2, AlertCircle, CheckCircle, User } from 'lucide-react';
 import Link from 'next/link';
 import { DatePicker } from './DatePicker';
+import { employeeService } from '../services/employeeService';
 
 interface EmployeeFormProps {
     mode: 'create' | 'edit';
@@ -84,6 +85,9 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
         managerId: '',
     });
 
+    const [employees, setEmployees] = useState<Employee[]>([]);
+    const [isFetchingEmployees, setIsFetchingEmployees] = useState(false);
+
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
     // Pre-fill form data for edit mode
@@ -101,6 +105,22 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
             });
         }
     }, [mode, employee]);
+
+    // Fetch employees for manager dropdown
+    useEffect(() => {
+        const fetchEmployees = async () => {
+            setIsFetchingEmployees(true);
+            try {
+                const response = await employeeService.list({ status: 'ACTIVE', size: 100 });
+                setEmployees(response.content);
+            } catch (err) {
+                console.error('Failed to fetch employees for manager dropdown:', err);
+            } finally {
+                setIsFetchingEmployees(false);
+            }
+        };
+        fetchEmployees();
+    }, []);
 
     const validate = (): boolean => {
         const errors: Record<string, string> = {};
@@ -145,7 +165,9 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
             if (formData.phone.trim()) payload.phone = formData.phone.trim();
             if (formData.department.trim()) payload.department = formData.department.trim();
             if (formData.designation.trim()) payload.designation = formData.designation.trim();
-            if (formData.joinDate) payload.joinDate = formData.joinDate;
+            if (formData.joinDate) {
+                payload.joinDate = formData.joinDate.includes('T') ? formData.joinDate : `${formData.joinDate}T23:59:59`;
+            }
             if (formData.managerId.trim()) payload.managerId = formData.managerId.trim();
             onSubmit(payload);
         } else {
@@ -155,7 +177,9 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
             if (formData.phone.trim()) payload.phone = formData.phone.trim();
             if (formData.department.trim()) payload.department = formData.department.trim();
             if (formData.designation.trim()) payload.designation = formData.designation.trim();
-            if (formData.joinDate) payload.joinDate = formData.joinDate;
+            if (formData.joinDate) {
+                payload.joinDate = formData.joinDate.includes('T') ? formData.joinDate : `${formData.joinDate}T23:59:59`;
+            }
             if (formData.managerId.trim()) payload.managerId = formData.managerId.trim();
             onSubmit(payload);
         }
@@ -296,8 +320,44 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
                             label="Join Date"
                             value={formData.joinDate}
                             onChange={(date) => setFormData(prev => ({ ...prev, joinDate: date }))}
+                            maxDate={new Date()}
                         />
-                        <div /> {/* Spacer to maintain layout since Manager ID is removed */}
+
+                        <div>
+                            <label
+                                htmlFor="managerId"
+                                style={{ display: 'block', fontSize: '13px', color: '#a1a1aa', marginBottom: '6px', fontWeight: 500 }}
+                            >
+                                Manager
+                            </label>
+                            <div style={{ position: 'relative' }}>
+                                <select
+                                    id="managerId"
+                                    value={formData.managerId}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, managerId: e.target.value }))}
+                                    style={{
+                                        ...inputBase,
+                                        appearance: 'none',
+                                        paddingLeft: '40px',
+                                        cursor: 'pointer',
+                                    }}
+                                >
+                                    <option value="">{isFetchingEmployees ? 'Loading names...' : 'Select a manager...'}</option>
+                                    {employees
+                                        .filter(emp => emp.id !== employee?.id) // Prevent self-selection
+                                        .map((emp) => (
+                                            <option key={emp.id} value={emp.id}>
+                                                {emp.firstName} {emp.lastName} ({emp.department})
+                                            </option>
+                                        ))
+                                    }
+                                </select>
+                                <User
+                                    size={16}
+                                    style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#71717a' }}
+                                />
+                            </div>
+                        </div>
                     </div>
 
                     {/* Actions */}

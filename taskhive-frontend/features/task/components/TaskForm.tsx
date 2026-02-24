@@ -6,6 +6,7 @@ import { Loader2, AlertCircle, CheckCircle, Calendar, Tag, AlignLeft, User, Cloc
 import Link from 'next/link';
 import { employeeService } from '@/features/employee/services/employeeService';
 import { EmployeeListItem } from '@/features/employee/types/employee.types';
+import { DatePicker } from '@/features/employee/components/DatePicker';
 
 interface TaskFormProps {
     mode: 'create' | 'edit';
@@ -246,20 +247,16 @@ export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoad
 
                     {/* Due Date + Estimated Hours */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                        <FormField label="Due Date" required={mode === 'create'}>
-                            <div style={{ position: 'relative' }}>
-                                <Calendar size={14} color="#52525b" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
-                                <input
-                                    type="date"
-                                    value={formData.dueDate}
-                                    onChange={handleChange('dueDate')}
-                                    onFocus={() => setFocusedField('dueDate')}
-                                    onBlur={() => setFocusedField(null)}
-                                    style={{ ...inputStyle('dueDate'), paddingLeft: '36px', colorScheme: 'dark' }}
-                                />
-                            </div>
-                            {fieldErrors.dueDate && <p style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>{fieldErrors.dueDate}</p>}
-                        </FormField>
+                        <DatePicker
+                            id="dueDate"
+                            label="Due Date"
+                            value={formData.dueDate}
+                            onChange={(date) => setFormData(prev => ({ ...prev, dueDate: date }))}
+                            required={mode === 'create'}
+                            error={fieldErrors.dueDate}
+                            minDate={new Date()}
+                            maxDate={new Date(new Date().getFullYear(), new Date().getMonth() + 2, 0)}
+                        />
 
                         <FormField label="Estimated Hours">
                             <div style={{ position: 'relative' }}>
