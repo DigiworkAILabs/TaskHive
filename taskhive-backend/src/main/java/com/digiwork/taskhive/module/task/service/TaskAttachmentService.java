@@ -1,0 +1,115 @@
+package com.digiwork.taskhive.module.task.service;
+
+import com.digiwork.taskhive.common.exception.BusinessException;
+import com.digiwork.taskhive.common.storage.StorageService;
+import com.digiwork.taskhive.module.auth.security.SecurityUtils;
+import com.digiwork.taskhive.module.employee.repository.EmployeeRepository;
+import com.digiwork.taskhive.module.task.dto.TaskAttachmentResponse;
+import com.digiwork.taskhive.module.task.exception.TaskAccessDeniedException;
+import com.digiwork.taskhive.module.task.exception.TaskNotFoundException;
+import com.digiwork.taskhive.module.task.mapper.TaskMapper;
+import com.digiwork.taskhive.module.task.model.Task;
+import com.digiwork.taskhive.module.task.model.TaskAttachment;
+import com.digiwork.taskhive.module.task.repository.TaskAttachmentRepository;
+import com.digiwork.taskhive.module.task.repository.TaskRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.UUID;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class TaskAttachmentService {
+
+    private final TaskAttachmentRepository attachmentRepository;
+    private final TaskRepository taskRepository;
+    private final EmployeeRepository employeeRepository;
+    private final StorageService storageService;
+    private final TaskMapper taskMapper;
+
+    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    private static final List<String> ALLOWED_CONTENT_TYPES = List.of(
+            "image/jpeg", "image/png",
+            "application/pdf",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document" // .docx
+    );
+    private static final String ATTACHMENT_DIRECTORY = "tasks/attachments";
+
+    @Transactional
+    public TaskAttachmentResponse uploadAttachment(UUID taskId, MultipartFile file) {
+        UUID currentUserId = SecurityUtils.getCurrentUserId();
+        String currentRole = SecurityUtils.getCurrentUserRole();
+
+        Task task = taskRepository.findByIdAndIsDeletedFalse(taskId)
+                .orElseThrow(() -> new TaskNotFoundException("Task not found with id: " + taskId));
+
+        // EMPLOYEE can only attach to their assigned tasks
+        if ("EMPLOYEE".equals(currentRole)) {
+            var employee = employeeRepository.findByUserIdAndIsDeletedFalse(currentUserId)
+                    .orElseThrow(() -> new TaskAccessDeniedException("Employee record not found"));
+            if (!task.getAssignedTo().equals(employee.getId())) {
+                throw new TaskAccessDeniedException("You can only add attachments to tasks assigned to you");
+            }
+        }
+
+        // Validate file
+        validateFile(file);
+
+        try {
+            // Store file
+            String filename = UUID.randomUUID().toString();
+            String storedPath = storageService.store(file, ATTACHMENT_DIRECTORY, filename);
+
+            // Create attachment record
+            TaskAttachment attachment = TaskAttachment.builder()
+                    .taskId(taskId)
+                    .uploadedBy(currentUserId)
+                    .fileName(file.getOriginalFilename())
+                    .fileUrl(storedPath)
+                    .fileSize(file.getSize())
+                    .mimeType(file.getContentType())
+                    .build();
+
+            attachment = attachmentRepository.save(attachment);
+
+            log.info("Attachment uploaded to task {}: {}", taskId, attachment.getId());
+
+            return taskMapper.toTaskAttachmentResponse(attachment);
+
+        } catch (IOException e) {
+            log.error("Failed to upload attachment for task: {}", taskId, e);
+            throw new BusinessException("Failed to upload attachment");
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public List<TaskAttachmentResponse> getAttachments(UUID taskId) {
+        // Verify task exists
+        taskRepository.findByIdAndIsDeletedFalse(taskId)
+                .orElseThrow(() -> new TaskNotFoundException("Task not found with id: " + taskId));
+
+        return attachmentRepository.findByTaskIdOrderByCreatedAtDesc(taskId).stream()
+                .map(taskMapper::toTaskAttachmentResponse)
+                .toList();
+    }
+
+    private void validateFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new BusinessException("File is required");
+        }
+
+        if (file.getSize() > MAX_FILE_SIZE) {
+            throw new BusinessException("File size exceeds maximum limit of 10MB");
+        }
+
+        if (!ALLOWED_CONTENT_TYPES.contains(file.getContentType())) {
+            throw new BusinessException("Only JPEG, PNG, PDF, and DOCX files are allowed");
+        }
+    }
+}

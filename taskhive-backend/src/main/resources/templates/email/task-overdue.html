@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Task Overdue - TaskHive</title>
+</head>
+
+<body style="font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px;">
+    <div
+        style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; padding: 40px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <h1 style="color: #d32f2f; margin-bottom: 20px;">Task Overdue Alert</h1>
+        <p style="color: #666; font-size: 16px; line-height: 1.6;">
+            Hello <span th:text="${recipientName}">Recipient</span>,
+        </p>
+        <p style="color: #666; font-size: 16px; line-height: 1.6;">
+            The following task is overdue and requires attention:
+        </p>
+        <div
+            style="background-color: #fef2f2; border-left: 4px solid #d32f2f; padding: 16px; margin: 20px 0; border-radius: 4px;">
+            <p style="margin: 4px 0; color: #333; font-weight: bold;" th:text="${taskTitle}">Task Title</p>
+            <p style="margin: 4px 0; color: #666;">Assigned To: <span th:text="${assigneeName}">Employee Name</span></p>
+            <p style="margin: 4px 0; color: #666;">Due Date: <span th:text="${dueDate}">2026-03-01</span></p>
+            <p style="margin: 4px 0; color: #d32f2f; font-weight: bold;">Overdue by: <span
+                    th:text="${overdueDays}">3</span> day(s)</p>
+        </div>
+        <p style="color: #999; font-size: 14px;">
+            Please log in to TaskHive to take the appropriate action.
+        </p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+        <p style="color: #999; font-size: 12px; text-align: center;">
+            &copy; 2026 TaskHive. All rights reserved.
+        </p>
+    </div>
+</body>
+
+</html>
