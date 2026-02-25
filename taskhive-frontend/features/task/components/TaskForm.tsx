@@ -53,6 +53,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoad
         priority: 'MEDIUM' as TaskPriority,
         assignedTo: '',
         dueDate: '',
+        dueTime: '17:00',
         estimatedHours: '',
         tags: '',
     });
@@ -64,12 +65,17 @@ export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoad
 
     useEffect(() => {
         if (mode === 'edit' && task) {
+            let editTime = '17:00';
+            if (task.dueDate && task.dueDate.includes('T')) {
+                editTime = task.dueDate.slice(11, 16); // Extract HH:mm from ISO string
+            }
             setFormData({
                 title: task.title || '',
                 description: task.description || '',
                 priority: task.priority || 'MEDIUM',
                 assignedTo: task.assignedTo || '',
                 dueDate: task.dueDate ? task.dueDate.slice(0, 10) : '',
+                dueTime: editTime,
                 estimatedHours: task.estimatedHours?.toString() || '',
                 tags: task.tags?.join(', ') || '',
             });
@@ -117,7 +123,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoad
                 title: formData.title.trim(),
                 priority: formData.priority,
                 assignedTo: formData.assignedTo.trim(),
-                dueDate: `${formData.dueDate}T17:00:00`,
+                dueDate: `${formData.dueDate}T${formData.dueTime}:00`,
             };
             if (formData.description.trim()) payload.description = formData.description.trim();
             if (formData.estimatedHours) payload.estimatedHours = parseFloat(formData.estimatedHours);
@@ -130,7 +136,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoad
             payload.priority = formData.priority;
             if (formData.assignedTo.trim()) payload.assignedTo = formData.assignedTo.trim();
             if (formData.dueDate) {
-                payload.dueDate = formData.dueDate.includes('T') ? formData.dueDate : `${formData.dueDate}T17:00:00`;
+                payload.dueDate = formData.dueDate.includes('T') ? formData.dueDate : `${formData.dueDate}T${formData.dueTime}:00`;
             }
             if (formData.estimatedHours) payload.estimatedHours = parseFloat(formData.estimatedHours);
             payload.tags = tags;
@@ -245,18 +251,47 @@ export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoad
                         </FormField>
                     </div>
 
-                    {/* Due Date + Estimated Hours */}
+                    {/* Due Date + Time + Estimated Hours */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                        <DatePicker
-                            id="dueDate"
-                            label="Due Date"
-                            value={formData.dueDate}
-                            onChange={(date) => setFormData(prev => ({ ...prev, dueDate: date }))}
-                            required={mode === 'create'}
-                            error={fieldErrors.dueDate}
-                            minDate={new Date()}
-                            maxDate={new Date(new Date().getFullYear(), new Date().getMonth() + 2, 0)}
-                        />
+                        <div>
+                            <DatePicker
+                                id="dueDate"
+                                label="Due Date & Time"
+                                value={formData.dueDate}
+                                onChange={(date) => setFormData(prev => ({ ...prev, dueDate: date }))}
+                                required={mode === 'create'}
+                                error={fieldErrors.dueDate}
+                                minDate={new Date()}
+                                maxDate={new Date(new Date().getFullYear(), new Date().getMonth() + 2, 0)}
+                            />
+                            {/* Time input — appears once a date is selected */}
+                            {formData.dueDate && (
+                                <div style={{ marginTop: '8px' }}>
+                                    <label
+                                        htmlFor="dueTime"
+                                        style={{ display: 'block', fontSize: '12px', color: '#71717a', marginBottom: '4px', fontWeight: 500 }}
+                                    >
+                                        Due Time (24-hr)
+                                    </label>
+                                    <div style={{ position: 'relative' }}>
+                                        <Clock size={14} color="#52525b" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                                        <input
+                                            id="dueTime"
+                                            type="time"
+                                            value={formData.dueTime}
+                                            onChange={handleChange('dueTime')}
+                                            onFocus={() => setFocusedField('dueTime')}
+                                            onBlur={() => setFocusedField(null)}
+                                            style={{
+                                                ...inputStyle('dueTime'),
+                                                paddingLeft: '34px',
+                                                colorScheme: 'dark',
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
 
                         <FormField label="Estimated Hours">
                             <div style={{ position: 'relative' }}>
