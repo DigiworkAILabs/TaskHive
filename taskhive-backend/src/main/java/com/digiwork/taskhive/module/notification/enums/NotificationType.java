@@ -4,5 +4,6 @@ public enum NotificationType {
     TASK_ASSIGNED,
     TASK_STATUS_CHANGED,
     TASK_COMMENT_ADDED,
-    TASK_OVERDUE
+    TASK_OVERDUE,
+    TASK_COMPLETED
 }

@@ -803,12 +803,264 @@
             ]
         },
         {
+            "name": "━━━ ADMIN NOTIFICATION TESTS ━━━",
+            "item": [],
+            "description": "Test that admin receives notifications when employees perform actions. Flow: Employee completes task → Employee adds comment → Login as Admin → Verify admin received TASK_COMPLETED, TASK_STATUS_CHANGED, and TASK_COMMENT_ADDED notifications."
+        },
+        {
+            "name": "18. Complete Task as Employee (triggers TASK_COMPLETED admin notification)",
+            "request": {
+                "method": "PATCH",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"status\": \"COMPLETED\",\n    \"comment\": \"Task finished, all deliverables submitted.\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/tasks/{{taskId}}/status",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "tasks",
+                        "{{taskId}}",
+                        "status"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Task completed by employee - admin should get TASK_COMPLETED notification + email', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.data.status).to.eql('COMPLETED');",
+                            "    console.log('Task completed → TASK_COMPLETED notification + email sent to admin');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "19. Add Comment as Employee (triggers TASK_COMMENT_ADDED admin notification)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"content\": \"Completed all tasks and uploaded final deliverables.\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/tasks/{{taskId}}/comments",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "tasks",
+                        "{{taskId}}",
+                        "comments"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Comment added by employee - admin should get TASK_COMMENT_ADDED notification', function () {",
+                            "    pm.response.to.have.status(201);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    console.log('Comment added by employee → TASK_COMMENT_ADDED notification sent to admin');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "20. Login as Admin (check admin notifications)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"admin@taskhive.com\",\n    \"password\": \"Admin@123\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/login",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "login"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Admin login successful', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    console.log('Logged in as Admin to verify admin notifications.');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "21. Get Admin Notifications (verify TASK_COMPLETED & TASK_COMMENT_ADDED)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/notifications?page=0&size=20",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "notifications"
+                    ],
+                    "query": [
+                        {
+                            "key": "page",
+                            "value": "0"
+                        },
+                        {
+                            "key": "size",
+                            "value": "20"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Admin has notifications from employee actions', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data.notifications.content.length).to.be.above(0);",
+                            "",
+                            "    var types = json.data.notifications.content.map(n => n.type);",
+                            "    console.log('Admin notification types: ' + JSON.stringify(types));",
+                            "",
+                            "    // Verify admin received key notification types",
+                            "    var hasCompleted = types.includes('TASK_COMPLETED');",
+                            "    var hasComment = types.includes('TASK_COMMENT_ADDED');",
+                            "    var hasStatusChanged = types.includes('TASK_STATUS_CHANGED');",
+                            "",
+                            "    pm.expect(hasCompleted || hasStatusChanged, 'Admin should have TASK_COMPLETED or TASK_STATUS_CHANGED').to.be.true;",
+                            "",
+                            "    console.log('TASK_COMPLETED: ' + hasCompleted);",
+                            "    console.log('TASK_COMMENT_ADDED: ' + hasComment);",
+                            "    console.log('TASK_STATUS_CHANGED: ' + hasStatusChanged);",
+                            "    console.log('Total admin notifications: ' + json.data.notifications.totalElements);",
+                            "",
+                            "    if (json.data.notifications.content.length > 0) {",
+                            "        pm.collectionVariables.set('notificationId', json.data.notifications.content[0].id);",
+                            "    }",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "22. Admin Unread Count (should be > 0)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/notifications/unread-count",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "notifications",
+                        "unread-count"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Admin has unread notifications', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data).to.be.above(0);",
+                            "    console.log('Admin unread badge count: ' + json.data);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "23. Admin Mark All Read",
+            "request": {
+                "method": "PATCH",
+                "url": {
+                    "raw": "{{baseUrl}}/notifications/mark-all-read",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "notifications",
+                        "mark-all-read"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Admin marked all notifications as read', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    console.log('Admin: all notifications marked as read');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
             "name": "━━━ EDGE CASES ━━━",
             "item": [],
             "description": "Test boundary conditions and error handling."
         },
         {
-            "name": "18. Get Notifications (empty page)",
+            "name": "24. Get Notifications (empty page)",
             "request": {
                 "method": "GET",
                 "url": {
@@ -849,7 +1101,7 @@
             ]
         },
         {
-            "name": "19. Unauthenticated Access (expect 401)",
+            "name": "25. Unauthenticated Access (expect 401)",
             "request": {
                 "method": "POST",
                 "header": [
@@ -887,7 +1139,7 @@
             ]
         },
         {
-            "name": "20. Notifications Without Auth (expect 401)",
+            "name": "26. Notifications Without Auth (expect 401)",
             "request": {
                 "method": "GET",
                 "url": {
