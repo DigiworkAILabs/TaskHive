@@ -16,4 +16,7 @@ public interface UserRoleRepository extends JpaRepository<UserRole, UserRole.Use
 
     @Query("SELECT r.name FROM UserRole ur JOIN ur.role r WHERE ur.userId = :userId")
     List<String> findRoleNamesByUserId(@Param("userId") UUID userId);
+
+    @Query("SELECT ur.userId FROM UserRole ur JOIN ur.role r WHERE r.name = :roleName")
+    List<UUID> findUserIdsByRoleName(@Param("roleName") String roleName);
 }
