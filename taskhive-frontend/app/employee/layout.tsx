@@ -6,18 +6,15 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { authService } from '@/features/auth/services/authService';
 import {
-    LayoutDashboard, Users, ClipboardList, BarChart3,
-    Settings, LogOut, Bell, UserPlus,
+    LayoutDashboard, ClipboardList, Settings, LogOut, Bell,
 } from 'lucide-react';
 
 // ── Sidebar nav items ───────────────────────────────────────────────────────
 
 const navItems = [
-    { label: 'Dashboard', icon: LayoutDashboard, href: '/admin/dashboard', enabled: true },
-    { label: 'Employees', icon: Users, href: '/admin/employees', enabled: true },
-    { label: 'Task', icon: ClipboardList, href: '/admin/tasks', enabled: true },
-    { label: 'Reports', icon: BarChart3, href: '#', enabled: false },
-    { label: 'Settings', icon: Settings, href: '#', enabled: false },
+    { label: 'Dashboard', icon: LayoutDashboard, href: '/employee/dashboard', enabled: true },
+    { label: 'My Tasks', icon: ClipboardList, href: '/employee/tasks', enabled: true },
+    { label: 'Security', icon: Settings, href: '/employee/settings/security', enabled: true },
 ];
 
 // ── TaskHive Logo ───────────────────────────────────────────────────────────
@@ -51,7 +48,7 @@ function Logo() {
 
 // ── Main Layout ─────────────────────────────────────────────────────────────
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default function EmployeeLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const router = useRouter();
     const user = useAuthStore((s) => s.user);
@@ -91,14 +88,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 {/* Nav */}
                 <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
                     {navItems.map((item) => {
-                        const isActive = pathname.startsWith(item.href) && item.href !== '#';
+                        const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
                         const Icon = item.icon;
 
                         return (
                             <Link
                                 key={item.label}
-                                href={item.enabled ? item.href : '#'}
-                                onClick={(e) => !item.enabled && e.preventDefault()}
+                                href={item.href}
                                 style={{
                                     display: 'flex',
                                     alignItems: 'center',
@@ -108,21 +104,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                     textDecoration: 'none',
                                     fontSize: '14px',
                                     fontWeight: isActive ? 600 : 400,
-                                    color: !item.enabled ? '#3f3f46' : isActive ? '#ffffff' : '#a1a1aa',
+                                    color: isActive ? '#ffffff' : '#a1a1aa',
                                     backgroundColor: isActive ? 'rgba(249,115,22,0.12)' : 'transparent',
                                     borderLeft: isActive ? '3px solid #f97316' : '3px solid transparent',
                                     transition: 'all 0.15s',
-                                    cursor: item.enabled ? 'pointer' : 'not-allowed',
-                                    opacity: item.enabled ? 1 : 0.4,
+                                    cursor: 'pointer',
                                 }}
                                 onMouseEnter={(e) => {
-                                    if (item.enabled && !isActive) {
+                                    if (!isActive) {
                                         e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
                                         e.currentTarget.style.color = '#ffffff';
                                     }
                                 }}
                                 onMouseLeave={(e) => {
-                                    if (item.enabled && !isActive) {
+                                    if (!isActive) {
                                         e.currentTarget.style.backgroundColor = 'transparent';
                                         e.currentTarget.style.color = '#a1a1aa';
                                     }
@@ -168,14 +163,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: '13px', fontWeight: 600, color: '#ffffff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {user ? `${user.firstName} ${user.lastName}` : 'Admin'}
+                            {user ? `${user.firstName} ${user.lastName}` : 'Employee'}
                         </div>
                         <div style={{ fontSize: '11px', color: '#52525b' }}>
-                            {user?.role === 'ADMIN' ? 'System Admin' : 'Employee'}
+                            Employee
                         </div>
                     </div>
 
-                    {/* Settings + Logout */}
+                    {/* Logout */}
                     <button
                         onClick={handleLogout}
                         title="Logout"
@@ -207,19 +202,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         zIndex: 20,
                     }}
                 >
-                    {/* Page title determined by pathname */}
                     <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#ffffff', margin: 0 }}>
-                        {pathname.includes('/employees/new')
-                            ? 'Add New Employee'
-                            : pathname.includes('/employees/')
-                                ? 'Employee Profile'
-                                : pathname.includes('/employees')
-                                    ? 'Employee Management'
-                                    : 'Dashboard'}
+                        {pathname === '/employee/dashboard' ? 'Dashboard' : pathname.includes('/employee/tasks') ? 'My Tasks' : 'Settings'}
                     </h2>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        {/* System Online badge */}
                         <div
                             style={{
                                 display: 'inline-flex', alignItems: 'center', gap: '6px',
@@ -229,10 +216,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                             }}
                         >
                             <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#22c55e' }} />
-                            SYSTEM ONLINE
+                            ONLINE
                         </div>
 
-                        {/* Notification bell */}
                         <button
                             style={{
                                 width: '40px', height: '40px', borderRadius: '10px',
@@ -245,27 +231,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         >
                             <Bell size={18} />
                         </button>
-
-                        {/* Add New Employee button (only on employees list page) */}
-                        {pathname === '/admin/employees' && (
-                            <Link
-                                href="/admin/employees/new"
-                                style={{
-                                    display: 'flex', alignItems: 'center', gap: '8px',
-                                    padding: '10px 20px', borderRadius: '10px', border: 'none',
-                                    background: 'linear-gradient(135deg, #f97316 0%, #ea6c10 100%)',
-                                    color: '#ffffff', fontSize: '14px', fontWeight: 600,
-                                    textDecoration: 'none',
-                                    boxShadow: '0 4px 16px rgba(249,115,22,0.3)',
-                                    transition: 'opacity 0.2s',
-                                }}
-                                onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.88')}
-                                onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
-                            >
-                                <UserPlus size={16} />
-                                Add New Employee
-                            </Link>
-                        )}
                     </div>
                 </header>
 

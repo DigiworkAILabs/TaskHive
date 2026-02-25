@@ -4,13 +4,15 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface DatePickerProps {
-    value: string; // YYYY/MM/DD
+    value: string; // YYYY-MM-DD
     onChange: (date: string) => void;
     label: string;
     id: string;
     placeholder?: string;
     error?: string;
     required?: boolean;
+    minDate?: Date | null;
+    maxDate?: Date | null;
 }
 
 export const DatePicker: React.FC<DatePickerProps> = ({
@@ -21,13 +23,15 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     placeholder = 'Select date',
     error,
     required,
+    minDate = null,
+    maxDate = null,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
 
     // Parse value YYYY/MM/DD or YYYY-MM-DD to Date object safely
     const parseValue = (val: string) => {
         if (!val) return new Date();
-        const separator = val.includes('/') ? '/' : '-';
+        const separator = val.includes('-') ? '-' : '/';
         const parts = val.split(separator);
         if (parts.length === 3) {
             return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
@@ -63,19 +67,26 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
-        return `${year}/${month}/${day}`;
+        return `${year}-${month}-${day}`;
     };
-
-    // Validation: FROM Today UNTIL end of next month
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const endOfNextMonth = new Date(today.getFullYear(), today.getMonth() + 2, 0);
-    endOfNextMonth.setHours(23, 59, 59, 999);
 
     const isDateDisabled = (year: number, month: number, day: number) => {
         const date = new Date(year, month, day);
-        return date < today || date > endOfNextMonth;
+        date.setHours(0, 0, 0, 0);
+
+        if (minDate) {
+            const min = new Date(minDate);
+            min.setHours(0, 0, 0, 0);
+            if (date < min) return true;
+        }
+
+        if (maxDate) {
+            const max = new Date(maxDate);
+            max.setHours(23, 59, 59, 999);
+            if (date > max) return true;
+        }
+
+        return false;
     };
 
     const handleDateClick = (day: number) => {

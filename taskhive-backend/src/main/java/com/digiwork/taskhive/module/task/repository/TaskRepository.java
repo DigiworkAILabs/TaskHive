@@ -53,12 +53,17 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
                         "AND t.status NOT IN ('DONE', 'CANCELLED')")
         Page<Task> findOverdueTasksPaged(@Param("now") LocalDateTime now, Pageable pageable);
 
+        // Extended search with optional assignedTo filter and null-safe description
+        // matching
         @Query(value = "SELECT * FROM tasks t WHERE t.is_deleted = false " +
-                        "AND to_tsvector('english', COALESCE(t.title, '') || ' ' || COALESCE(t.description, '')) " +
-                        "@@ plainto_tsquery('english', :query)", countQuery = "SELECT COUNT(*) FROM tasks t WHERE t.is_deleted = false "
+                        "AND (CAST(:assignedTo AS UUID) IS NULL OR t.assigned_to = CAST(:assignedTo AS UUID)) " +
+                        "AND (LOWER(t.title) LIKE LOWER(CONCAT('%', :query, '%')) " +
+                        "OR LOWER(COALESCE(t.description, '')) LIKE LOWER(CONCAT('%', :query, '%')))", countQuery = "SELECT COUNT(*) FROM tasks t WHERE t.is_deleted = false "
                                         +
-                                        "AND to_tsvector('english', COALESCE(t.title, '') || ' ' || COALESCE(t.description, '')) "
+                                        "AND (CAST(:assignedTo AS UUID) IS NULL OR t.assigned_to = CAST(:assignedTo AS UUID)) "
                                         +
-                                        "@@ plainto_tsquery('english', :query)", nativeQuery = true)
-        Page<Task> searchFullText(@Param("query") String query, Pageable pageable);
+                                        "AND (LOWER(t.title) LIKE LOWER(CONCAT('%', :query, '%')) " +
+                                        "OR LOWER(COALESCE(t.description, '')) LIKE LOWER(CONCAT('%', :query, '%')))", nativeQuery = true)
+        Page<Task> searchTasksExtended(@Param("query") String query, @Param("assignedTo") UUID assignedTo,
+                        Pageable pageable);
 }

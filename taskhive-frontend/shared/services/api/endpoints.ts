@@ -18,4 +18,15 @@ export const ENDPOINTS = {
         GET_PHOTO: (id: string) => `/employees/${id}/photo`,
         SEARCH: '/employees/search',
     },
+    TASKS: {
+        BASE: '/tasks',
+        DETAIL: (id: string) => `/tasks/${id}`,
+        STATUS: (id: string) => `/tasks/${id}/status`,
+        COMMENTS: (id: string) => `/tasks/${id}/comments`,
+        ATTACHMENTS: (id: string) => `/tasks/${id}/attachments`,
+        HISTORY: (id: string) => `/tasks/${id}/history`,
+        MY_TASKS: '/tasks/my-tasks',
+        OVERDUE: '/tasks/overdue',
+        SEARCH: '/tasks/search',
+    },
 };
