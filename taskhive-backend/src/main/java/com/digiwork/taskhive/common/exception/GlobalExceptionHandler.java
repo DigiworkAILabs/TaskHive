@@ -2,6 +2,7 @@ package com.digiwork.taskhive.common.exception;
 
 import com.digiwork.taskhive.common.constants.MessageConstants;
 import com.digiwork.taskhive.common.dto.ErrorResponse;
+import com.digiwork.taskhive.module.audit.service.AuditService;
 import com.digiwork.taskhive.module.auth.exception.*;
 import com.digiwork.taskhive.module.employee.exception.EmployeeAlreadyExistsException;
 import com.digiwork.taskhive.module.employee.exception.EmployeeNotFoundException;
@@ -22,6 +23,12 @@ import java.util.List;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+        private final AuditService auditService;
+
+        public GlobalExceptionHandler(AuditService auditService) {
+                this.auditService = auditService;
+        }
 
         @ExceptionHandler(MethodArgumentNotValidException.class)
         public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex,
@@ -110,6 +117,15 @@ public class GlobalExceptionHandler {
 
         @ExceptionHandler(AccessDeniedException.class)
         public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex, HttpServletRequest request) {
+                // Log UNAUTHORIZED_ACCESS security event
+                try {
+                        String ipAddress = request.getRemoteAddr();
+                        String details = "{\"path\":\"" + request.getRequestURI() + "\",\"method\":\""
+                                        + request.getMethod() + "\"}";
+                        auditService.logSecurityEvent("UNAUTHORIZED_ACCESS", null, ipAddress, false, details);
+                } catch (Exception e) {
+                        log.warn("Failed to log UNAUTHORIZED_ACCESS security event", e);
+                }
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                                 .body(ErrorResponse.of(MessageConstants.ACCESS_DENIED, request.getRequestURI()));
         }
