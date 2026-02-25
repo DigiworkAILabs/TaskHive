@@ -23,12 +23,13 @@ interface TaskDetailProps {
     isAdmin?: boolean;
 }
 
+// Must match backend: com.digiwork.taskhive.module.task.enums.TaskStatus.VALID_TRANSITIONS
 const STATUS_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
     TODO: ['IN_PROGRESS', 'CANCELLED'],
-    IN_PROGRESS: ['IN_REVIEW', 'TODO', 'CANCELLED'],
-    IN_REVIEW: ['DONE', 'IN_PROGRESS'],
-    DONE: [],
-    CANCELLED: ['TODO'],
+    IN_PROGRESS: ['IN_REVIEW', 'CANCELLED'],             // NOT 'TODO' — backend forbids it
+    IN_REVIEW: ['DONE', 'IN_PROGRESS', 'CANCELLED'],
+    DONE: ['CANCELLED'],                                   // backend allows DONE→CANCELLED
+    CANCELLED: [],                                         // no outgoing transitions
 };
 
 const STATUS_LABELS: Record<TaskStatus, string> = {
