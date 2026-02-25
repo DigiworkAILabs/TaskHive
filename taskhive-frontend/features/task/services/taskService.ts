@@ -67,10 +67,14 @@ export const taskService = {
         return response.data.data;
     },
 
-    // GET /tasks/{id}/comments — Get comments
+    // GET /tasks/{id}/comments — Get comments (paginated)
     getComments: async (id: string): Promise<TaskComment[]> => {
-        const response = await apiClient.get(ENDPOINTS.TASKS.COMMENTS(id));
-        return response.data.data;
+        const response = await apiClient.get(ENDPOINTS.TASKS.COMMENTS(id), {
+            params: { page: 0, size: 100 },
+        });
+        // Backend returns PageResponse<TaskCommentResponse> with a .content array
+        const pageData = response.data.data;
+        return Array.isArray(pageData?.content) ? pageData.content : [];
     },
 
     // POST /tasks/{id}/attachments — Upload attachment

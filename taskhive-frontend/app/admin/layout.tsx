@@ -7,8 +7,9 @@ import { useAuthStore } from '@/features/auth/store/authStore';
 import { authService } from '@/features/auth/services/authService';
 import {
     LayoutDashboard, Users, ClipboardList, BarChart3,
-    Settings, LogOut, Bell, UserPlus,
+    Settings, LogOut, UserPlus,
 } from 'lucide-react';
+import { NotificationBell } from '@/features/notification/components/NotificationBell';
 
 // ── Sidebar nav items ───────────────────────────────────────────────────────
 
@@ -232,19 +233,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                             SYSTEM ONLINE
                         </div>
 
-                        {/* Notification bell */}
-                        <button
-                            style={{
-                                width: '40px', height: '40px', borderRadius: '10px',
-                                border: '1px solid #1f1f1f', backgroundColor: 'transparent',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                cursor: 'pointer', color: '#71717a', transition: 'color 0.15s',
-                            }}
-                            onMouseEnter={(e) => (e.currentTarget.style.color = '#ffffff')}
-                            onMouseLeave={(e) => (e.currentTarget.style.color = '#71717a')}
-                        >
-                            <Bell size={18} />
-                        </button>
+                        <NotificationBell />
 
                         {/* Add New Employee button (only on employees list page) */}
                         {pathname === '/admin/employees' && (
