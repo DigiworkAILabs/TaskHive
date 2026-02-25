@@ -6,8 +6,9 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { authService } from '@/features/auth/services/authService';
 import {
-    LayoutDashboard, ClipboardList, Settings, LogOut, Bell,
+    LayoutDashboard, ClipboardList, Settings, LogOut,
 } from 'lucide-react';
+import { NotificationBell } from '@/features/notification/components/NotificationBell';
 
 // ── Sidebar nav items ───────────────────────────────────────────────────────
 
@@ -219,18 +220,7 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
                             ONLINE
                         </div>
 
-                        <button
-                            style={{
-                                width: '40px', height: '40px', borderRadius: '10px',
-                                border: '1px solid #1f1f1f', backgroundColor: 'transparent',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                cursor: 'pointer', color: '#71717a', transition: 'color 0.15s',
-                            }}
-                            onMouseEnter={(e) => (e.currentTarget.style.color = '#ffffff')}
-                            onMouseLeave={(e) => (e.currentTarget.style.color = '#71717a')}
-                        >
-                            <Bell size={18} />
-                        </button>
+                        <NotificationBell />
                     </div>
                 </header>
 

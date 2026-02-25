@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { usePathname } from 'next/navigation';
 import { taskService } from '../services/taskService';
 import { TaskComment } from '../types/task.types';
 import { MessageSquare, Send, Loader2, AlertCircle } from 'lucide-react';
@@ -10,13 +11,15 @@ interface TaskCommentsProps {
 }
 
 export const TaskComments: React.FC<TaskCommentsProps> = ({ taskId }) => {
+    const pathname = usePathname();
     const [comments, setComments] = useState<TaskComment[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [newComment, setNewComment] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const fetchComments = async () => {
+    const fetchComments = useCallback(async () => {
+        if (!taskId) return;
         setIsLoading(true);
         setError(null);
         try {
@@ -27,9 +30,19 @@ export const TaskComments: React.FC<TaskCommentsProps> = ({ taskId }) => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [taskId]);
 
-    useEffect(() => { if (taskId) fetchComments(); }, [taskId]);
+    // Re-fetch when taskId or pathname changes (covers navigation back)
+    useEffect(() => { fetchComments(); }, [fetchComments, pathname]);
+
+    // Re-fetch when the browser tab regains focus
+    useEffect(() => {
+        const onVisibilityChange = () => {
+            if (document.visibilityState === 'visible') fetchComments();
+        };
+        document.addEventListener('visibilitychange', onVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+    }, [fetchComments]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
