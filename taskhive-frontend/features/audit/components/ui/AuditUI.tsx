@@ -44,12 +44,18 @@ export const TableRow = ({
   children,
   className,
   onClick,
+  style,
 }: {
   children: React.ReactNode;
   className?: string;
   onClick?: () => void;
+  style?: React.CSSProperties;
 }) => (
-  <tr className={cn("border-b border-[#1f1f1f]", className)} onClick={onClick}>
+  <tr
+    className={cn("border-b border-[#1f1f1f]", className)}
+    onClick={onClick}
+    style={style}
+  >
     {children}
   </tr>
 );

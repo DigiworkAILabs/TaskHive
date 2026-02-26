@@ -178,8 +178,8 @@ export default function ComplianceTab() {
                     Report Ready
                   </h4>
                   <p className="text-orange-100/80 text-sm">
-                    {data.totalElements.toLocaleString()} records identified.
-                    Showing page {data.page + 1} of {data.totalPages}.
+                    {data?.totalElements.toLocaleString()} records identified.
+                    Showing page {(data?.page ?? 0) + 1} of {data?.totalPages}.
                   </p>
                 </div>
                 <div className="flex gap-3">
@@ -214,20 +214,20 @@ export default function ComplianceTab() {
                       variant="outline"
                       size="icon"
                       className="h-8 w-8 bg-transparent border-[#2f2f2f] text-[#a3a3a3] hover:text-white"
-                      disabled={data.page === 0}
-                      onClick={() => handlePageChange(data.page - 1)}
+                      disabled={!data || data.page === 0}
+                      onClick={() => data && handlePageChange(data.page - 1)}
                     >
                       <ChevronLeft size={16} />
                     </Button>
                     <span className="text-xs text-[#a3a3a3] font-medium min-w-[60px] text-center">
-                      Page {data.page + 1} / {data.totalPages}
+                      Page {(data?.page ?? 0) + 1} / {data?.totalPages}
                     </span>
                     <Button
                       variant="outline"
                       size="icon"
                       className="h-8 w-8 bg-transparent border-[#2f2f2f] text-[#a3a3a3] hover:text-white"
-                      disabled={data.last}
-                      onClick={() => handlePageChange(data.page + 1)}
+                      disabled={!data || data.last}
+                      onClick={() => data && handlePageChange(data.page + 1)}
                     >
                       <ChevronRight size={16} />
                     </Button>
@@ -258,7 +258,7 @@ export default function ComplianceTab() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {data.content.map((item: any) => (
+                    {data?.content.map((item: any) => (
                       <TableRow key={item.id} className="hover:bg-[#252525]/30 group">
                         {appliedParams.reportType === "SECURITY_INCIDENT" ? (
                           <>
@@ -291,7 +291,7 @@ export default function ComplianceTab() {
                         )}
                       </TableRow>
                     ))}
-                    {data.content.length === 0 && (
+                    {data?.content.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={5} className="py-12 text-center text-[#555] italic">
                           No records found for the selected criteria.

@@ -18,7 +18,7 @@ const navItems = [
     { label: 'Employees', icon: Users, href: '/admin/employees', enabled: true },
     { label: 'Task', icon: ClipboardList, href: '/admin/tasks', enabled: true },
     { label: 'Audit Logs', icon: Activity, href: '/admin/audit', enabled: true },
-    { label: 'Reports', icon: BarChart3, href: '#', enabled: false },
+    { label: 'Analytics', icon: BarChart3, href: '/admin/analytics', enabled: true },
     { label: 'Settings', icon: Settings, href: '#', enabled: false },
 ];
 
@@ -253,11 +253,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                     ? 'Employee Profile'
                                     : pathname.includes('/employees')
                                         ? 'Employee Management'
-                                        : pathname.includes('/audit')
-                                            ? 'Audit & Compliance'
-                                            : pathname.includes('/tasks')
-                                                ? 'Task Management'
-                                                : 'Dashboard'}
+                                        : pathname.includes('/analytics')
+                                            ? 'Analytics & Reports'
+                                            : pathname.includes('/audit')
+                                                ? 'Audit & Compliance'
+                                                : pathname.includes('/tasks')
+                                                    ? 'Task Management'
+                                                    : 'Dashboard'}
                         </h2>
                     </div>
 
