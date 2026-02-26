@@ -208,7 +208,7 @@ function NotificationPreferencesSection() {
 /* ─── Page ────────────────────────────────────────────────────── */
 export default function SecuritySettingsPage() {
     return (
-        <div className="max-w-3xl space-y-6 p-6">
+        <div className="max-w-3xl space-y-6 p-3 sm:p-6">
             {/* Page heading */}
             <div className="pb-2 border-b border-zinc-800">
                 <h1 className="text-xl font-bold text-white">Security &amp; Notifications</h1>

@@ -1,7 +1,6 @@
 'use client';
 
 import { BellOff } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { useNotifications } from '../hooks/useNotifications';
 import { NotificationItem } from './NotificationItem';
 
@@ -19,7 +18,7 @@ function NotificationSkeleton() {
 }
 
 export function NotificationList() {
-    const { data, isLoading } = useNotifications(0, 10);
+    const { data, isLoading } = useNotifications(0, 20);
     // Backend shape: { notifications: { content: [...], page, size, ... }, unreadCount: N }
     const notifications = data?.notifications?.content ?? [];
 
@@ -44,10 +43,17 @@ export function NotificationList() {
     }
 
     return (
-        <ScrollArea className="max-h-[380px]">
+        <div
+            className="overflow-y-auto"
+            style={{
+                maxHeight: '400px',
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#3f3f46 transparent',
+            }}
+        >
             {notifications.map((notification) => (
                 <NotificationItem key={notification.id} notification={notification} />
             ))}
-        </ScrollArea>
+        </div>
     );
 }

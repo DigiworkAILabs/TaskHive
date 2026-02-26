@@ -224,6 +224,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                         position: 'absolute',
                         top: 'calc(100% + 8px)',
                         left: 0,
+                        right: 'auto',
                         zIndex: 50,
                         backgroundColor: '#161616',
                         border: '1px solid #2a2a2a',
@@ -231,6 +232,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                         padding: '16px',
                         boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.4)',
                         width: '280px',
+                        maxWidth: 'calc(100vw - 2rem)',
                     }}
                 >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', gap: '4px' }}>

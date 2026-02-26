@@ -1,13 +1,13 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { authService } from '@/features/auth/services/authService';
 import {
     LayoutDashboard, Users, ClipboardList, BarChart3,
-    Settings, LogOut, UserPlus,
+    Settings, LogOut, UserPlus, Activity, Menu, X,
 } from 'lucide-react';
 import { NotificationBell } from '@/features/notification/components/NotificationBell';
 
@@ -17,6 +17,7 @@ const navItems = [
     { label: 'Dashboard', icon: LayoutDashboard, href: '/admin/dashboard', enabled: true },
     { label: 'Employees', icon: Users, href: '/admin/employees', enabled: true },
     { label: 'Task', icon: ClipboardList, href: '/admin/tasks', enabled: true },
+    { label: 'Audit Logs', icon: Activity, href: '/admin/audit', enabled: true },
     { label: 'Reports', icon: BarChart3, href: '#', enabled: false },
     { label: 'Settings', icon: Settings, href: '#', enabled: false },
 ];
@@ -36,6 +37,7 @@ function Logo() {
                     alignItems: 'center',
                     justifyContent: 'center',
                     boxShadow: '0 4px 12px rgba(249,115,22,0.3)',
+                    flexShrink: 0,
                 }}
             >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -57,6 +59,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const router = useRouter();
     const user = useAuthStore((s) => s.user);
     const clearAuth = useAuthStore((s) => s.clearAuth);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+
+    // Close sidebar on route change
+    useEffect(() => {
+        setSidebarOpen(false);
+    }, [pathname]);
+
+    // Close sidebar on window resize to desktop
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth >= 768) setSidebarOpen(false);
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     const handleLogout = async () => {
         try {
@@ -68,22 +85,42 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     return (
         <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#0a0a0a' }}>
+            {/* ── Mobile Overlay ──────────────────────────────────────────── */}
+            {sidebarOpen && (
+                <div
+                    onClick={() => setSidebarOpen(false)}
+                    style={{
+                        position: 'fixed',
+                        inset: 0,
+                        backgroundColor: 'rgba(0,0,0,0.6)',
+                        zIndex: 40,
+                        backdropFilter: 'blur(2px)',
+                    }}
+                    className="md:hidden"
+                />
+            )}
+
             {/* ── Sidebar ──────────────────────────────────────────────────── */}
             <aside
-                style={{
-                    width: '220px',
-                    backgroundColor: '#111111',
-                    borderRight: '1px solid #1a1a1a',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    padding: '24px 16px',
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    bottom: 0,
-                    zIndex: 30,
-                }}
+                className={`
+                    fixed top-0 left-0 bottom-0 z-50
+                    flex flex-col
+                    w-[220px] bg-[#111111] border-r border-[#1a1a1a]
+                    p-6 pl-4 pr-4
+                    transition-transform duration-300 ease-in-out
+                    ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+                    md:translate-x-0
+                `}
             >
+                {/* Close button on mobile */}
+                <button
+                    onClick={() => setSidebarOpen(false)}
+                    className="md:hidden absolute top-4 right-4 text-zinc-400 hover:text-white"
+                    aria-label="Close sidebar"
+                >
+                    <X size={20} />
+                </button>
+
                 {/* Logo */}
                 <div style={{ marginBottom: '36px' }}>
                     <Logo />
@@ -99,7 +136,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                             <Link
                                 key={item.label}
                                 href={item.enabled ? item.href : '#'}
-                                onClick={(e) => !item.enabled && e.preventDefault()}
+                                onClick={(e) => {
+                                    if (!item.enabled) e.preventDefault();
+                                }}
                                 style={{
                                     display: 'flex',
                                     alignItems: 'center',
@@ -176,7 +215,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         </div>
                     </div>
 
-                    {/* Settings + Logout */}
+                    {/* Logout */}
                     <button
                         onClick={handleLogout}
                         title="Logout"
@@ -193,43 +232,45 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </aside>
 
             {/* ── Main Content ─────────────────────────────────────────────── */}
-            <div style={{ flex: 1, marginLeft: '220px', display: 'flex', flexDirection: 'column' }}>
+            <div className="flex-1 flex flex-col ml-0 md:ml-[220px] min-w-0">
                 {/* Top bar */}
                 <header
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '16px 32px',
-                        borderBottom: '1px solid #1a1a1a',
-                        backgroundColor: '#0a0a0a',
-                        position: 'sticky',
-                        top: 0,
-                        zIndex: 20,
-                    }}
+                    className="flex items-center justify-between px-4 py-3 md:px-8 md:py-4 border-b border-[#1a1a1a] bg-[#0a0a0a] sticky top-0 z-20"
                 >
-                    {/* Page title determined by pathname */}
-                    <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#ffffff', margin: 0 }}>
-                        {pathname.includes('/employees/new')
-                            ? 'Add New Employee'
-                            : pathname.includes('/employees/')
-                                ? 'Employee Profile'
-                                : pathname.includes('/employees')
-                                    ? 'Employee Management'
-                                    : 'Dashboard'}
-                    </h2>
+                    {/* Left: Hamburger + Title */}
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setSidebarOpen(true)}
+                            className="md:hidden text-zinc-400 hover:text-white p-1"
+                            aria-label="Open menu"
+                        >
+                            <Menu size={22} />
+                        </button>
+                        <h2 className="text-base md:text-lg font-bold text-white m-0 truncate">
+                            {pathname.includes('/employees/new')
+                                ? 'Add New Employee'
+                                : pathname.includes('/employees/')
+                                    ? 'Employee Profile'
+                                    : pathname.includes('/employees')
+                                        ? 'Employee Management'
+                                        : pathname.includes('/audit')
+                                            ? 'Audit & Compliance'
+                                            : pathname.includes('/tasks')
+                                                ? 'Task Management'
+                                                : 'Dashboard'}
+                        </h2>
+                    </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        {/* System Online badge */}
+                    <div className="flex items-center gap-2 md:gap-3">
+                        {/* System Online badge — hide on very small screens */}
                         <div
+                            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium"
                             style={{
-                                display: 'inline-flex', alignItems: 'center', gap: '6px',
-                                padding: '6px 14px', borderRadius: '999px',
-                                border: '1px solid rgba(34,197,94,0.25)',
-                                fontSize: '12px', fontWeight: 500, color: '#22c55e',
+                                borderColor: 'rgba(34,197,94,0.25)',
+                                color: '#22c55e',
                             }}
                         >
-                            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#22c55e' }} />
+                            <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
                             SYSTEM ONLINE
                         </div>
 
@@ -239,27 +280,36 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         {pathname === '/admin/employees' && (
                             <Link
                                 href="/admin/employees/new"
+                                className="hidden sm:flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold no-underline"
                                 style={{
-                                    display: 'flex', alignItems: 'center', gap: '8px',
-                                    padding: '10px 20px', borderRadius: '10px', border: 'none',
                                     background: 'linear-gradient(135deg, #f97316 0%, #ea6c10 100%)',
-                                    color: '#ffffff', fontSize: '14px', fontWeight: 600,
-                                    textDecoration: 'none',
                                     boxShadow: '0 4px 16px rgba(249,115,22,0.3)',
-                                    transition: 'opacity 0.2s',
                                 }}
-                                onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.88')}
-                                onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
                             >
                                 <UserPlus size={16} />
-                                Add New Employee
+                                <span className="hidden lg:inline">Add New Employee</span>
+                                <span className="lg:hidden">Add</span>
+                            </Link>
+                        )}
+                        {/* Mobile FAB for Add Employee */}
+                        {pathname === '/admin/employees' && (
+                            <Link
+                                href="/admin/employees/new"
+                                className="sm:hidden flex items-center justify-center w-9 h-9 rounded-full text-white"
+                                style={{
+                                    background: 'linear-gradient(135deg, #f97316 0%, #ea6c10 100%)',
+                                    boxShadow: '0 4px 16px rgba(249,115,22,0.3)',
+                                }}
+                                aria-label="Add New Employee"
+                            >
+                                <UserPlus size={16} />
                             </Link>
                         )}
                     </div>
                 </header>
 
                 {/* Page content */}
-                <main style={{ flex: 1, padding: '28px 32px' }}>
+                <main className="flex-1 p-4 md:p-7">
                     {children}
                 </main>
             </div>

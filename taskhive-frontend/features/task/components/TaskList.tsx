@@ -175,17 +175,17 @@ export const TaskList: React.FC = () => {
     return (
         <div>
             {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
-                <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#ffffff', margin: 0 }}>Task Management</h1>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
+                <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#ffffff', margin: 0 }}>Task Management</h1>
                 <Link
                     href="/admin/tasks/new"
                     style={{
                         display: 'flex', alignItems: 'center', gap: '8px',
-                        padding: '10px 20px', borderRadius: '10px', border: 'none',
+                        padding: '8px 16px', borderRadius: '10px', border: 'none',
                         background: 'linear-gradient(135deg, #f97316 0%, #ea6c10 100%)',
-                        color: '#ffffff', fontSize: '14px', fontWeight: 600,
+                        color: '#ffffff', fontSize: '13px', fontWeight: 600,
                         textDecoration: 'none', boxShadow: '0 4px 16px rgba(249,115,22,0.3)',
-                        transition: 'opacity 0.2s',
+                        transition: 'opacity 0.2s', whiteSpace: 'nowrap',
                     }}
                     onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.88')}
                     onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
@@ -196,7 +196,7 @@ export const TaskList: React.FC = () => {
             </div>
 
             {/* Stat Cards */}
-            <div style={{ display: 'flex', gap: '16px', marginBottom: '20px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px', marginBottom: '20px' }}>
                 <StatCard label="Total Tasks" value={total} color="#ffffff" icon={<ClipboardList size={14} />} />
                 <StatCard label="In Progress" value={inProgress} color="#3b82f6" icon={<Clock size={14} />} />
                 <StatCard label="Completed" value={done} color="#22c55e" icon={<CheckCircle2 size={14} />} />
@@ -207,11 +207,11 @@ export const TaskList: React.FC = () => {
             <div
                 style={{
                     backgroundColor: '#161616', border: '1px solid #1f1f1f', borderRadius: '14px',
-                    padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', flexWrap: 'wrap',
+                    padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', flexWrap: 'wrap',
                 }}
             >
                 <Filter size={15} color="#71717a" style={{ flexShrink: 0 }} />
-                <div style={{ position: 'relative', flex: '1', minWidth: '200px' }}>
+                <div style={{ position: 'relative', flex: '1', minWidth: '150px' }}>
                     <Search size={14} color="#71717a" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
                     <input
                         type="text"
