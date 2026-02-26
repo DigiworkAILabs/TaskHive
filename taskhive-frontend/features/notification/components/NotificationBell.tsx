@@ -86,7 +86,7 @@ export function NotificationBell() {
             <PopoverContent
                 align="end"
                 sideOffset={8}
-                className="w-80 p-0 bg-zinc-900 border border-zinc-700/50
+                className="w-[calc(100vw-2rem)] max-w-80 p-0 bg-zinc-900 border border-zinc-700/50
                            rounded-xl shadow-2xl shadow-black/60 overflow-hidden"
             >
                 {/* Header */}

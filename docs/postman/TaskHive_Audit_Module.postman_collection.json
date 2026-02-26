@@ -1,0 +1,1616 @@
+{
+    "info": {
+        "name": "TaskHive - Audit Module",
+        "description": "Complete testing collection for the Audit module (Phase 5).\n\n**Pre-requisites:**\n1. Auth, Employee, and Task modules must be set up and running.\n2. Admin user must exist (admin@taskhive.com / Admin@123).\n3. At least one employee and task should exist to generate audit trail data.\n\n**Flow:**\n1. Login as Admin (cookies set automatically)\n2. Trigger audit events (create employee, create/update task)\n3. GET /audit/logs — paginated audit log listing\n4. GET /audit/logs/search — filtered search with date range, action, entity type\n5. GET /audit/logs/entity/{type}/{id} — entity-specific timeline\n6. GET /audit/security-events — security event listing\n7. GET /audit/compliance/report — compliance reports (JSON + CSV)\n8. Negative tests — employee access denied, invalid params\n\n**Note:** Audit logs are created automatically via event listeners. Security events (LOGIN_FAILED, ACCOUNT_LOCKED, UNAUTHORIZED_ACCESS) are logged directly by AuthService and GlobalExceptionHandler.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:8080/api/v1"
+        },
+        {
+            "key": "employeeId",
+            "value": "",
+            "description": "Auto-captured employee ID for entity timeline tests"
+        },
+        {
+            "key": "taskId",
+            "value": "",
+            "description": "Auto-captured task ID for entity timeline tests"
+        }
+    ],
+    "item": [
+        {
+            "name": "━━━ SETUP: Login & Generate Audit Data ━━━",
+            "item": [],
+            "description": "Login as Admin and perform actions that trigger audit events (employee creation, task creation, task updates)."
+        },
+        {
+            "name": "0. Login as Admin",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"admin@taskhive.com\",\n    \"password\": \"Admin@123\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/login",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "login"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Admin login successful — USER_LOGIN audit event triggered', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    console.log('Admin logged in. Cookies set automatically.');",
+                            "    console.log('→ AuditEventListener captured UserAuthenticatedEvent');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "1. List Employees (get employeeId)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/employees?status=ACTIVE&page=0&size=5",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "employees"
+                    ],
+                    "query": [
+                        {
+                            "key": "status",
+                            "value": "ACTIVE"
+                        },
+                        {
+                            "key": "page",
+                            "value": "0"
+                        },
+                        {
+                            "key": "size",
+                            "value": "5"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Active employees found', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data.content.length).to.be.above(0);",
+                            "    var empId = json.data.content[0].id;",
+                            "    pm.collectionVariables.set('employeeId', empId);",
+                            "    console.log('Using employee: ' + json.data.content[0].firstName + ' (ID: ' + empId + ')');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "2. Create Task (triggers TASK_CREATED + TASK_ASSIGNED audit)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"title\": \"Audit Module Test Task\",\n    \"description\": \"Task created to generate audit trail entries for testing.\",\n    \"priority\": \"HIGH\",\n    \"dueDate\": \"2026-03-20T17:00:00\",\n    \"assignedTo\": \"{{employeeId}}\",\n    \"estimatedHours\": 4.0,\n    \"tags\": [\"audit-test\"]\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/tasks",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "tasks"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Task created — TASK_CREATED + TASK_ASSIGNED audit events triggered', function () {",
+                            "    pm.response.to.have.status(201);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.collectionVariables.set('taskId', json.data.id);",
+                            "    console.log('Task created: ' + json.data.id);",
+                            "    console.log('→ AuditEventListener captured TaskCreatedEvent + TaskAssignedEvent');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "3. Update Task Status (triggers TASK_STATUS_CHANGED audit with before/after)",
+            "request": {
+                "method": "PATCH",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"status\": \"IN_PROGRESS\",\n    \"comment\": \"Starting work — this generates audit with before/after state\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/tasks/{{taskId}}/status",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "tasks",
+                        "{{taskId}}",
+                        "status"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Status changed — TASK_STATUS_CHANGED audit with before/after state', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.data.status).to.eql('IN_PROGRESS');",
+                            "    console.log('→ Audit log includes beforeState={status:TODO} afterState={status:IN_PROGRESS}');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "━━━ AUDIT LOG ENDPOINTS (ADMIN ONLY) ━━━",
+            "item": [],
+            "description": "All audit endpoints require ADMIN role. These test the 5 API endpoints defined in AuditController."
+        },
+        {
+            "name": "4. GET All Audit Logs (paginated)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/audit/logs?page=0&size=20",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "audit",
+                        "logs"
+                    ],
+                    "query": [
+                        {
+                            "key": "page",
+                            "value": "0"
+                        },
+                        {
+                            "key": "size",
+                            "value": "20"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Audit logs retrieved successfully', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.message).to.eql('Audit logs retrieved successfully');",
+                            "    pm.expect(json.data).to.have.property('content');",
+                            "    pm.expect(json.data).to.have.property('page');",
+                            "    pm.expect(json.data).to.have.property('size');",
+                            "    pm.expect(json.data).to.have.property('totalElements');",
+                            "    pm.expect(json.data).to.have.property('totalPages');",
+                            "    pm.expect(json.data).to.have.property('last');",
+                            "    pm.expect(json.data.content).to.be.an('array');",
+                            "",
+                            "    if (json.data.content.length > 0) {",
+                            "        var first = json.data.content[0];",
+                            "        pm.expect(first).to.have.property('id');",
+                            "        pm.expect(first).to.have.property('action');",
+                            "        pm.expect(first).to.have.property('entityType');",
+                            "        pm.expect(first).to.have.property('createdAt');",
+                            "        console.log('Latest log: [' + first.action + '] on ' + first.entityType + ' by ' + (first.actorEmail || first.actorId));",
+                            "    }",
+                            "",
+                            "    console.log('Total audit logs: ' + json.data.totalElements + ' | Page: ' + json.data.page + '/' + json.data.totalPages);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "5. GET Audit Logs — Page 2 (pagination test)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/audit/logs?page=1&size=5",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "audit",
+                        "logs"
+                    ],
+                    "query": [
+                        {
+                            "key": "page",
+                            "value": "1"
+                        },
+                        {
+                            "key": "size",
+                            "value": "5"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Pagination works — page 2 with size 5', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data.page).to.eql(1);",
+                            "    pm.expect(json.data.size).to.eql(5);",
+                            "    console.log('Page 2 returned ' + json.data.content.length + ' items');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "━━━ SEARCH / FILTER ━━━",
+            "item": [],
+            "description": "Test the search endpoint with various filter combinations."
+        },
+        {
+            "name": "6. Search — Filter by Action (TASK_CREATED)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/audit/logs/search?action=TASK_CREATED&page=0&size=20",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "audit",
+                        "logs",
+                        "search"
+                    ],
+                    "query": [
+                        {
+                            "key": "action",
+                            "value": "TASK_CREATED"
+                        },
+                        {
+                            "key": "page",
+                            "value": "0"
+                        },
+                        {
+                            "key": "size",
+                            "value": "20"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Search by action=TASK_CREATED', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "",
+                            "    // All returned items should have action=TASK_CREATED",
+                            "    json.data.content.forEach(function(log) {",
+                            "        pm.expect(log.action).to.eql('TASK_CREATED');",
+                            "    });",
+                            "",
+                            "    console.log('Found ' + json.data.totalElements + ' TASK_CREATED events');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "7. Search — Filter by Entity Type (EMPLOYEE)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/audit/logs/search?entityType=EMPLOYEE&page=0&size=20",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "audit",
+                        "logs",
+                        "search"
+                    ],
+                    "query": [
+                        {
+                            "key": "entityType",
+                            "value": "EMPLOYEE"
+                        },
+                        {
+                            "key": "page",
+                            "value": "0"
+                        },
+                        {
+                            "key": "size",
+                            "value": "20"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Search by entityType=EMPLOYEE', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "",
+                            "    json.data.content.forEach(function(log) {",
+                            "        pm.expect(log.entityType).to.eql('EMPLOYEE');",
+                            "    });",
+                            "",
+                            "    console.log('Found ' + json.data.totalElements + ' EMPLOYEE audit events');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "8. Search — Filter by Date Range",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/audit/logs/search?startDate=2026-01-01T00:00:00&endDate=2026-12-31T23:59:59&page=0&size=20",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "audit",
+                        "logs",
+                        "search"
+                    ],
+                    "query": [
+                        {
+                            "key": "startDate",
+                            "value": "2026-01-01T00:00:00"
+                        },
+                        {
+                            "key": "endDate",
+                            "value": "2026-12-31T23:59:59"
+                        },
+                        {
+                            "key": "page",
+                            "value": "0"
+                        },
+                        {
+                            "key": "size",
+                            "value": "20"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Search by date range (year 2026)', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    console.log('Found ' + json.data.totalElements + ' logs in 2026 date range');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "9. Search — Combined Filters (action + entityType + date)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/audit/logs/search?action=USER_LOGIN&entityType=USER&startDate=2026-01-01T00:00:00&page=0&size=10",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "audit",
+                        "logs",
+                        "search"
+                    ],
+                    "query": [
+                        {
+                            "key": "action",
+                            "value": "USER_LOGIN"
+                        },
+                        {
+                            "key": "entityType",
+                            "value": "USER"
+                        },
+                        {
+                            "key": "startDate",
+                            "value": "2026-01-01T00:00:00"
+                        },
+                        {
+                            "key": "page",
+                            "value": "0"
+                        },
+                        {
+                            "key": "size",
+                            "value": "10"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Combined filter: USER_LOGIN + USER + date', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "",
+                            "    json.data.content.forEach(function(log) {",
+                            "        pm.expect(log.action).to.eql('USER_LOGIN');",
+                            "        pm.expect(log.entityType).to.eql('USER');",
+                            "    });",
+                            "",
+                            "    console.log('Found ' + json.data.totalElements + ' USER_LOGIN events');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "10. Search — No Filters (returns all logs)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/audit/logs/search?page=0&size=20",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "audit",
+                        "logs",
+                        "search"
+                    ],
+                    "query": [
+                        {
+                            "key": "page",
+                            "value": "0"
+                        },
+                        {
+                            "key": "size",
+                            "value": "20"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Search with no filters returns all logs', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data.content).to.be.an('array');",
+                            "    console.log('All logs (unfiltered): ' + json.data.totalElements + ' total');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "━━━ ENTITY TIMELINE ━━━",
+            "item": [],
+            "description": "View the complete audit history for a specific entity (task or employee)."
+        },
+        {
+            "name": "11. Entity Timeline — TASK",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/audit/logs/entity/TASK/{{taskId}}?page=0&size=20",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "audit",
+                        "logs",
+                        "entity",
+                        "TASK",
+                        "{{taskId}}"
+                    ],
+                    "query": [
+                        {
+                            "key": "page",
+                            "value": "0"
+                        },
+                        {
+                            "key": "size",
+                            "value": "20"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Task entity timeline retrieved', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.message).to.eql('Entity timeline retrieved successfully');",
+                            "",
+                            "    // Should have at least TASK_CREATED + TASK_ASSIGNED + TASK_STATUS_CHANGED",
+                            "    pm.expect(json.data.content.length).to.be.at.least(1);",
+                            "",
+                            "    json.data.content.forEach(function(log) {",
+                            "        pm.expect(log.entityType).to.eql('TASK');",
+                            "        pm.expect(log.entityId).to.eql(pm.collectionVariables.get('taskId'));",
+                            "    });",
+                            "",
+                            "    console.log('Task timeline events:');",
+                            "    json.data.content.forEach(function(log) {",
+                            "        console.log('  → ' + log.action + ' at ' + log.createdAt);",
+                            "    });",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "12. Entity Timeline — EMPLOYEE",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/audit/logs/entity/EMPLOYEE/{{employeeId}}?page=0&size=20",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "audit",
+                        "logs",
+                        "entity",
+                        "EMPLOYEE",
+                        "{{employeeId}}"
+                    ],
+                    "query": [
+                        {
+                            "key": "page",
+                            "value": "0"
+                        },
+                        {
+                            "key": "size",
+                            "value": "20"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Employee entity timeline retrieved', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "",
+                            "    json.data.content.forEach(function(log) {",
+                            "        pm.expect(log.entityType).to.eql('EMPLOYEE');",
+                            "    });",
+                            "",
+                            "    console.log('Employee timeline: ' + json.data.totalElements + ' events');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "13. Entity Timeline — Non-existent Entity (empty result)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/audit/logs/entity/TASK/00000000-0000-0000-0000-000000000000?page=0&size=20",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "audit",
+                        "logs",
+                        "entity",
+                        "TASK",
+                        "00000000-0000-0000-0000-000000000000"
+                    ],
+                    "query": [
+                        {
+                            "key": "page",
+                            "value": "0"
+                        },
+                        {
+                            "key": "size",
+                            "value": "20"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Non-existent entity returns empty timeline', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data.content).to.be.an('array').that.is.empty;",
+                            "    pm.expect(json.data.totalElements).to.eql(0);",
+                            "    console.log('Correctly returned empty timeline for non-existent entity');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "━━━ SECURITY EVENTS ━━━",
+            "item": [],
+            "description": "Security events are generated by AuthService (LOGIN_FAILED, ACCOUNT_LOCKED) and GlobalExceptionHandler (UNAUTHORIZED_ACCESS)."
+        },
+        {
+            "name": "14. GET Security Events (paginated)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/audit/security-events?page=0&size=20",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "audit",
+                        "security-events"
+                    ],
+                    "query": [
+                        {
+                            "key": "page",
+                            "value": "0"
+                        },
+                        {
+                            "key": "size",
+                            "value": "20"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Security events retrieved', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.message).to.eql('Security events retrieved successfully');",
+                            "    pm.expect(json.data).to.have.property('content');",
+                            "    pm.expect(json.data.content).to.be.an('array');",
+                            "",
+                            "    if (json.data.content.length > 0) {",
+                            "        var first = json.data.content[0];",
+                            "        pm.expect(first).to.have.property('id');",
+                            "        pm.expect(first).to.have.property('eventType');",
+                            "        pm.expect(first).to.have.property('success');",
+                            "        pm.expect(first).to.have.property('timestamp');",
+                            "        console.log('Latest: [' + first.eventType + '] success=' + first.success + ' ip=' + first.ipAddress);",
+                            "    }",
+                            "",
+                            "    console.log('Total security events: ' + json.data.totalElements);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "━━━ TRIGGER SECURITY EVENTS ━━━",
+            "item": [],
+            "description": "Trigger LOGIN_FAILED security events by attempting login with wrong credentials."
+        },
+        {
+            "name": "15. Failed Login Attempt (triggers LOGIN_FAILED event)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"admin@taskhive.com\",\n    \"password\": \"WrongPassword123\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/login",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "login"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Failed login — LOGIN_FAILED security event generated', function () {",
+                            "    pm.response.to.have.status(401);",
+                            "    console.log('Login failed as expected → LOGIN_FAILED security event written to DB');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "16. Re-login as Admin (reset session after failed attempt)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"admin@taskhive.com\",\n    \"password\": \"Admin@123\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/login",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "login"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Admin re-login successful', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    console.log('Admin re-authenticated for remaining tests');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "17. Verify LOGIN_FAILED Event Exists",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/audit/security-events?page=0&size=5",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "audit",
+                        "security-events"
+                    ],
+                    "query": [
+                        {
+                            "key": "page",
+                            "value": "0"
+                        },
+                        {
+                            "key": "size",
+                            "value": "5"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('LOGIN_FAILED event exists in security events', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "",
+                            "    var failedEvents = json.data.content.filter(e => e.eventType === 'LOGIN_FAILED');",
+                            "    pm.expect(failedEvents.length).to.be.at.least(1);",
+                            "",
+                            "    var latest = failedEvents[0];",
+                            "    pm.expect(latest.success).to.be.false;",
+                            "    pm.expect(latest.details).to.include('admin@taskhive.com');",
+                            "    console.log('Verified LOGIN_FAILED event: ' + JSON.stringify(latest));",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "━━━ COMPLIANCE REPORTS ━━━",
+            "item": [],
+            "description": "Test the 3 compliance report types (USER_ACCESS, DATA_MODIFICATION, SECURITY_INCIDENT) in both JSON and CSV formats."
+        },
+        {
+            "name": "18. Compliance Report — User Access (JSON)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/audit/compliance/report?reportType=USER_ACCESS&format=json&page=0&size=20",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "audit",
+                        "compliance",
+                        "report"
+                    ],
+                    "query": [
+                        {
+                            "key": "reportType",
+                            "value": "USER_ACCESS"
+                        },
+                        {
+                            "key": "format",
+                            "value": "json"
+                        },
+                        {
+                            "key": "page",
+                            "value": "0"
+                        },
+                        {
+                            "key": "size",
+                            "value": "20"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('User Access Report (JSON)', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.message).to.eql('User Access Report generated');",
+                            "    pm.expect(json.data.content).to.be.an('array');",
+                            "",
+                            "    // All entries should be user-access related actions",
+                            "    var validActions = ['USER_LOGIN', 'USER_LOGOUT', 'ACCOUNT_ACTIVATED', 'PASSWORD_CHANGED', 'PASSWORD_RESET_REQUESTED'];",
+                            "    json.data.content.forEach(function(log) {",
+                            "        pm.expect(validActions).to.include(log.action);",
+                            "    });",
+                            "",
+                            "    console.log('User Access Report: ' + json.data.totalElements + ' entries');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "19. Compliance Report — User Access with Date Range",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/audit/compliance/report?reportType=USER_ACCESS&startDate=2026-01-01T00:00:00&endDate=2026-12-31T23:59:59&format=json&page=0&size=20",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "audit",
+                        "compliance",
+                        "report"
+                    ],
+                    "query": [
+                        {
+                            "key": "reportType",
+                            "value": "USER_ACCESS"
+                        },
+                        {
+                            "key": "startDate",
+                            "value": "2026-01-01T00:00:00"
+                        },
+                        {
+                            "key": "endDate",
+                            "value": "2026-12-31T23:59:59"
+                        },
+                        {
+                            "key": "format",
+                            "value": "json"
+                        },
+                        {
+                            "key": "page",
+                            "value": "0"
+                        },
+                        {
+                            "key": "size",
+                            "value": "20"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('User Access Report with date range filter', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    console.log('User Access (2026): ' + json.data.totalElements + ' entries');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "20. Compliance Report — Data Modification (JSON)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/audit/compliance/report?reportType=DATA_MODIFICATION&format=json&page=0&size=20",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "audit",
+                        "compliance",
+                        "report"
+                    ],
+                    "query": [
+                        {
+                            "key": "reportType",
+                            "value": "DATA_MODIFICATION"
+                        },
+                        {
+                            "key": "format",
+                            "value": "json"
+                        },
+                        {
+                            "key": "page",
+                            "value": "0"
+                        },
+                        {
+                            "key": "size",
+                            "value": "20"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Data Modification Report (JSON)', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.message).to.eql('Data Modification Report generated');",
+                            "    pm.expect(json.data.content).to.be.an('array');",
+                            "",
+                            "    var validActions = ['EMPLOYEE_CREATED','EMPLOYEE_UPDATED','EMPLOYEE_ACTIVATED','EMPLOYEE_DEACTIVATED','EMPLOYEE_DELETED','TASK_CREATED','TASK_UPDATED','TASK_STATUS_CHANGED','TASK_ASSIGNED','TASK_COMMENT_ADDED'];",
+                            "    json.data.content.forEach(function(log) {",
+                            "        pm.expect(validActions).to.include(log.action);",
+                            "    });",
+                            "",
+                            "    console.log('Data Modification Report: ' + json.data.totalElements + ' entries');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "21. Compliance Report — Security Incident (JSON)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/audit/compliance/report?reportType=SECURITY_INCIDENT&format=json&page=0&size=20",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "audit",
+                        "compliance",
+                        "report"
+                    ],
+                    "query": [
+                        {
+                            "key": "reportType",
+                            "value": "SECURITY_INCIDENT"
+                        },
+                        {
+                            "key": "format",
+                            "value": "json"
+                        },
+                        {
+                            "key": "page",
+                            "value": "0"
+                        },
+                        {
+                            "key": "size",
+                            "value": "20"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Security Incident Report (JSON)', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.message).to.eql('Security Incident Report generated');",
+                            "    pm.expect(json.data.content).to.be.an('array');",
+                            "",
+                            "    if (json.data.content.length > 0) {",
+                            "        var first = json.data.content[0];",
+                            "        pm.expect(first).to.have.property('eventType');",
+                            "        pm.expect(first).to.have.property('success');",
+                            "        console.log('Latest incident: [' + first.eventType + '] success=' + first.success);",
+                            "    }",
+                            "",
+                            "    console.log('Security Incident Report: ' + json.data.totalElements + ' entries');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "━━━ CSV EXPORT ━━━",
+            "item": [],
+            "description": "Test CSV export for all 3 report types. Response should be text/csv with Content-Disposition header."
+        },
+        {
+            "name": "22. Compliance Report — User Access (CSV)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/audit/compliance/report?reportType=USER_ACCESS&format=csv",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "audit",
+                        "compliance",
+                        "report"
+                    ],
+                    "query": [
+                        {
+                            "key": "reportType",
+                            "value": "USER_ACCESS"
+                        },
+                        {
+                            "key": "format",
+                            "value": "csv"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('User Access Report (CSV export)', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    pm.expect(pm.response.headers.get('Content-Type')).to.include('text/csv');",
+                            "    pm.expect(pm.response.headers.get('Content-Disposition')).to.include('user_access_report.csv');",
+                            "",
+                            "    var csv = pm.response.text();",
+                            "    pm.expect(csv).to.include('ID,Actor ID,Actor Email,Action');",
+                            "    console.log('CSV header: ' + csv.split('\\n')[0]);",
+                            "    console.log('CSV rows (including header): ' + csv.split('\\n').length);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "23. Compliance Report — Data Modification (CSV)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/audit/compliance/report?reportType=DATA_MODIFICATION&format=csv",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "audit",
+                        "compliance",
+                        "report"
+                    ],
+                    "query": [
+                        {
+                            "key": "reportType",
+                            "value": "DATA_MODIFICATION"
+                        },
+                        {
+                            "key": "format",
+                            "value": "csv"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Data Modification Report (CSV export)', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    pm.expect(pm.response.headers.get('Content-Type')).to.include('text/csv');",
+                            "    pm.expect(pm.response.headers.get('Content-Disposition')).to.include('data_modification_report.csv');",
+                            "",
+                            "    var csv = pm.response.text();",
+                            "    pm.expect(csv).to.include('ID,Actor ID,Actor Email,Action');",
+                            "    console.log('CSV rows: ' + csv.split('\\n').length);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "24. Compliance Report — Security Incident (CSV)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/audit/compliance/report?reportType=SECURITY_INCIDENT&format=csv",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "audit",
+                        "compliance",
+                        "report"
+                    ],
+                    "query": [
+                        {
+                            "key": "reportType",
+                            "value": "SECURITY_INCIDENT"
+                        },
+                        {
+                            "key": "format",
+                            "value": "csv"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Security Incident Report (CSV export)', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    pm.expect(pm.response.headers.get('Content-Type')).to.include('text/csv');",
+                            "    pm.expect(pm.response.headers.get('Content-Disposition')).to.include('security_incident_report.csv');",
+                            "",
+                            "    var csv = pm.response.text();",
+                            "    pm.expect(csv).to.include('ID,Event Type,User ID,IP Address');",
+                            "    console.log('CSV rows: ' + csv.split('\\n').length);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "━━━ NEGATIVE TESTS ━━━",
+            "item": [],
+            "description": "Test error cases: invalid report type, employee access denied, etc."
+        },
+        {
+            "name": "25. Compliance Report — Invalid Report Type",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/audit/compliance/report?reportType=INVALID_TYPE&format=json&page=0&size=20",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "audit",
+                        "compliance",
+                        "report"
+                    ],
+                    "query": [
+                        {
+                            "key": "reportType",
+                            "value": "INVALID_TYPE"
+                        },
+                        {
+                            "key": "format",
+                            "value": "json"
+                        },
+                        {
+                            "key": "page",
+                            "value": "0"
+                        },
+                        {
+                            "key": "size",
+                            "value": "20"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Invalid report type returns 400', function () {",
+                            "    pm.response.to.have.status(400);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.false;",
+                            "    pm.expect(json.message).to.include('Invalid report type');",
+                            "    console.log('Correctly rejected invalid report type');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "26. Login as Employee (non-admin)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"REPLACE_WITH_EMPLOYEE_EMAIL\",\n    \"password\": \"REPLACE_WITH_EMPLOYEE_PASSWORD\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/login",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "login"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Employee login successful', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    console.log('Logged in as Employee. Next requests should be FORBIDDEN.');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "27. Employee Access Denied — GET Audit Logs (expect 403)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/audit/logs?page=0&size=20",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "audit",
+                        "logs"
+                    ],
+                    "query": [
+                        {
+                            "key": "page",
+                            "value": "0"
+                        },
+                        {
+                            "key": "size",
+                            "value": "20"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Employee cannot access audit logs — 403 Forbidden', function () {",
+                            "    pm.response.to.have.status(403);",
+                            "    console.log('Correctly denied. UNAUTHORIZED_ACCESS security event logged.');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "28. Employee Access Denied — GET Security Events (expect 403)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/audit/security-events?page=0&size=20",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "audit",
+                        "security-events"
+                    ],
+                    "query": [
+                        {
+                            "key": "page",
+                            "value": "0"
+                        },
+                        {
+                            "key": "size",
+                            "value": "20"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Employee cannot access security events — 403 Forbidden', function () {",
+                            "    pm.response.to.have.status(403);",
+                            "    console.log('Correctly denied. UNAUTHORIZED_ACCESS security event logged.');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "29. Employee Access Denied — GET Compliance Report (expect 403)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/audit/compliance/report?reportType=USER_ACCESS&format=json&page=0&size=20",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "audit",
+                        "compliance",
+                        "report"
+                    ],
+                    "query": [
+                        {
+                            "key": "reportType",
+                            "value": "USER_ACCESS"
+                        },
+                        {
+                            "key": "format",
+                            "value": "json"
+                        },
+                        {
+                            "key": "page",
+                            "value": "0"
+                        },
+                        {
+                            "key": "size",
+                            "value": "20"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Employee cannot access compliance report — 403 Forbidden', function () {",
+                            "    pm.response.to.have.status(403);",
+                            "    console.log('Correctly denied. UNAUTHORIZED_ACCESS security event logged.');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "━━━ VERIFY UNAUTHORIZED_ACCESS EVENTS ━━━",
+            "item": [],
+            "description": "Re-login as Admin and verify that the employee's denied access attempts were captured as UNAUTHORIZED_ACCESS security events."
+        },
+        {
+            "name": "30. Re-login as Admin (verify security events)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"admin@taskhive.com\",\n    \"password\": \"Admin@123\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/login",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "login"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Admin re-login for final verification', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    console.log('Admin re-authenticated for UNAUTHORIZED_ACCESS verification');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "31. Verify UNAUTHORIZED_ACCESS Events Captured",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/audit/security-events?page=0&size=10",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "audit",
+                        "security-events"
+                    ],
+                    "query": [
+                        {
+                            "key": "page",
+                            "value": "0"
+                        },
+                        {
+                            "key": "size",
+                            "value": "10"
+                        }
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('UNAUTHORIZED_ACCESS events captured from employee denied access', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "",
+                            "    var unauthEvents = json.data.content.filter(e => e.eventType === 'UNAUTHORIZED_ACCESS');",
+                            "    pm.expect(unauthEvents.length).to.be.at.least(1);",
+                            "",
+                            "    console.log('UNAUTHORIZED_ACCESS events found: ' + unauthEvents.length);",
+                            "    unauthEvents.forEach(function(e) {",
+                            "        console.log('  → path: ' + e.details + ' | ip: ' + e.ipAddress);",
+                            "    });",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}

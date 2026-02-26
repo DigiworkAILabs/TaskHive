@@ -27,7 +27,7 @@ export default function EmployeeDashboard() {
         <div>
             {/* Welcome */}
             <div style={{ marginBottom: '32px' }}>
-                <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#ffffff', margin: '0 0 8px 0' }}>
+                <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#ffffff', margin: '0 0 8px 0' }}>
                     Employee Dashboard
                 </h1>
                 <p style={{ color: '#71717a', fontSize: '15px', margin: 0 }}>
@@ -44,7 +44,7 @@ export default function EmployeeDashboard() {
             )}
 
             {/* Stat Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '32px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px', marginBottom: '28px' }}>
                 <DashboardStatCard
                     icon={<ClipboardList size={20} color="#6366f1" />}
                     iconBg="rgba(99,102,241,0.12)"
@@ -72,7 +72,7 @@ export default function EmployeeDashboard() {
             </div>
 
             {/* Recent Tasks */}
-            <div style={{ backgroundColor: '#161616', border: '1px solid #1f1f1f', borderRadius: '16px', padding: '24px' }}>
+            <div style={{ backgroundColor: '#161616', border: '1px solid #1f1f1f', borderRadius: '16px', padding: '16px' }}>
                 <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#ffffff', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <ClipboardList size={18} color="#f97316" />
                     Recent Tasks

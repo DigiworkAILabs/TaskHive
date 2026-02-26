@@ -189,13 +189,12 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
         backgroundColor: '#161616',
         border: '1px solid #1f1f1f',
         borderRadius: '16px',
-        padding: '32px',
     };
 
     return (
         <div>
             {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '28px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '28px', flexWrap: 'wrap' }}>
                 <Link
                     href="/admin/employees"
                     style={{
@@ -249,9 +248,9 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
 
             {/* Form */}
             <div style={cardStyle}>
-                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <form onSubmit={handleSubmit} className="flex flex-col gap-5 p-4 md:p-8">
                     {/* Row: First Name + Last Name */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormInput
                             id="firstName"
                             label="First Name"
@@ -273,7 +272,7 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
                     </div>
 
                     {/* Row: Email + Phone */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormInput
                             id="email"
                             label="Email"
@@ -296,7 +295,7 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
                     </div>
 
                     {/* Row: Department + Designation */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormInput
                             id="department"
                             label="Department"
@@ -314,13 +313,14 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
                     </div>
 
                     {/* Row: Join Date */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <DatePicker
                             id="joinDate"
                             label="Join Date"
                             value={formData.joinDate}
                             onChange={(date) => setFormData(prev => ({ ...prev, joinDate: date }))}
-                            maxDate={new Date()}
+                            minDate={new Date()}
+                            maxDate={(() => { const d = new Date(); d.setDate(d.getDate() + 30); return d; })()}
                         />
 
                         <div>
@@ -361,7 +361,7 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
                     </div>
 
                     {/* Actions */}
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
+                    <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 mt-2">
                         <Link
                             href="/admin/employees"
                             style={{

@@ -45,7 +45,7 @@ export default function DashboardPage() {
         <div>
             {/* Welcome */}
             <div style={{ marginBottom: '32px' }}>
-                <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#ffffff', margin: '0 0 8px 0' }}>
+                <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#ffffff', margin: '0 0 8px 0' }}>
                     Welcome to TaskHive
                 </h1>
                 <p style={{ color: '#71717a', fontSize: '15px', margin: 0 }}>
@@ -54,7 +54,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Stat Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
                 <DashboardStatCard
                     icon={<Users size={24} color="#6366f1" />}
                     iconBg="rgba(99,102,241,0.12)"

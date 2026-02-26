@@ -23,8 +23,8 @@ function StatCard({ icon, label, value, iconBg }: {
                 backgroundColor: '#161616',
                 border: '1px solid #1f1f1f',
                 borderRadius: '14px',
-                padding: '24px',
-                flex: '1 1 200px',
+                padding: '16px',
+                minWidth: 0,
             }}
         >
             <div
@@ -65,7 +65,7 @@ function FilterSelect({ value, onChange, options, placeholder }: {
                 backgroundRepeat: 'no-repeat',
                 backgroundPosition: 'right 12px center',
                 paddingRight: '32px',
-                minWidth: '140px',
+                minWidth: '120px',
             }}
         >
             <option value="">{placeholder}</option>
@@ -187,7 +187,7 @@ export const EmployeeList: React.FC = () => {
     return (
         <div>
             {/* Stat Cards */}
-            <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px', marginBottom: '24px' }}>
                 <StatCard
                     icon={<Users size={22} color="#6366f1" />}
                     label="Total Employees"
@@ -214,16 +214,16 @@ export const EmployeeList: React.FC = () => {
                     backgroundColor: '#161616',
                     border: '1px solid #1f1f1f',
                     borderRadius: '14px',
-                    padding: '16px 20px',
+                    padding: '12px 16px',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '12px',
+                    gap: '10px',
                     marginBottom: '20px',
                     flexWrap: 'wrap',
                 }}
             >
                 {/* Search */}
-                <div style={{ position: 'relative', flex: '1 1 300px' }}>
+                <div style={{ position: 'relative', flex: '1 1 200px', minWidth: 0 }}>
                     <Search size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#52525b' }} />
                     <input
                         type="text"
@@ -309,7 +309,8 @@ export const EmployeeList: React.FC = () => {
                         No employees found.
                     </div>
                 ) : (
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
                         <thead>
                             <tr style={{ borderBottom: '1px solid #1f1f1f' }}>
                                 <th style={{ padding: '14px 16px', width: '48px' }}>
@@ -343,6 +344,7 @@ export const EmployeeList: React.FC = () => {
                             ))}
                         </tbody>
                     </table>
+                    </div>
                 )}
 
                 {/* Pagination */}
@@ -350,7 +352,7 @@ export const EmployeeList: React.FC = () => {
                     <div
                         style={{
                             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                            padding: '16px 20px', borderTop: '1px solid #1f1f1f',
+                            padding: '12px 16px', borderTop: '1px solid #1f1f1f', flexWrap: 'wrap', gap: '8px',
                         }}
                     >
                         <span style={{ color: '#71717a', fontSize: '13px' }}>
