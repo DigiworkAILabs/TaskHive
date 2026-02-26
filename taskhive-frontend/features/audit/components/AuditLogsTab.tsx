@@ -224,7 +224,7 @@ export default function AuditLogsTab() {
                 <TableHead>Entity ID</TableHead>
                 <TableHead>IP Address</TableHead>
                 <TableHead>Timestamp</TableHead>
-                <TableHead className="w-10"></TableHead>
+                <TableHead className="w-10">{" "}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

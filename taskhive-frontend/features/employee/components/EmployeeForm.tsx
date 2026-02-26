@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { CreateEmployeeData, UpdateEmployeeData, Employee } from '../types/employee.types';
+import { CreateEmployeeData, UpdateEmployeeData, Employee, EmployeeListItem } from '../types/employee.types';
 import { ArrowLeft, Loader2, AlertCircle, CheckCircle, User } from 'lucide-react';
 import Link from 'next/link';
 import { DatePicker } from './DatePicker';
@@ -85,7 +85,7 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
         managerId: '',
     });
 
-    const [employees, setEmployees] = useState<Employee[]>([]);
+    const [employees, setEmployees] = useState<EmployeeListItem[]>([]);
     const [isFetchingEmployees, setIsFetchingEmployees] = useState(false);
 
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -111,7 +111,7 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
         const fetchEmployees = async () => {
             setIsFetchingEmployees(true);
             try {
-                const response = await employeeService.list({ status: 'ACTIVE', size: 100 });
+                const response = await employeeService.list({ status: 'ACTIVE', size: 100, page: 0 });
                 setEmployees(response.content);
             } catch (err) {
                 console.error('Failed to fetch employees for manager dropdown:', err);

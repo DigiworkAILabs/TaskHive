@@ -66,7 +66,7 @@ export default function SecurityEventsTab() {
           <Table>
             <TableHeader>
               <TableRow className="bg-[#252525]/50 hover:bg-[#252525]/50 border-none">
-                <TableHead className="w-12"></TableHead>
+                <TableHead className="w-12">{" "}</TableHead>
                 <TableHead>Event Type</TableHead>
                 <TableHead>User / Identifier</TableHead>
                 <TableHead>IP Address</TableHead>

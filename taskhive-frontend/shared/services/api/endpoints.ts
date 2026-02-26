@@ -29,4 +29,14 @@ export const ENDPOINTS = {
         OVERDUE: '/tasks/overdue',
         SEARCH: '/tasks/search',
     },
+    ANALYTICS: {
+        DASHBOARD_ADMIN: '/analytics/dashboard/admin',
+        DASHBOARD_EMPLOYEE: '/analytics/dashboard/employee',
+        TASK_DISTRIBUTION: '/analytics/tasks/distribution',
+        TASK_BY_PRIORITY: '/analytics/tasks/by-priority',
+        COMPLETION_TREND: '/analytics/tasks/completion-trend',
+        EMPLOYEE_PERFORMANCE: '/analytics/employees/performance',
+        REPORT_EXPORT: '/analytics/reports/export',
+        REPORT_DOWNLOAD: (id: string) => `/analytics/reports/${id}/download`,
+    },
 };
