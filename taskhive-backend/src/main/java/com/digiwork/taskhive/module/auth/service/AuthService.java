@@ -1,6 +1,7 @@
 package com.digiwork.taskhive.module.auth.service;
 
 import com.digiwork.taskhive.common.constants.MessageConstants;
+import com.digiwork.taskhive.module.audit.service.AuditService;
 import com.digiwork.taskhive.module.auth.dto.*;
 import com.digiwork.taskhive.module.auth.enums.UserStatus;
 import com.digiwork.taskhive.module.auth.event.PasswordChangedEvent;
@@ -40,6 +41,7 @@ public class AuthService {
     private final CookieUtil cookieUtil;
     private final UserMapper userMapper;
     private final ApplicationEventPublisher eventPublisher;
+    private final AuditService auditService;
 
     @Value("${app.auth.max-failed-attempts}")
     private int maxFailedAttempts;
@@ -176,9 +178,17 @@ public class AuthService {
     private void handleFailedLogin(User user) {
         user.setFailedAttempts(user.getFailedAttempts() + 1);
 
+        // Log LOGIN_FAILED security event
+        auditService.logSecurityEvent("LOGIN_FAILED", user.getId(), null, false,
+                "{\"email\":\"" + user.getEmail() + "\",\"failedAttempts\":" + user.getFailedAttempts() + "}");
+
         if (user.getFailedAttempts() >= maxFailedAttempts) {
             user.setLockedUntil(LocalDateTime.now().plusNanos(lockoutDurationMs * 1_000_000L));
             log.warn("Account locked for user: {} due to {} failed attempts", user.getEmail(), maxFailedAttempts);
+
+            // Log ACCOUNT_LOCKED security event
+            auditService.logSecurityEvent("ACCOUNT_LOCKED", user.getId(), null, false,
+                    "{\"email\":\"" + user.getEmail() + "\",\"failedAttempts\":" + user.getFailedAttempts() + "}");
         }
 
         userRepository.save(user);
