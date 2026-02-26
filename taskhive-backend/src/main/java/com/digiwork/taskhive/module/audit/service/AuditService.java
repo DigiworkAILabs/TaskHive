@@ -10,9 +10,11 @@ import com.digiwork.taskhive.module.audit.repository.AuditLogRepository;
 import com.digiwork.taskhive.module.audit.repository.SecurityEventRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +27,7 @@ public class AuditService {
 
     private final AuditLogRepository auditLogRepository;
     private final SecurityEventRepository securityEventRepository;
+    private final JdbcTemplate jdbcTemplate;
 
     // ─── Log an audit action ─────────────────────────────────────────────────
 
@@ -33,9 +36,13 @@ public class AuditService {
             String entityType, UUID entityId,
             String beforeState, String afterState,
             String ipAddress, String userAgent) {
+
+        // Auto-resolve email from users table if not provided with the event
+        String resolvedEmail = (actorEmail != null) ? actorEmail : resolveEmail(actorId);
+
         AuditLog auditLog = AuditLog.builder()
                 .actorId(actorId)
-                .actorEmail(actorEmail)
+                .actorEmail(resolvedEmail)
                 .action(action)
                 .entityType(entityType)
                 .entityId(entityId)
@@ -47,6 +54,22 @@ public class AuditService {
 
         auditLogRepository.save(auditLog);
         log.debug("Audit log created: action={}, entityType={}, entityId={}", action, entityType, entityId);
+    }
+
+    // ─── Resolve actor email by user ID ──────────────────────────────────────
+
+    private String resolveEmail(UUID actorId) {
+        if (actorId == null)
+            return null;
+        try {
+            return jdbcTemplate.queryForObject(
+                    "SELECT email FROM users WHERE id = ?",
+                    String.class,
+                    actorId);
+        } catch (EmptyResultDataAccessException e) {
+            log.warn("Could not resolve email for actorId={}", actorId);
+            return null;
+        }
     }
 
     // ─── Log a security event ────────────────────────────────────────────────
