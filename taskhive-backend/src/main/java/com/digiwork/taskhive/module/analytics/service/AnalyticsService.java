@@ -297,7 +297,7 @@ public class AnalyticsService {
         private String getEmployeeName(UUID userId) {
                 try {
                         String sql = "SELECT CONCAT(e.first_name, ' ', e.last_name) " +
-                                        "FROM employees e WHERE e.user_id = :userId";
+                                        "FROM employees e WHERE e.id = :userId";
                         Object result = entityManager.createNativeQuery(sql)
                                         .setParameter("userId", userId)
                                         .getSingleResult();

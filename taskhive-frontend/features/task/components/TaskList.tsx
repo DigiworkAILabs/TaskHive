@@ -282,14 +282,6 @@ export const TaskList: React.FC = () => {
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                             <thead>
                                 <tr style={{ borderBottom: '1px solid #1f1f1f' }}>
-                                    <th style={{ padding: '14px 16px', width: '48px' }}>
-                                        <input
-                                            type="checkbox"
-                                            checked={selected.size === tasks.length && tasks.length > 0}
-                                            onChange={handleSelectAll}
-                                            style={{ width: '16px', height: '16px', accentColor: '#f97316', cursor: 'pointer' }}
-                                        />
-                                    </th>
                                     {['Title', 'Priority', 'Status', 'Assigned To', 'Due Date', ''].map((h) => (
                                         <th
                                             key={h}

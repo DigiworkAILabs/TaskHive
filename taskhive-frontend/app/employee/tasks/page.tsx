@@ -181,7 +181,6 @@ export default function EmployeeTasksPage() {
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                             <thead>
                                 <tr style={{ borderBottom: '1px solid #1f1f1f' }}>
-                                    <th style={{ padding: '14px 16px', width: '48px' }}></th>
                                     {['Title', 'Priority', 'Status', 'Due Date', ''].map(h => (
                                         <th key={h} style={{ padding: '14px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 600, color: '#f97316', textTransform: 'uppercase' }}>{h}</th>
                                     ))}

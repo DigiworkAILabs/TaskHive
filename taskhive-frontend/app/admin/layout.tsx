@@ -59,20 +59,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const router = useRouter();
     const user = useAuthStore((s) => s.user);
     const clearAuth = useAuthStore((s) => s.clearAuth);
-    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(true);
 
-    // Close sidebar on route change
+    // Close sidebar on small screens only on route change
     useEffect(() => {
-        setSidebarOpen(false);
+        if (window.innerWidth < 768) {
+            setSidebarOpen(false);
+        }
     }, [pathname]);
 
-    // Close sidebar on window resize to desktop
+    // Initialize sidebar based on screen size
     useEffect(() => {
-        const handleResize = () => {
-            if (window.innerWidth >= 768) setSidebarOpen(false);
-        };
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
+        if (window.innerWidth < 768) {
+            setSidebarOpen(false);
+        }
     }, []);
 
     const handleLogout = async () => {
@@ -109,7 +109,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     p-6 pl-4 pr-4
                     transition-transform duration-300 ease-in-out
                     ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-                    md:translate-x-0
                 `}
             >
                 {/* Close button on mobile */}
@@ -232,7 +231,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </aside>
 
             {/* ── Main Content ─────────────────────────────────────────────── */}
-            <div className="flex-1 flex flex-col ml-0 md:ml-[220px] min-w-0">
+            <div
+                className="flex-1 flex flex-col min-w-0"
+                style={{
+                    marginLeft: sidebarOpen ? (typeof window !== 'undefined' && window.innerWidth >= 768 ? '220px' : '0') : '0',
+                    transition: 'margin-left 0.3s ease-in-out'
+                }}
+            >
                 {/* Top bar */}
                 <header
                     className="flex items-center justify-between px-4 py-3 md:px-8 md:py-4 border-b border-[#1a1a1a] bg-[#0a0a0a] sticky top-0 z-20"
@@ -240,9 +245,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     {/* Left: Hamburger + Title */}
                     <div className="flex items-center gap-3">
                         <button
-                            onClick={() => setSidebarOpen(true)}
-                            className="md:hidden text-zinc-400 hover:text-white p-1"
-                            aria-label="Open menu"
+                            onClick={() => setSidebarOpen(!sidebarOpen)}
+                            className="text-zinc-400 hover:text-white p-1"
+                            aria-label="Toggle menu"
                         >
                             <Menu size={22} />
                         </button>

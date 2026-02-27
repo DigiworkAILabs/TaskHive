@@ -154,7 +154,7 @@ public class ReportService {
                 "COALESCE(AVG(EXTRACT(EPOCH FROM (t.completed_at - t.created_at)) / 3600) " +
                 "FILTER (WHERE t.status = 'DONE' AND t.completed_at IS NOT NULL), 0) AS avg_hours " +
                 "FROM tasks t " +
-                "LEFT JOIN employees e ON e.user_id = t.assigned_to " +
+                "LEFT JOIN employees e ON e.id = t.assigned_to " +
                 "WHERE t.is_deleted = false " +
                 "GROUP BY t.assigned_to, e.first_name, e.last_name " +
                 "ORDER BY tasks_completed DESC";

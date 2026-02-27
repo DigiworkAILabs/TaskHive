@@ -4,12 +4,14 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { employeeService } from '@/features/employee/services/employeeService';
 import { useEmployees } from '@/features/employee/hooks/useEmployees';
+import { useRouter } from 'next/navigation';
 import {
     Users, UserCheck, Clock, Loader2,
     ArrowRight, Building2, UserCircle2
 } from 'lucide-react';
 
 export default function DashboardPage() {
+    const router = useRouter();
     const [stats, setStats] = useState({ total: 0, active: 0, pending: 0 });
     const [statsLoading, setStatsLoading] = useState(true);
 
@@ -79,7 +81,7 @@ export default function DashboardPage() {
                 <DashboardStatCard
                     icon={<Clock size={24} color="#eab308" />}
                     iconBg="rgba(234,179,8,0.12)"
-                    label="Pending Tasks"
+                    label="Employee Status Pending "
                     value={stats.pending}
                     description="Awaiting activation"
                 />
@@ -141,9 +143,11 @@ export default function DashboardPage() {
                                 employees.map((emp, idx) => (
                                     <tr
                                         key={emp.id}
+                                        onClick={() => router.push(`/admin/employees/${emp.id}`)}
                                         style={{
                                             borderBottom: idx === employees.length - 1 ? 'none' : '1px solid #1f1f1f',
-                                            transition: 'background-color 0.2s'
+                                            transition: 'background-color 0.2s',
+                                            cursor: 'pointer'
                                         }}
                                         className="hover:bg-white/5"
                                     >

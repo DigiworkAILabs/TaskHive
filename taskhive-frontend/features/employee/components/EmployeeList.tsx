@@ -310,40 +310,32 @@ export const EmployeeList: React.FC = () => {
                     </div>
                 ) : (
                     <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
-                        <thead>
-                            <tr style={{ borderBottom: '1px solid #1f1f1f' }}>
-                                <th style={{ padding: '14px 16px', width: '48px' }}>
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedIds.size === employees.length && employees.length > 0}
-                                        onChange={toggleSelectAll}
-                                        style={{ width: '16px', height: '16px', accentColor: '#f97316', cursor: 'pointer' }}
+                        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
+                            <thead>
+                                <tr style={{ borderBottom: '1px solid #1f1f1f' }}>
+                                    <HeaderCell>EMPLOYEE</HeaderCell>
+                                    <HeaderCell>ROLE</HeaderCell>
+                                    <HeaderCell>DEPARTMENT</HeaderCell>
+                                    <HeaderCell>STATUS</HeaderCell>
+                                    <HeaderCell>ACTIONS</HeaderCell>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {employees.map((emp) => (
+                                    <EmployeeCard
+                                        key={emp.id}
+                                        employee={emp}
+                                        selected={selectedIds.has(emp.id)}
+                                        onSelect={toggleSelect}
+                                        onView={handleView}
+                                        onEdit={handleEdit}
+                                        onActivate={handleActivate}
+                                        onDeactivate={handleDeactivate}
+                                        onDelete={handleDelete}
                                     />
-                                </th>
-                                <HeaderCell>EMPLOYEE</HeaderCell>
-                                <HeaderCell>ROLE</HeaderCell>
-                                <HeaderCell>DEPARTMENT</HeaderCell>
-                                <HeaderCell>STATUS</HeaderCell>
-                                <HeaderCell>ACTIONS</HeaderCell>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {employees.map((emp) => (
-                                <EmployeeCard
-                                    key={emp.id}
-                                    employee={emp}
-                                    selected={selectedIds.has(emp.id)}
-                                    onSelect={toggleSelect}
-                                    onView={handleView}
-                                    onEdit={handleEdit}
-                                    onActivate={handleActivate}
-                                    onDeactivate={handleDeactivate}
-                                    onDelete={handleDelete}
-                                />
-                            ))}
-                        </tbody>
-                    </table>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                 )}
 
