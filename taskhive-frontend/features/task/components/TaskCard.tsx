@@ -34,15 +34,6 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onView, onEdit, onDele
             onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)')}
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
         >
-            {/* Checkbox */}
-            <td style={{ padding: '14px 16px', width: '48px' }}>
-                <input
-                    type="checkbox"
-                    checked={selected}
-                    onChange={() => onSelect(task.id)}
-                    style={{ width: '16px', height: '16px', accentColor: '#f97316', cursor: 'pointer' }}
-                />
-            </td>
 
             {/* Title + Tags */}
             <td style={{ padding: '14px 16px', maxWidth: '300px' }}>
@@ -135,7 +126,6 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onView, onEdit, onDele
                             }}
                         >
                             <ActionItem icon={<Eye size={14} />} label="View" onClick={() => { setMenuOpen(false); onView(task.id); }} />
-                            <ActionItem icon={<Pencil size={14} />} label="Edit" onClick={() => { setMenuOpen(false); onEdit(task.id); }} />
                             <div style={{ height: '1px', backgroundColor: '#2a2a2a', margin: '4px 0' }} />
                             <ActionItem icon={<Trash2 size={14} />} label="Delete" onClick={() => { setMenuOpen(false); onDelete(task.id); }} color="#ef4444" />
                         </div>

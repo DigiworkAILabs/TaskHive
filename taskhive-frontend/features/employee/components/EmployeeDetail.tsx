@@ -11,7 +11,7 @@ import { EmployeeForm } from './EmployeeForm';
 import { UpdateEmployeeData, EmployeeStatus } from '../types/employee.types';
 import {
     ArrowLeft, Pencil, Trash2, UserCheck, UserX,
-    Mail, Phone, Building2, Calendar, Users, Loader2, AlertCircle,
+    Mail, Phone, Building2, Calendar, Loader2, AlertCircle,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -241,7 +241,6 @@ export const EmployeeDetail: React.FC = () => {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '20px' }}>
                 <InfoCard icon={<Building2 size={18} />} label="Department" value={employee.department || '—'} />
                 <InfoCard icon={<Calendar size={18} />} label="Join Date" value={employee.joinDate ? new Date(employee.joinDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—'} />
-                <InfoCard icon={<Users size={18} />} label="Manager" value={employee.managerName || '—'} />
             </div>
 
             {/* Action Bar */}

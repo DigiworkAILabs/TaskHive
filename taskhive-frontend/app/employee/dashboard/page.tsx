@@ -3,6 +3,7 @@
 import React from 'react';
 import { useMyTasks } from '@/features/task/hooks/useMyTasks';
 import { ClipboardList, Clock, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { TaskListItem } from '@/features/task/types/task.types';
 
 export default function EmployeeDashboard() {
@@ -109,6 +110,7 @@ function DashboardStatCard({ icon, iconBg, label, value }: {
 }
 
 function TaskRow({ task }: { task: TaskListItem }) {
+    const router = useRouter();
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'DONE': return '#22c55e';
@@ -120,7 +122,21 @@ function TaskRow({ task }: { task: TaskListItem }) {
     };
 
     return (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: '10px', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid transparent', transition: 'all 0.2s' }}>
+        <div
+            onClick={() => router.push(`/employee/tasks/${task.id}`)}
+            style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '12px 16px',
+                borderRadius: '10px',
+                backgroundColor: 'rgba(255,255,255,0.02)',
+                border: '1px solid transparent',
+                transition: 'all 0.2s',
+                cursor: 'pointer'
+            }}
+            className="hover:bg-white/5"
+        >
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 <span style={{ fontSize: '14px', fontWeight: 500, color: '#ffffff' }}>{task.title}</span>
                 <span style={{ fontSize: '11px', color: '#52525b' }}>Due: {new Date(task.dueDate).toLocaleDateString()}</span>

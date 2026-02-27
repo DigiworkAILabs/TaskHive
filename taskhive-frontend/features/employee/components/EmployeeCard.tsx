@@ -44,21 +44,6 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
             onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)')}
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
         >
-            {/* Checkbox */}
-            <td style={{ padding: '16px', width: '48px' }}>
-                <input
-                    type="checkbox"
-                    checked={selected}
-                    onChange={() => onSelect(employee.id)}
-                    style={{
-                        width: '16px',
-                        height: '16px',
-                        accentColor: '#f97316',
-                        cursor: 'pointer',
-                    }}
-                />
-            </td>
-
             {/* Employee - Avatar + Name + Email */}
             <td style={{ padding: '16px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
@@ -178,7 +163,6 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                             }}
                         >
                             <ActionItem icon={<Eye size={14} />} label="View" onClick={() => { setMenuOpen(false); onView(employee.id); }} />
-                            <ActionItem icon={<Pencil size={14} />} label="Edit" onClick={() => { setMenuOpen(false); onEdit(employee.id); }} />
                             {employee.status !== 'ACTIVE' && (
                                 <ActionItem icon={<UserCheck size={14} />} label="Activate" onClick={() => { setMenuOpen(false); onActivate(employee.id); }} color="#22c55e" />
                             )}
