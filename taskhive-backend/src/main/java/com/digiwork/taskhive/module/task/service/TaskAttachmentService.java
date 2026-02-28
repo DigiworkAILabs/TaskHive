@@ -33,12 +33,21 @@ public class TaskAttachmentService {
     private final StorageService storageService;
     private final TaskMapper taskMapper;
 
-    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    private static final long MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB per SRS NFR-SEC-10
     private static final List<String> ALLOWED_CONTENT_TYPES = List.of(
-            "image/jpeg", "image/png",
+            // Images
+            "image/jpeg", "image/png", "image/webp", "image/gif",
+            // Documents
             "application/pdf",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document" // .docx
-    );
+            "application/msword", // .doc
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
+            "application/vnd.ms-excel", // .xls
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // .xlsx
+            "application/vnd.ms-powerpoint", // .ppt
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation", // .pptx
+            // Text & Archives
+            "text/plain", "text/csv",
+            "application/zip", "application/x-rar-compressed");
     private static final String ATTACHMENT_DIRECTORY = "tasks/attachments";
 
     @Transactional
@@ -105,11 +114,12 @@ public class TaskAttachmentService {
         }
 
         if (file.getSize() > MAX_FILE_SIZE) {
-            throw new BusinessException("File size exceeds maximum limit of 10MB");
+            throw new BusinessException("File size exceeds maximum limit of 20MB");
         }
 
         if (!ALLOWED_CONTENT_TYPES.contains(file.getContentType())) {
-            throw new BusinessException("Only JPEG, PNG, PDF, and DOCX files are allowed");
+            throw new BusinessException(
+                    "File type not allowed. Supported: images, PDF, Office documents, text, CSV, ZIP, RAR");
         }
     }
 }

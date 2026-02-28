@@ -232,11 +232,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
             {/* ── Main Content ─────────────────────────────────────────────── */}
             <div
-                className="flex-1 flex flex-col min-w-0"
-                style={{
-                    marginLeft: sidebarOpen ? (typeof window !== 'undefined' && window.innerWidth >= 768 ? '220px' : '0') : '0',
-                    transition: 'margin-left 0.3s ease-in-out'
-                }}
+                className={`flex-1 flex flex-col min-w-0 transition-[margin-left] duration-300 ease-in-out ${sidebarOpen ? 'md:ml-[220px]' : 'ml-0'}`}
             >
                 {/* Top bar */}
                 <header
