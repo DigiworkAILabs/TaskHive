@@ -2,3 +2,275 @@
 2026-02-28 12:58:41.143 [main] [] INFO  c.d.taskhive.TaskhiveApplication - Starting TaskhiveApplication using Java 21.0.10 with PID 8816 (D:\Internship\TaskHive\taskhive-backend\target\classes started by Admin in D:\Internship\TaskHive\taskhive-backend)
 2026-02-28 12:58:41.144 [main] [] DEBUG c.d.taskhive.TaskhiveApplication - Running with Spring Boot v3.5.11, Spring v6.2.16
 2026-02-28 12:58:41.145 [main] [] INFO  c.d.taskhive.TaskhiveApplication - The following 1 profile is active: "dev"
+2026-02-28 16:01:43.679 [background-preinit] [] INFO  o.h.validator.internal.util.Version - HV000001: Hibernate Validator 8.0.3.Final
+2026-02-28 16:01:43.884 [main] [] INFO  c.d.taskhive.TaskhiveApplication - Starting TaskhiveApplication using Java 21.0.10 with PID 9204 (D:\Internship\TaskHive\taskhive-backend\target\classes started by Admin in D:\Internship\TaskHive\taskhive-backend)
+2026-02-28 16:01:43.886 [main] [] DEBUG c.d.taskhive.TaskhiveApplication - Running with Spring Boot v3.5.11, Spring v6.2.16
+2026-02-28 16:01:43.887 [main] [] INFO  c.d.taskhive.TaskhiveApplication - The following 1 profile is active: "dev"
+2026-02-28 16:01:47.172 [main] [] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-02-28 16:01:47.860 [main] [] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 648 ms. Found 21 JPA repository interfaces.
+2026-02-28 16:01:49.808 [main] [] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2026-02-28 16:01:49.830 [main] [] INFO  o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2026-02-28 16:01:49.837 [main] [] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2026-02-28 16:01:49.838 [main] [] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.52]
+2026-02-28 16:01:50.040 [main] [] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-02-28 16:01:50.042 [main] [] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 5979 ms
+2026-02-28 16:01:50.859 [main] [] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2026-02-28 16:01:51.310 [main] [] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@f4f843f
+2026-02-28 16:01:51.314 [main] [] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2026-02-28 16:01:51.396 [main] [] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:postgresql://localhost:5432/taskhive (PostgreSQL 18.1)
+2026-02-28 16:01:51.428 [main] [] WARN  o.f.c.i.database.base.Database - Flyway upgrade recommended: PostgreSQL 18.1 is newer than this version of Flyway and support has not been tested. The latest supported version of PostgreSQL is 17.
+2026-02-28 16:01:51.727 [main] [] INFO  o.f.core.internal.command.DbValidate - Successfully validated 21 migrations (execution time 00:00.255s)
+2026-02-28 16:01:51.777 [main] [] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "public": 21
+2026-02-28 16:01:51.790 [main] [] INFO  o.f.core.internal.command.DbMigrate - Schema "public" is up to date. No migration necessary.
+2026-02-28 16:01:52.128 [main] [] INFO  o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-02-28 16:01:52.240 [main] [] INFO  org.hibernate.Version - HHH000412: Hibernate ORM core version 6.6.42.Final
+2026-02-28 16:01:52.329 [main] [] INFO  o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2026-02-28 16:01:53.256 [main] [] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-02-28 16:01:53.448 [main] [] WARN  org.hibernate.orm.deprecation - HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-02-28 16:01:53.499 [main] [] INFO  o.hibernate.orm.connections.pooling - HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 18.1
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-02-28 16:01:58.036 [main] [] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-02-28 16:01:58.305 [main] [] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-02-28 16:01:59.089 [main] [] INFO  o.s.d.j.r.query.QueryEnhancerFactory - Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-02-28 16:02:00.149 [main] [] DEBUG c.d.t.m.a.s.JwtAuthenticationFilter - Filter 'jwtAuthenticationFilter' configured for use
+2026-02-28 16:02:04.731 [main] [] WARN  o.s.b.a.o.j.JpaBaseConfiguration$JpaWebConfiguration - spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-02-28 16:02:05.356 [main] [] INFO  o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer - Global AuthenticationManager configured with UserDetailsService bean with name customUserDetailsService
+2026-02-28 16:02:05.566 [main] [] DEBUG o.s.s.web.DefaultSecurityFilterChain - Will secure any request with filters: DisableEncodeUrlFilter, WebAsyncManagerIntegrationFilter, SecurityContextHolderFilter, HeaderWriterFilter, CorsFilter, LogoutFilter, JwtAuthenticationFilter, RequestCacheAwareFilter, SecurityContextHolderAwareRequestFilter, AnonymousAuthenticationFilter, SessionManagementFilter, ExceptionTranslationFilter, AuthorizationFilter
+2026-02-28 16:02:06.440 [main] [] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - Starting...
+2026-02-28 16:02:06.442 [main] [] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - BrokerAvailabilityEvent[available=true, SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@776f4f35]]
+2026-02-28 16:02:06.443 [main] [] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - Started.
+2026-02-28 16:02:06.446 [main] [] INFO  o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2026-02-28 16:02:06.492 [main] [] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/'
+2026-02-28 16:02:06.524 [main] [] INFO  c.d.taskhive.TaskhiveApplication - Started TaskhiveApplication in 24.849 seconds (process running for 26.022)
+2026-02-28 16:02:06.823 [main] [] INFO  c.d.t.m.auth.service.AdminSeeder - Admin user already exists: admin@taskhive.com
+2026-02-28 16:03:06.455 [MessageBroker-2] [] INFO  o.s.w.s.c.WebSocketMessageBrokerStats - WebSocketSession[0 current WS(0)-HttpStream(0)-HttpPoll(0), 0 total, 0 closed abnormally (0 connect failure, 0 send limit, 0 transport error)], stompSubProtocol[processed CONNECT(0)-CONNECTED(0)-DISCONNECT(0)], stompBrokerRelay[null], inboundChannel[pool size = 0, active threads = 0, queued tasks = 0, completed tasks = 0], outboundChannel[pool size = 0, active threads = 0, queued tasks = 0, completed tasks = 0], sockJsScheduler[pool size = 7, active threads = 1, queued tasks = 4, completed tasks = 2]
+2026-02-28 16:13:39.710 [http-nio-8080-exec-1] [] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-02-28 16:13:39.711 [http-nio-8080-exec-1] [] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2026-02-28 16:13:39.718 [http-nio-8080-exec-1] [] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 6 ms
+2026-02-28 16:13:39.778 [http-nio-8080-exec-1] [] DEBUG o.s.security.web.FilterChainProxy - Securing OPTIONS /api/v1/auth/login
+2026-02-28 16:13:39.889 [http-nio-8080-exec-2] [] DEBUG o.s.security.web.FilterChainProxy - Securing POST /api/v1/auth/login
+2026-02-28 16:13:39.926 [http-nio-8080-exec-2] [] DEBUG o.s.s.w.a.AnonymousAuthenticationFilter - Set SecurityContextHolder to anonymous SecurityContext
+2026-02-28 16:13:39.941 [http-nio-8080-exec-2] [] DEBUG o.s.security.web.FilterChainProxy - Secured POST /api/v1/auth/login
+2026-02-28 16:13:42.106 [http-nio-8080-exec-2] [] DEBUG c.d.t.m.a.l.AuditEventListener - Audit: UserAuthenticatedEvent for user [18ef0067-a820-43ba-ace5-04a9bc9ae7aa]
+2026-02-28 16:13:42.112 [http-nio-8080-exec-2] [] DEBUG c.d.t.m.audit.service.AuditService - Audit log created: action=USER_LOGIN, entityType=USER, entityId=18ef0067-a820-43ba-ace5-04a9bc9ae7aa
+2026-02-28 16:13:42.113 [http-nio-8080-exec-2] [] INFO  c.d.t.m.auth.service.AuthService - User logged in: admin@taskhive.com
+2026-02-28 16:13:47.043 [http-nio-8080-exec-3] [] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/v1/notifications/unread-count
+2026-02-28 16:13:47.126 [http-nio-8080-exec-5] [] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/v1/employees?page=0&size=5&sortBy=createdAt&sortDir=desc
+2026-02-28 16:13:47.162 [http-nio-8080-exec-4] [] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/v1/employees?page=0&size=5&sortBy=createdAt&sortDir=desc
+2026-02-28 16:13:47.173 [http-nio-8080-exec-7] [] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/v1/employees?page=0&size=1
+2026-02-28 16:13:47.173 [http-nio-8080-exec-6] [] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/v1/employees?page=0&size=1
+2026-02-28 16:13:47.737 [http-nio-8080-exec-6] [] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/v1/employees?page=0&size=1
+2026-02-28 16:13:47.740 [http-nio-8080-exec-5] [] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/v1/employees?page=0&size=5&sortBy=createdAt&sortDir=desc
+2026-02-28 16:13:47.741 [http-nio-8080-exec-3] [] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/v1/notifications/unread-count
+2026-02-28 16:13:47.746 [http-nio-8080-exec-7] [] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/v1/employees?page=0&size=1
+2026-02-28 16:13:47.756 [http-nio-8080-exec-4] [] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/v1/employees?page=0&size=5&sortBy=createdAt&sortDir=desc
+2026-02-28 16:13:47.797 [http-nio-8080-exec-6] [] DEBUG o.s.s.a.m.AuthorizationManagerBeforeMethodInterceptor - Authorizing method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.digiwork.taskhive.module.employee.controller.EmployeeController.listEmployees(java.lang.String,java.lang.String,java.lang.String,java.lang.String,int,int,java.lang.String,java.lang.String); target is of class [com.digiwork.taskhive.module.employee.controller.EmployeeController]
+2026-02-28 16:13:47.797 [http-nio-8080-exec-4] [] DEBUG o.s.s.a.m.AuthorizationManagerBeforeMethodInterceptor - Authorizing method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.digiwork.taskhive.module.employee.controller.EmployeeController.listEmployees(java.lang.String,java.lang.String,java.lang.String,java.lang.String,int,int,java.lang.String,java.lang.String); target is of class [com.digiwork.taskhive.module.employee.controller.EmployeeController]
+2026-02-28 16:13:47.798 [http-nio-8080-exec-5] [] DEBUG o.s.s.a.m.AuthorizationManagerBeforeMethodInterceptor - Authorizing method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.digiwork.taskhive.module.employee.controller.EmployeeController.listEmployees(java.lang.String,java.lang.String,java.lang.String,java.lang.String,int,int,java.lang.String,java.lang.String); target is of class [com.digiwork.taskhive.module.employee.controller.EmployeeController]
+2026-02-28 16:13:47.801 [http-nio-8080-exec-7] [] DEBUG o.s.s.a.m.AuthorizationManagerBeforeMethodInterceptor - Authorizing method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.digiwork.taskhive.module.employee.controller.EmployeeController.listEmployees(java.lang.String,java.lang.String,java.lang.String,java.lang.String,int,int,java.lang.String,java.lang.String); target is of class [com.digiwork.taskhive.module.employee.controller.EmployeeController]
+2026-02-28 16:13:47.860 [http-nio-8080-exec-7] [] DEBUG o.s.s.a.m.AuthorizationManagerBeforeMethodInterceptor - Authorized method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.digiwork.taskhive.module.employee.controller.EmployeeController.listEmployees(java.lang.String,java.lang.String,java.lang.String,java.lang.String,int,int,java.lang.String,java.lang.String); target is of class [com.digiwork.taskhive.module.employee.controller.EmployeeController]
+2026-02-28 16:13:47.860 [http-nio-8080-exec-6] [] DEBUG o.s.s.a.m.AuthorizationManagerBeforeMethodInterceptor - Authorized method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.digiwork.taskhive.module.employee.controller.EmployeeController.listEmployees(java.lang.String,java.lang.String,java.lang.String,java.lang.String,int,int,java.lang.String,java.lang.String); target is of class [com.digiwork.taskhive.module.employee.controller.EmployeeController]
+2026-02-28 16:13:47.860 [http-nio-8080-exec-5] [] DEBUG o.s.s.a.m.AuthorizationManagerBeforeMethodInterceptor - Authorized method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.digiwork.taskhive.module.employee.controller.EmployeeController.listEmployees(java.lang.String,java.lang.String,java.lang.String,java.lang.String,int,int,java.lang.String,java.lang.String); target is of class [com.digiwork.taskhive.module.employee.controller.EmployeeController]
+2026-02-28 16:13:47.861 [http-nio-8080-exec-4] [] DEBUG o.s.s.a.m.AuthorizationManagerBeforeMethodInterceptor - Authorized method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.digiwork.taskhive.module.employee.controller.EmployeeController.listEmployees(java.lang.String,java.lang.String,java.lang.String,java.lang.String,int,int,java.lang.String,java.lang.String); target is of class [com.digiwork.taskhive.module.employee.controller.EmployeeController]
+2026-02-28 16:13:48.279 [http-nio-8080-exec-8] [] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/v1/employees?page=0&size=1&status=ACTIVE
+2026-02-28 16:13:48.302 [http-nio-8080-exec-9] [] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/v1/employees?page=0&size=1&status=ACTIVE
+2026-02-28 16:13:48.344 [http-nio-8080-exec-8] [] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/v1/employees?page=0&size=1&status=ACTIVE
+2026-02-28 16:13:48.360 [http-nio-8080-exec-8] [] DEBUG o.s.s.a.m.AuthorizationManagerBeforeMethodInterceptor - Authorizing method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.digiwork.taskhive.module.employee.controller.EmployeeController.listEmployees(java.lang.String,java.lang.String,java.lang.String,java.lang.String,int,int,java.lang.String,java.lang.String); target is of class [com.digiwork.taskhive.module.employee.controller.EmployeeController]
+2026-02-28 16:13:48.369 [http-nio-8080-exec-9] [] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/v1/employees?page=0&size=1&status=ACTIVE
+2026-02-28 16:13:48.375 [http-nio-8080-exec-8] [] DEBUG o.s.s.a.m.AuthorizationManagerBeforeMethodInterceptor - Authorized method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.digiwork.taskhive.module.employee.controller.EmployeeController.listEmployees(java.lang.String,java.lang.String,java.lang.String,java.lang.String,int,int,java.lang.String,java.lang.String); target is of class [com.digiwork.taskhive.module.employee.controller.EmployeeController]
+2026-02-28 16:13:48.387 [http-nio-8080-exec-9] [] DEBUG o.s.s.a.m.AuthorizationManagerBeforeMethodInterceptor - Authorizing method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.digiwork.taskhive.module.employee.controller.EmployeeController.listEmployees(java.lang.String,java.lang.String,java.lang.String,java.lang.String,int,int,java.lang.String,java.lang.String); target is of class [com.digiwork.taskhive.module.employee.controller.EmployeeController]
+2026-02-28 16:13:48.408 [http-nio-8080-exec-9] [] DEBUG o.s.s.a.m.AuthorizationManagerBeforeMethodInterceptor - Authorized method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.digiwork.taskhive.module.employee.controller.EmployeeController.listEmployees(java.lang.String,java.lang.String,java.lang.String,java.lang.String,int,int,java.lang.String,java.lang.String); target is of class [com.digiwork.taskhive.module.employee.controller.EmployeeController]
+2026-02-28 16:13:48.460 [http-nio-8080-exec-10] [] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/v1/employees?page=0&size=1&status=PENDING
+2026-02-28 16:13:48.467 [http-nio-8080-exec-1] [] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/v1/employees?page=0&size=1&status=PENDING
+2026-02-28 16:13:48.514 [http-nio-8080-exec-10] [] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/v1/employees?page=0&size=1&status=PENDING
+2026-02-28 16:13:48.528 [http-nio-8080-exec-1] [] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/v1/employees?page=0&size=1&status=PENDING
+2026-02-28 16:13:48.554 [http-nio-8080-exec-10] [] DEBUG o.s.s.a.m.AuthorizationManagerBeforeMethodInterceptor - Authorizing method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.digiwork.taskhive.module.employee.controller.EmployeeController.listEmployees(java.lang.String,java.lang.String,java.lang.String,java.lang.String,int,int,java.lang.String,java.lang.String); target is of class [com.digiwork.taskhive.module.employee.controller.EmployeeController]
+2026-02-28 16:13:48.559 [http-nio-8080-exec-10] [] DEBUG o.s.s.a.m.AuthorizationManagerBeforeMethodInterceptor - Authorized method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.digiwork.taskhive.module.employee.controller.EmployeeController.listEmployees(java.lang.String,java.lang.String,java.lang.String,java.lang.String,int,int,java.lang.String,java.lang.String); target is of class [com.digiwork.taskhive.module.employee.controller.EmployeeController]
+2026-02-28 16:13:48.567 [http-nio-8080-exec-1] [] DEBUG o.s.s.a.m.AuthorizationManagerBeforeMethodInterceptor - Authorizing method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.digiwork.taskhive.module.employee.controller.EmployeeController.listEmployees(java.lang.String,java.lang.String,java.lang.String,java.lang.String,int,int,java.lang.String,java.lang.String); target is of class [com.digiwork.taskhive.module.employee.controller.EmployeeController]
+2026-02-28 16:13:48.596 [http-nio-8080-exec-1] [] DEBUG o.s.s.a.m.AuthorizationManagerBeforeMethodInterceptor - Authorized method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.digiwork.taskhive.module.employee.controller.EmployeeController.listEmployees(java.lang.String,java.lang.String,java.lang.String,java.lang.String,int,int,java.lang.String,java.lang.String); target is of class [com.digiwork.taskhive.module.employee.controller.EmployeeController]
+2026-02-28 16:18:14.220 [http-nio-8080-exec-8] [] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/v1/notifications/unread-count
+2026-02-28 16:18:14.253 [http-nio-8080-exec-8] [] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/v1/notifications/unread-count
+2026-02-28 16:18:30.600 [http-nio-8080-exec-9] [] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/v1/notifications/unread-count
+2026-02-28 16:18:30.642 [http-nio-8080-exec-9] [] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/v1/notifications/unread-count
+2026-02-28 16:19:00.692 [http-nio-8080-exec-10] [] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/v1/notifications/unread-count
+2026-02-28 16:19:00.733 [http-nio-8080-exec-10] [] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/v1/notifications/unread-count
+2026-02-28 16:19:30.803 [http-nio-8080-exec-1] [] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/v1/notifications/unread-count
+2026-02-28 16:19:30.849 [http-nio-8080-exec-1] [] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/v1/notifications/unread-count
+2026-02-28 16:20:00.944 [http-nio-8080-exec-3] [] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/v1/notifications/unread-count
+2026-02-28 16:20:00.998 [http-nio-8080-exec-3] [] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/v1/notifications/unread-count
+2026-02-28 16:20:31.068 [http-nio-8080-exec-4] [] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/v1/notifications/unread-count
+2026-02-28 16:20:31.147 [http-nio-8080-exec-4] [] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/v1/notifications/unread-count
+2026-02-28 16:20:38.403 [http-nio-8080-exec-5] [] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/v1/tasks?page=0&size=10
+2026-02-28 16:20:38.433 [http-nio-8080-exec-6] [] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/v1/tasks?page=0&size=10
+2026-02-28 16:20:38.457 [http-nio-8080-exec-5] [] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/v1/tasks?page=0&size=10
+2026-02-28 16:20:38.477 [http-nio-8080-exec-6] [] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/v1/tasks?page=0&size=10
+2026-02-28 16:20:38.483 [http-nio-8080-exec-5] [] DEBUG o.s.s.a.m.AuthorizationManagerBeforeMethodInterceptor - Authorizing method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.digiwork.taskhive.module.task.controller.TaskController.getAllTasks(java.lang.String,java.lang.String,java.util.UUID,java.time.LocalDateTime,java.time.LocalDateTime,int,int,java.lang.String,java.lang.String); target is of class [com.digiwork.taskhive.module.task.controller.TaskController]
+2026-02-28 16:20:38.484 [http-nio-8080-exec-6] [] DEBUG o.s.s.a.m.AuthorizationManagerBeforeMethodInterceptor - Authorizing method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.digiwork.taskhive.module.task.controller.TaskController.getAllTasks(java.lang.String,java.lang.String,java.util.UUID,java.time.LocalDateTime,java.time.LocalDateTime,int,int,java.lang.String,java.lang.String); target is of class [com.digiwork.taskhive.module.task.controller.TaskController]
+2026-02-28 16:20:38.485 [http-nio-8080-exec-6] [] DEBUG o.s.s.a.m.AuthorizationManagerBeforeMethodInterceptor - Authorized method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.digiwork.taskhive.module.task.controller.TaskController.getAllTasks(java.lang.String,java.lang.String,java.util.UUID,java.time.LocalDateTime,java.time.LocalDateTime,int,int,java.lang.String,java.lang.String); target is of class [com.digiwork.taskhive.module.task.controller.TaskController]
+2026-02-28 16:20:38.485 [http-nio-8080-exec-5] [] DEBUG o.s.s.a.m.AuthorizationManagerBeforeMethodInterceptor - Authorized method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.digiwork.taskhive.module.task.controller.TaskController.getAllTasks(java.lang.String,java.lang.String,java.util.UUID,java.time.LocalDateTime,java.time.LocalDateTime,int,int,java.lang.String,java.lang.String); target is of class [com.digiwork.taskhive.module.task.controller.TaskController]
+2026-02-28 16:20:53.971 [http-nio-8080-exec-7] [] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/v1/employees?page=0&size=100&status=ACTIVE
+2026-02-28 16:20:53.989 [http-nio-8080-exec-8] [] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/v1/employees?page=0&size=100&status=ACTIVE
+2026-02-28 16:20:53.991 [http-nio-8080-exec-7] [] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/v1/employees?page=0&size=100&status=ACTIVE
+2026-02-28 16:20:54.003 [http-nio-8080-exec-7] [] DEBUG o.s.s.a.m.AuthorizationManagerBeforeMethodInterceptor - Authorizing method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.digiwork.taskhive.module.employee.controller.EmployeeController.listEmployees(java.lang.String,java.lang.String,java.lang.String,java.lang.String,int,int,java.lang.String,java.lang.String); target is of class [com.digiwork.taskhive.module.employee.controller.EmployeeController]
+2026-02-28 16:20:54.010 [http-nio-8080-exec-7] [] DEBUG o.s.s.a.m.AuthorizationManagerBeforeMethodInterceptor - Authorized method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.digiwork.taskhive.module.employee.controller.EmployeeController.listEmployees(java.lang.String,java.lang.String,java.lang.String,java.lang.String,int,int,java.lang.String,java.lang.String); target is of class [com.digiwork.taskhive.module.employee.controller.EmployeeController]
+2026-02-28 16:20:54.029 [http-nio-8080-exec-8] [] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/v1/employees?page=0&size=100&status=ACTIVE
+2026-02-28 16:20:54.052 [http-nio-8080-exec-8] [] DEBUG o.s.s.a.m.AuthorizationManagerBeforeMethodInterceptor - Authorizing method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.digiwork.taskhive.module.employee.controller.EmployeeController.listEmployees(java.lang.String,java.lang.String,java.lang.String,java.lang.String,int,int,java.lang.String,java.lang.String); target is of class [com.digiwork.taskhive.module.employee.controller.EmployeeController]
+2026-02-28 16:20:54.058 [http-nio-8080-exec-8] [] DEBUG o.s.s.a.m.AuthorizationManagerBeforeMethodInterceptor - Authorized method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.digiwork.taskhive.module.employee.controller.EmployeeController.listEmployees(java.lang.String,java.lang.String,java.lang.String,java.lang.String,int,int,java.lang.String,java.lang.String); target is of class [com.digiwork.taskhive.module.employee.controller.EmployeeController]
+2026-02-28 16:21:01.184 [http-nio-8080-exec-9] [] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/v1/notifications/unread-count
+2026-02-28 16:21:01.214 [http-nio-8080-exec-9] [] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/v1/notifications/unread-count
+2026-02-28 16:21:13.018 [http-nio-8080-exec-10] [] DEBUG o.s.security.web.FilterChainProxy - Securing OPTIONS /api/v1/tasks
+2026-02-28 16:21:13.040 [http-nio-8080-exec-1] [] DEBUG o.s.security.web.FilterChainProxy - Securing POST /api/v1/tasks
+2026-02-28 16:21:13.075 [http-nio-8080-exec-1] [] DEBUG o.s.security.web.FilterChainProxy - Secured POST /api/v1/tasks
+2026-02-28 16:21:13.141 [http-nio-8080-exec-1] [] DEBUG o.s.s.a.m.AuthorizationManagerBeforeMethodInterceptor - Authorizing method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.digiwork.taskhive.module.task.controller.TaskController.createTask(com.digiwork.taskhive.module.task.dto.CreateTaskRequest); target is of class [com.digiwork.taskhive.module.task.controller.TaskController]
+2026-02-28 16:21:13.143 [http-nio-8080-exec-1] [] DEBUG o.s.s.a.m.AuthorizationManagerBeforeMethodInterceptor - Authorized method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.digiwork.taskhive.module.task.controller.TaskController.createTask(com.digiwork.taskhive.module.task.dto.CreateTaskRequest); target is of class [com.digiwork.taskhive.module.task.controller.TaskController]
+2026-02-28 16:21:13.200 [http-nio-8080-exec-1] [] DEBUG c.d.t.m.a.l.AuditEventListener - Audit: TaskCreatedEvent for task [454eba8e-2cca-427c-8314-38e00659b691]
+2026-02-28 16:21:13.229 [http-nio-8080-exec-1] [] DEBUG c.d.t.m.audit.service.AuditService - Audit log created: action=TASK_CREATED, entityType=TASK, entityId=454eba8e-2cca-427c-8314-38e00659b691
+2026-02-28 16:21:13.232 [http-nio-8080-exec-1] [] DEBUG c.d.t.m.a.l.AuditEventListener - Audit: TaskAssignedEvent for task [454eba8e-2cca-427c-8314-38e00659b691] to employee [3d10035e-5027-4c59-b267-f6725c3a22d9]
+2026-02-28 16:21:13.237 [http-nio-8080-exec-1] [] DEBUG c.d.t.m.audit.service.AuditService - Audit log created: action=TASK_ASSIGNED, entityType=TASK, entityId=454eba8e-2cca-427c-8314-38e00659b691
+2026-02-28 16:21:13.237 [http-nio-8080-exec-1] [] INFO  c.d.t.m.n.listener.TaskEventListener - Handling TaskAssignedEvent for task [454eba8e-2cca-427c-8314-38e00659b691] assigned to employee [3d10035e-5027-4c59-b267-f6725c3a22d9]
+2026-02-28 16:21:13.259 [http-nio-8080-exec-1] [] INFO  c.d.t.m.n.s.NotificationService - Created notification [TASK_ASSIGNED] for user [22431b87-729b-4151-bd58-8e6e8acc3f08]: New Task Assigned
+2026-02-28 16:21:13.297 [http-nio-8080-exec-1] [] DEBUG c.d.t.m.n.s.WebSocketNotificationService - WebSocket notification sent to user [22431b87-729b-4151-bd58-8e6e8acc3f08]: New Task Assigned
+2026-02-28 16:21:13.339 [http-nio-8080-exec-1] [] INFO  c.d.t.m.n.service.EmailQueueService - Email queued for [erwin1410c@gmail.com] with template [task-assigned]
+2026-02-28 16:21:13.341 [http-nio-8080-exec-1] [] INFO  c.d.t.m.task.service.TaskService - Task created: gygy (454eba8e-2cca-427c-8314-38e00659b691)
+2026-02-28 16:21:13.885 [http-nio-8080-exec-2] [] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/v1/tasks?page=0&size=10
+2026-02-28 16:21:13.905 [http-nio-8080-exec-3] [] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/v1/tasks?page=0&size=10
+2026-02-28 16:21:13.917 [http-nio-8080-exec-2] [] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/v1/tasks?page=0&size=10
+2026-02-28 16:21:13.922 [http-nio-8080-exec-2] [] DEBUG o.s.s.a.m.AuthorizationManagerBeforeMethodInterceptor - Authorizing method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.digiwork.taskhive.module.task.controller.TaskController.getAllTasks(java.lang.String,java.lang.String,java.util.UUID,java.time.LocalDateTime,java.time.LocalDateTime,int,int,java.lang.String,java.lang.String); target is of class [com.digiwork.taskhive.module.task.controller.TaskController]
+2026-02-28 16:21:13.926 [http-nio-8080-exec-2] [] DEBUG o.s.s.a.m.AuthorizationManagerBeforeMethodInterceptor - Authorized method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.digiwork.taskhive.module.task.controller.TaskController.getAllTasks(java.lang.String,java.lang.String,java.util.UUID,java.time.LocalDateTime,java.time.LocalDateTime,int,int,java.lang.String,java.lang.String); target is of class [com.digiwork.taskhive.module.task.controller.TaskController]
+2026-02-28 16:21:13.946 [http-nio-8080-exec-3] [] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/v1/tasks?page=0&size=10
+2026-02-28 16:21:13.961 [http-nio-8080-exec-3] [] DEBUG o.s.s.a.m.AuthorizationManagerBeforeMethodInterceptor - Authorizing method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.digiwork.taskhive.module.task.controller.TaskController.getAllTasks(java.lang.String,java.lang.String,java.util.UUID,java.time.LocalDateTime,java.time.LocalDateTime,int,int,java.lang.String,java.lang.String); target is of class [com.digiwork.taskhive.module.task.controller.TaskController]
+2026-02-28 16:21:13.962 [http-nio-8080-exec-3] [] DEBUG o.s.s.a.m.AuthorizationManagerBeforeMethodInterceptor - Authorized method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.digiwork.taskhive.module.task.controller.TaskController.getAllTasks(java.lang.String,java.lang.String,java.util.UUID,java.time.LocalDateTime,java.time.LocalDateTime,int,int,java.lang.String,java.lang.String); target is of class [com.digiwork.taskhive.module.task.controller.TaskController]
+2026-02-28 16:21:31.263 [http-nio-8080-exec-4] [] DEBUG o.s.security.web.FilterChainProxy - Securing GET /api/v1/notifications/unread-count
+2026-02-28 16:21:31.305 [http-nio-8080-exec-4] [] DEBUG o.s.security.web.FilterChainProxy - Secured GET /api/v1/notifications/unread-count
+2026-02-28 16:21:37.841 [MessageBroker-4] [] INFO  c.d.t.m.n.s.EmailQueueScheduler - Processing 1 pending emails from queue
+2026-02-28 16:21:44.699 [MessageBroker-4] [] INFO  c.d.t.m.n.s.NotificationEmailService - Email sent successfully to [erwin1410c@gmail.com] with template [task-assigned]
+2026-02-28 16:21:44.703 [MessageBroker-4] [] INFO  c.d.t.m.n.s.EmailQueueScheduler - Email sent successfully to [erwin1410c@gmail.com] (id: ea0fb305-4b0c-4719-ae8d-d47e7b69edab)
+2026-02-28 16:24:04.448 [http-nio-8080-exec-8] [] DEBUG o.s.security.web.FilterChainProxy - Securing HEAD /api/v1/auth/login
+2026-02-28 16:24:04.450 [http-nio-8080-exec-8] [] DEBUG o.s.s.w.a.AnonymousAuthenticationFilter - Set SecurityContextHolder to anonymous SecurityContext
+2026-02-28 16:24:04.452 [http-nio-8080-exec-8] [] DEBUG o.s.security.web.FilterChainProxy - Secured HEAD /api/v1/auth/login
+2026-02-28 16:24:04.457 [http-nio-8080-exec-8] [] ERROR c.d.t.c.e.GlobalExceptionHandler - Unexpected error: 
+org.springframework.web.HttpRequestMethodNotSupportedException: Request method 'HEAD' is not supported
+	at org.springframework.web.servlet.mvc.method.RequestMappingInfoHandlerMapping.handleNoMatch(RequestMappingInfoHandlerMapping.java:267)
+	at org.springframework.web.servlet.handler.AbstractHandlerMethodMapping.lookupHandlerMethod(AbstractHandlerMethodMapping.java:441)
+	at org.springframework.web.servlet.handler.AbstractHandlerMethodMapping.getHandlerInternal(AbstractHandlerMethodMapping.java:382)
+	at org.springframework.web.servlet.mvc.method.RequestMappingInfoHandlerMapping.getHandlerInternal(RequestMappingInfoHandlerMapping.java:127)
+	at org.springframework.web.servlet.mvc.method.RequestMappingInfoHandlerMapping.getHandlerInternal(RequestMappingInfoHandlerMapping.java:68)
+	at org.springframework.web.servlet.handler.AbstractHandlerMapping.getHandler(AbstractHandlerMapping.java:509)
+	at org.springframework.web.servlet.DispatcherServlet.getHandler(DispatcherServlet.java:1284)
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1065)
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:979)
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1014)
+	at org.springframework.web.servlet.FrameworkServlet.doGet(FrameworkServlet.java:903)
+	at jakarta.servlet.http.HttpServlet.doHead(HttpServlet.java:211)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:587)
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:885)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:658)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:110)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at org.springframework.web.servlet.resource.ResourceUrlEncodingFilter.doFilter(ResourceUrlEncodingFilter.java:66)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:108)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:108)
+	at org.springframework.security.web.FilterChainProxy.lambda$doFilterInternal$3(FilterChainProxy.java:231)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:365)
+	at org.springframework.security.web.access.intercept.AuthorizationFilter.doFilter(AuthorizationFilter.java:101)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:125)
+	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:119)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:131)
+	at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:85)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.authentication.AnonymousAuthenticationFilter.doFilter(AnonymousAuthenticationFilter.java:100)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter.doFilter(SecurityContextHolderAwareRequestFilter.java:179)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.savedrequest.RequestCacheAwareFilter.doFilter(RequestCacheAwareFilter.java:63)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at com.digiwork.taskhive.module.auth.security.JwtAuthenticationFilter.doFilterInternal(JwtAuthenticationFilter.java:49)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:107)
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:93)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.web.filter.CorsFilter.doFilterInternal(CorsFilter.java:91)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.header.HeaderWriterFilter.doHeadersAfter(HeaderWriterFilter.java:90)
+	at org.springframework.security.web.header.HeaderWriterFilter.doFilterInternal(HeaderWriterFilter.java:75)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:82)
+	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:69)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter.doFilterInternal(WebAsyncManagerIntegrationFilter.java:62)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.session.DisableEncodeUrlFilter.doFilterInternal(DisableEncodeUrlFilter.java:42)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374)
+	at org.springframework.security.web.FilterChainProxy.doFilterInternal(FilterChainProxy.java:233)
+	at org.springframework.security.web.FilterChainProxy.doFilter(FilterChainProxy.java:191)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)
+	at org.springframework.web.filter.ServletRequestPathFilter.doFilter(ServletRequestPathFilter.java:52)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)
+	at org.springframework.web.filter.CompositeFilter.doFilter(CompositeFilter.java:74)
+	at org.springframework.security.config.annotation.web.configuration.WebSecurityConfiguration$CompositeFilterChainProxy.doFilter(WebSecurityConfiguration.java:319)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)
+	at org.springframework.web.servlet.handler.HandlerMappingIntrospector.lambda$createCacheFilter$4(HandlerMappingIntrospector.java:267)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)
+	at org.springframework.web.filter.CompositeFilter.doFilter(CompositeFilter.java:74)
+	at org.springframework.security.config.annotation.web.configuration.WebMvcSecurityConfiguration$CompositeFilterChainProxy.doFilter(WebMvcSecurityConfiguration.java:240)
+	at org.springframework.web.filter.DelegatingFilterProxy.invokeDelegate(DelegatingFilterProxy.java:362)
+	at org.springframework.web.filter.DelegatingFilterProxy.doFilter(DelegatingFilterProxy.java:278)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:165)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:88)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:492)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:113)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:83)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:72)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:342)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:399)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:903)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1775)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:973)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:491)
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:63)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+2026-02-28 16:25:58.008 [SpringApplicationShutdownHook] [] INFO  o.s.b.w.e.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2026-02-28 16:25:58.036 [tomcat-shutdown] [] INFO  o.s.b.w.e.tomcat.GracefulShutdown - Graceful shutdown complete
+2026-02-28 16:25:58.044 [SpringApplicationShutdownHook] [] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - Stopping...
+2026-02-28 16:25:58.046 [SpringApplicationShutdownHook] [] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - BrokerAvailabilityEvent[available=false, SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@776f4f35]]
+2026-02-28 16:25:58.046 [SpringApplicationShutdownHook] [] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - Stopped.
+2026-02-28 16:25:58.071 [SpringApplicationShutdownHook] [] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-02-28 16:25:58.079 [SpringApplicationShutdownHook] [] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
+2026-02-28 16:25:58.115 [SpringApplicationShutdownHook] [] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.

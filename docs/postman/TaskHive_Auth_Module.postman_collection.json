@@ -1,0 +1,782 @@
+{
+    "info": {
+        "name": "TaskHive - Auth Module",
+        "description": "Complete testing collection for the Auth module.\n\n**Endpoints:** Login, Logout, Refresh Token, Activate Account, Forgot Password, Reset Password, Change Password, Get Current User\n\n**Flow:** Login → Get Me → Refresh Token → Change Password → Logout → Forgot Password → Reset Password → Activate Account\n\n**Note:** Tokens are auto-saved to collection variables via test scripts.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:8080/api/v1"
+        },
+        {
+            "key": "accessToken",
+            "value": ""
+        },
+        {
+            "key": "refreshToken",
+            "value": ""
+        },
+        {
+            "key": "newAccessToken",
+            "value": ""
+        },
+        {
+            "key": "newRefreshToken",
+            "value": ""
+        },
+        {
+            "key": "activationToken",
+            "value": "paste-token-from-email-or-db"
+        },
+        {
+            "key": "resetToken",
+            "value": "paste-token-from-email-or-db"
+        }
+    ],
+    "item": [
+        {
+            "name": "1. Login (Admin)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"admin@taskhive.com\",\n    \"password\": \"Admin@123\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/login",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "login"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Admin login successful (200)', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data).to.have.property('accessToken');",
+                            "    pm.expect(json.data).to.have.property('refreshToken');",
+                            "    pm.expect(json.data.user).to.have.property('id');",
+                            "    pm.expect(json.data.user.role).to.eql('ADMIN');",
+                            "",
+                            "    // Save tokens for subsequent requests",
+                            "    pm.collectionVariables.set('accessToken', json.data.accessToken);",
+                            "    pm.collectionVariables.set('refreshToken', json.data.refreshToken);",
+                            "    console.log('Admin logged in. Tokens saved.');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "2. Login (Invalid Credentials - expect 401)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"admin@taskhive.com\",\n    \"password\": \"WrongPassword123\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/login",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "login"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Invalid credentials returns 401', function () {",
+                            "    pm.response.to.have.status(401);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.false;",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "3. Login (Missing Fields - expect 400)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/login",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "login"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Validation error returns 400', function () {",
+                            "    pm.response.to.have.status(400);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "4. Get Current User (/me)",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                    }
+                ],
+                "url": {
+                    "raw": "{{baseUrl}}/auth/me",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "me"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Get current user returns 200', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data).to.have.property('id');",
+                            "    pm.expect(json.data).to.have.property('email');",
+                            "    pm.expect(json.data).to.have.property('firstName');",
+                            "    pm.expect(json.data).to.have.property('role');",
+                            "    pm.expect(json.data.status).to.eql('ACTIVE');",
+                            "    console.log('Current user: ' + json.data.email + ' (' + json.data.role + ')');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "5. Get Current User (No Token - expect 401)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/auth/me",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "me"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('No token returns 401', function () {",
+                            "    pm.response.to.have.status(401);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "6. Refresh Token",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"refreshToken\": \"{{refreshToken}}\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/refresh",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "refresh"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Token refresh returns 200 with new tokens', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data).to.have.property('accessToken');",
+                            "    pm.expect(json.data).to.have.property('refreshToken');",
+                            "",
+                            "    // Save new tokens",
+                            "    pm.collectionVariables.set('accessToken', json.data.accessToken);",
+                            "    pm.collectionVariables.set('refreshToken', json.data.refreshToken);",
+                            "    console.log('Tokens refreshed and saved.');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "7. Refresh Token (Invalid - expect 401)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"refreshToken\": \"invalid-refresh-token-value\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/refresh",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "refresh"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Invalid refresh token returns 401', function () {",
+                            "    pm.response.to.have.status(401);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.false;",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "8. Change Password",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"oldPassword\": \"Admin@123\",\n    \"newPassword\": \"Admin@456\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/change-password",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "change-password"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Password changed (200)', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    console.log('Password changed. All refresh tokens revoked — re-login required.');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "9. Change Password (Wrong Old - expect 401)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"oldPassword\": \"TotallyWrongPassword\",\n    \"newPassword\": \"NewPass@123\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/change-password",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "change-password"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Wrong old password returns 401', function () {",
+                            "    pm.response.to.have.status(401);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.false;",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "10. Re-Login (After Password Change)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"admin@taskhive.com\",\n    \"password\": \"Admin@456\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/login",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "login"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Re-login with new password (200)', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "",
+                            "    pm.collectionVariables.set('accessToken', json.data.accessToken);",
+                            "    pm.collectionVariables.set('refreshToken', json.data.refreshToken);",
+                            "    console.log('Re-login successful with new password. Tokens saved.');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "11. Forgot Password",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"admin@taskhive.com\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/forgot-password",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "forgot-password"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Forgot password returns 200', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    console.log('Reset email sent (check inbox or DB for token).');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "12. Forgot Password (Non-existent Email - still 200)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"nobody@doesnotexist.com\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/forgot-password",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "forgot-password"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Non-existent email still returns 200 (no info leak)', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "13. Reset Password",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"token\": \"{{resetToken}}\",\n    \"newPassword\": \"Admin@789\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/reset-password",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "reset-password"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Password reset successful (200)', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    console.log('Password reset done. All refresh tokens revoked.');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "14. Reset Password (Invalid Token - expect 401)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"token\": \"invalid-or-expired-token\",\n    \"newPassword\": \"NewPass@123\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/reset-password",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "reset-password"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Invalid reset token returns 401', function () {",
+                            "    pm.response.to.have.status(401);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.false;",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "15. Activate Account",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"token\": \"{{activationToken}}\",\n    \"newPassword\": \"Employee@123\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/activate-account",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "activate-account"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Account activation successful (200)', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    console.log('Account activated. Employee can now login.');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "16. Activate Account (Invalid Token - expect 401)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"token\": \"invalid-activation-token\",\n    \"newPassword\": \"Employee@123\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/activate-account",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "activate-account"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Invalid activation token returns 401', function () {",
+                            "    pm.response.to.have.status(401);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.false;",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "17. Logout",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"refreshToken\": \"{{refreshToken}}\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/logout",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "logout"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Logout successful (200)', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    console.log('Logged out. Refresh token revoked.');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "18. Logout (No Token - expect 401)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"refreshToken\": \"some-token\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/logout",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "logout"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Logout without JWT returns 401', function () {",
+                            "    pm.response.to.have.status(401);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}

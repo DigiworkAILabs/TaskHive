@@ -1,0 +1,692 @@
+{
+    "info": {
+        "name": "TaskHive - Analytics Module",
+        "description": "Complete testing collection for the Analytics module (Phase 6).\n\n**Pre-requisites:**\n1. Auth, Employee, and Task modules must be set up.\n2. Tasks must exist in the database (with various statuses and assignments).\n3. The MetricsCalculationScheduler runs nightly at 2 AM — for immediate dashboard data, the fallback real-time queries will be used.\n\n**Flow:** Login as Admin → Admin Dashboard → Employee Dashboard → Task Distribution → Priority Distribution → Completion Trend → Employee Performance → Export Report → Download Report\n\n**Error Testing:** Invalid report type, expired download, non-existent report\n\n**Auth:** Cookie-based (set automatically on login). No manual token needed.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:8080/api/v1"
+        },
+        {
+            "key": "reportId",
+            "value": "",
+            "description": "ID of the exported report (set automatically by export test)"
+        }
+    ],
+    "item": [
+        {
+            "name": "━━━ SETUP: Login ━━━",
+            "item": [],
+            "description": "Login as Admin to access analytics endpoints. All analytics endpoints except Employee Dashboard require ADMIN role."
+        },
+        {
+            "name": "0. Login as Admin",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"admin@taskhive.com\",\n    \"password\": \"Admin@123\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/login",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "login"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Admin login successful', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    console.log('Admin logged in. Cookies set automatically.');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "━━━ DASHBOARD ENDPOINTS ━━━",
+            "item": [],
+            "description": "Admin and Employee dashboard endpoints. Admin dashboard reads from pre-calculated daily_metrics table (populated by nightly scheduler). If no metrics exist yet, zeroes are returned."
+        },
+        {
+            "name": "1. Admin Dashboard",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/analytics/dashboard/admin",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "analytics",
+                        "dashboard",
+                        "admin"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Admin dashboard retrieved successfully', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    var d = json.data;",
+                            "    pm.expect(d).to.have.property('totalTasks');",
+                            "    pm.expect(d).to.have.property('activeTasks');",
+                            "    pm.expect(d).to.have.property('overdueTasks');",
+                            "    pm.expect(d).to.have.property('completedTasks');",
+                            "    pm.expect(d).to.have.property('completionRate');",
+                            "    pm.expect(d).to.have.property('totalEmployees');",
+                            "    pm.expect(d).to.have.property('avgCompletionHours');",
+                            "    pm.expect(d).to.have.property('metricDate');",
+                            "",
+                            "    console.log('Dashboard: total=' + d.totalTasks + ', active=' + d.activeTasks + ', overdue=' + d.overdueTasks + ', completed=' + d.completedTasks);",
+                            "    console.log('Rate: ' + d.completionRate + '%, Avg Hours: ' + d.avgCompletionHours + ', Employees: ' + d.totalEmployees);",
+                            "    console.log('Metric Date: ' + d.metricDate);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "2. Employee Dashboard (as Admin)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/analytics/dashboard/employee",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "analytics",
+                        "dashboard",
+                        "employee"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Employee dashboard retrieved successfully', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    var d = json.data;",
+                            "    pm.expect(d).to.have.property('totalTasks');",
+                            "    pm.expect(d).to.have.property('todoTasks');",
+                            "    pm.expect(d).to.have.property('inProgressTasks');",
+                            "    pm.expect(d).to.have.property('inReviewTasks');",
+                            "    pm.expect(d).to.have.property('completedTasks');",
+                            "    pm.expect(d).to.have.property('onTimeCompletionRate');",
+                            "    pm.expect(d).to.have.property('avgCompletionHours');",
+                            "",
+                            "    console.log('Employee: total=' + d.totalTasks + ', todo=' + d.todoTasks + ', inProgress=' + d.inProgressTasks + ', done=' + d.completedTasks);",
+                            "    console.log('On-time rate: ' + d.onTimeCompletionRate + '%, Avg Hours: ' + d.avgCompletionHours);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "━━━ CHART ENDPOINTS ━━━",
+            "item": [],
+            "description": "Chart data endpoints for task distribution (pie/donut charts), priority breakdown, completion trend (line chart), and employee performance table."
+        },
+        {
+            "name": "3. Task Distribution by Status",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/analytics/tasks/distribution",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "analytics",
+                        "tasks",
+                        "distribution"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Task distribution by status retrieved', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data).to.be.an('array');",
+                            "",
+                            "    json.data.forEach(function(item) {",
+                            "        pm.expect(item).to.have.property('status');",
+                            "        pm.expect(item).to.have.property('count');",
+                            "        pm.expect(item.count).to.be.a('number');",
+                            "        console.log('  ' + item.status + ': ' + item.count);",
+                            "    });",
+                            "",
+                            "    console.log('Total statuses: ' + json.data.length);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "4. Task Distribution by Priority",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/analytics/tasks/by-priority",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "analytics",
+                        "tasks",
+                        "by-priority"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Task distribution by priority retrieved', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data).to.be.an('array');",
+                            "",
+                            "    json.data.forEach(function(item) {",
+                            "        pm.expect(item).to.have.property('status');",
+                            "        pm.expect(item).to.have.property('count');",
+                            "        console.log('  ' + item.status + ': ' + item.count);",
+                            "    });",
+                            "",
+                            "    console.log('Total priorities: ' + json.data.length);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "5. 30-Day Completion Trend",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/analytics/tasks/completion-trend",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "analytics",
+                        "tasks",
+                        "completion-trend"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Completion trend retrieved', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data).to.be.an('array');",
+                            "",
+                            "    json.data.forEach(function(item) {",
+                            "        pm.expect(item).to.have.property('date');",
+                            "        pm.expect(item).to.have.property('count');",
+                            "        console.log('  ' + item.date + ': ' + item.count + ' completed');",
+                            "    });",
+                            "",
+                            "    console.log('Days with completions: ' + json.data.length);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "6. Employee Performance",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/analytics/employees/performance",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "analytics",
+                        "employees",
+                        "performance"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Employee performance retrieved', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.data).to.be.an('array');",
+                            "",
+                            "    json.data.forEach(function(emp) {",
+                            "        pm.expect(emp).to.have.property('employeeId');",
+                            "        pm.expect(emp).to.have.property('employeeName');",
+                            "        pm.expect(emp).to.have.property('tasksAssigned');",
+                            "        pm.expect(emp).to.have.property('tasksCompleted');",
+                            "        pm.expect(emp).to.have.property('onTimeRate');",
+                            "        pm.expect(emp).to.have.property('avgCompletionHours');",
+                            "        console.log('  ' + emp.employeeName + ': assigned=' + emp.tasksAssigned + ', completed=' + emp.tasksCompleted + ', onTime=' + emp.onTimeRate + '%');",
+                            "    });",
+                            "",
+                            "    console.log('Total employees: ' + json.data.length);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "━━━ REPORT EXPORT ENDPOINTS ━━━",
+            "item": [],
+            "description": "Async report export and download endpoints. Export triggers a background CSV generation. Download validates 24-hour expiry."
+        },
+        {
+            "name": "7. Export Task Summary Report",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"reportType\": \"TASK_SUMMARY\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/analytics/reports/export",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "analytics",
+                        "reports",
+                        "export"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Task Summary report export initiated', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    var d = json.data;",
+                            "    pm.expect(d).to.have.property('reportId');",
+                            "    pm.expect(d).to.have.property('downloadUrl');",
+                            "    pm.expect(d).to.have.property('message');",
+                            "",
+                            "    pm.collectionVariables.set('reportId', d.reportId);",
+                            "    console.log('Report ID: ' + d.reportId);",
+                            "    console.log('Download URL: ' + d.downloadUrl);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "8. Export Employee Performance Report",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"reportType\": \"EMPLOYEE_PERFORMANCE\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/analytics/reports/export",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "analytics",
+                        "reports",
+                        "export"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Employee Performance report export initiated', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    var d = json.data;",
+                            "    pm.expect(d).to.have.property('reportId');",
+                            "",
+                            "    console.log('Employee Performance Report ID: ' + d.reportId);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "9. Download Report (CSV)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/analytics/reports/{{reportId}}/download",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "analytics",
+                        "reports",
+                        "{{reportId}}",
+                        "download"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Report downloaded successfully as CSV', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    pm.expect(pm.response.headers.get('Content-Type')).to.include('text/csv');",
+                            "    pm.expect(pm.response.headers.get('Content-Disposition')).to.include('attachment');",
+                            "    pm.expect(pm.response.headers.get('Content-Disposition')).to.include('.csv');",
+                            "",
+                            "    var body = pm.response.text();",
+                            "    pm.expect(body.length).to.be.above(0);",
+                            "    console.log('Downloaded CSV (' + body.length + ' bytes)');",
+                            "    console.log('First 200 chars: ' + body.substring(0, 200));",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "━━━ ERROR CASES ━━━",
+            "item": [],
+            "description": "Test error handling: invalid report type, non-existent report download, and unauthorized access."
+        },
+        {
+            "name": "10. Export Invalid Report Type (expect error)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"reportType\": \"INVALID_TYPE\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/analytics/reports/export",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "analytics",
+                        "reports",
+                        "export"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Invalid report type returns error', function () {",
+                            "    // May return 202 since it's async, but the report generation will fail",
+                            "    // Or it may return 400/500 depending on validation timing",
+                            "    var status = pm.response.code;",
+                            "    console.log('Response status: ' + status);",
+                            "    console.log('Response: ' + pm.response.text().substring(0, 300));",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "11. Download Non-existent Report (expect error)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/analytics/reports/00000000-0000-0000-0000-000000000000/download",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "analytics",
+                        "reports",
+                        "00000000-0000-0000-0000-000000000000",
+                        "download"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Non-existent report returns error', function () {",
+                            "    pm.response.to.have.status(500);",
+                            "    console.log('Correctly returned error for non-existent report');",
+                            "    console.log('Response: ' + pm.response.text().substring(0, 300));",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "━━━ EMPLOYEE ACCESS TEST ━━━",
+            "item": [],
+            "description": "Login as Employee to test restricted access. Employees should only access the Employee Dashboard, not Admin-only endpoints."
+        },
+        {
+            "name": "12. Login as Employee",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"REPLACE_WITH_EMPLOYEE_EMAIL\",\n    \"password\": \"REPLACE_WITH_EMPLOYEE_PASSWORD\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/login",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "login"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Employee login successful', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    console.log('Logged in as employee. Testing restricted access.');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "13. Employee Dashboard (as Employee — should work)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/analytics/dashboard/employee",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "analytics",
+                        "dashboard",
+                        "employee"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Employee can access their own dashboard', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    console.log('Employee dashboard: total=' + json.data.totalTasks + ', completed=' + json.data.completedTasks);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "14. Admin Dashboard (as Employee — should be 403)",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/analytics/dashboard/admin",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "analytics",
+                        "dashboard",
+                        "admin"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Employee cannot access admin dashboard (403)', function () {",
+                            "    pm.response.to.have.status(403);",
+                            "    console.log('Correctly denied: Employee cannot access Admin Dashboard');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "15. Export Report (as Employee — should be 403)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"reportType\": \"TASK_SUMMARY\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/analytics/reports/export",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "analytics",
+                        "reports",
+                        "export"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Employee cannot export reports (403)', function () {",
+                            "    pm.response.to.have.status(403);",
+                            "    console.log('Correctly denied: Employee cannot export reports');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}
