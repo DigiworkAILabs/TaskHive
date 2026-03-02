@@ -8,17 +8,21 @@
 -->
 <configuration>
 
+    <!-- Log redaction converter (NFR-SEC-12): redacts emails, JWTs, password fields -->
+    <conversionRule conversionWord="redact"
+                    converterClass="com.digiwork.taskhive.common.logging.LogRedactionConverter"/>
+
     <springProperty scope="context" name="APP_NAME" source="spring.application.name" defaultValue="taskhive-backend"/>
 
     <!-- ===== COMMON PROPERTIES ===== -->
     <property name="LOG_DIR" value="./logs"/>
-    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{correlationId:-}] %-5level %logger{36} - %msg%n"/>
+    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{correlationId:-}] %-5level %logger{36} - %redact%n"/>
 
     <!-- ===== DEV PROFILE: Console with colors ===== -->
     <springProfile name="dev">
         <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
             <encoder>
-                <pattern>%d{HH:mm:ss.SSS} %highlight(%-5level) [%blue(%thread)] [%magenta(%X{correlationId:-N/A})] %cyan(%logger{36}) - %msg%n</pattern>
+                <pattern>%d{HH:mm:ss.SSS} %highlight(%-5level) [%blue(%thread)] [%magenta(%X{correlationId:-N/A})] %cyan(%logger{36}) - %redact%n</pattern>
             </encoder>
         </appender>
 
