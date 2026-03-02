@@ -92,11 +92,24 @@ class AnalyticsServiceTest {
         }
 
         @Test
-        @DisplayName("should return zeroes when no metrics exist")
+        @DisplayName("should return zeroes when no metrics exist (falls back to real-time query)")
         void shouldReturnZeroesWhenNoMetrics() {
-            // given
+            // given — no pre-calculated metrics, so service falls back to
+            // getAdminDashboardRealTime()
             when(dailyMetricsRepository.findTopByOrderByMetricDateDesc())
                     .thenReturn(Optional.empty());
+
+            // Mock the two native queries inside getAdminDashboardRealTime():
+            // 1st query: task stats → Object[] {total, active, overdue, completed,
+            // avgHours}
+            // 2nd query: employee count → long
+            Query mockQuery = mock(Query.class);
+            when(entityManager.createNativeQuery(anyString())).thenReturn(mockQuery);
+
+            Object[] taskRow = { 0L, 0L, 0L, 0L, 0.0 };
+            when(mockQuery.getSingleResult())
+                    .thenReturn(taskRow) // 1st call → task stats
+                    .thenReturn(0L); // 2nd call → employee count
 
             // when
             AdminDashboardResponse response = analyticsService.getAdminDashboard();
