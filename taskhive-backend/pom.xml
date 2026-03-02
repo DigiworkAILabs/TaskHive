@@ -108,6 +108,16 @@
 			<version>8.0</version>
 		</dependency>
 
+		<!-- Monitoring & Metrics (NFR-OPS-05, NFR-OPS-06) -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.micrometer</groupId>
+			<artifactId>micrometer-registry-prometheus</artifactId>
+		</dependency>
+
 		<!-- Test -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
