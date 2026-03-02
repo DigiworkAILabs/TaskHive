@@ -162,3 +162,51 @@ textarea {
     cursor: pointer;
   }
 }
+
+/* ── Touch Targets (NFR-USE-04) — minimum 44×44px ────────────── */
+button,
+a,
+[role="button"],
+input[type="checkbox"],
+input[type="radio"],
+select {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Exceptions for inline text links */
+p a, span a, li a {
+  min-height: auto;
+  min-width: auto;
+}
+
+/* ── Focus Visibility (WCAG 2.4.7) ──────────────────────────── */
+:focus-visible {
+  outline: 2px solid #f97316;
+  outline-offset: 2px;
+}
+
+/* ── Skip to Content (WCAG 2.4.1) ───────────────────────────── */
+.skip-to-content {
+  position: absolute;
+  top: -100%;
+  left: 0;
+  z-index: 9999;
+  padding: 12px 24px;
+  background: #f97316;
+  color: white;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 0 0 8px 0;
+}
+.skip-to-content:focus {
+  top: 0;
+}
+
+/* ── Reduced Motion Preference (WCAG 2.3.3) ─────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

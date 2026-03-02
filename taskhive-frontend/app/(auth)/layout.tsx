@@ -16,7 +16,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             />
 
             {/* Card */}
-            <div className="relative z-10 w-full max-w-[420px]">
+            <div role="main" className="relative z-10 w-full max-w-[420px]">
                 {children}
             </div>
 
