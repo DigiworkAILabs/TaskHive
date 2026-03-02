@@ -28,4 +28,7 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
 
     List<Notification> findByUserIdAndIsReadFalseAndCreatedAtAfterOrderByCreatedAtDesc(
             UUID userId, LocalDateTime since);
+
+    // GDPR — total notification count for a user (for data export)
+    long countByUserId(UUID userId);
 }
