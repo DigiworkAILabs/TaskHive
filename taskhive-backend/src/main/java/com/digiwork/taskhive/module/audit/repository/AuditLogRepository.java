@@ -46,4 +46,7 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, UUID> {
                         @Param("startDate") LocalDateTime startDate,
                         @Param("endDate") LocalDateTime endDate,
                         Pageable pageable);
+
+        // GDPR — total audit log count for a user actor (for data export)
+        long countByActorId(UUID actorId);
 }

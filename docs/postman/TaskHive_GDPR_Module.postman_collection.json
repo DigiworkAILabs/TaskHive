@@ -1,0 +1,381 @@
+{
+    "info": {
+        "name": "TaskHive - GDPR Module",
+        "description": "Testing collection for GDPR endpoints (NFR-SEC-13).\n\n**Endpoints:** Data Export, GDPR Delete (Anonymize)\n\n**Flow:**\n1. Login as Admin → saves token + userId\n2. Export own data (admin)\n3. Export another user's data as admin\n4. Try to export another user's data as employee → expect 403\n5. GDPR delete a test user\n6. Verify login fails after anonymization\n\n**Note:** Run requests in order. Step 4 requires you to paste an employee userId in the collection variable.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:8080/api/v1"
+        },
+        {
+            "key": "accessToken",
+            "value": ""
+        },
+        {
+            "key": "adminUserId",
+            "value": ""
+        },
+        {
+            "key": "employeeAccessToken",
+            "value": ""
+        },
+        {
+            "key": "targetUserId",
+            "value": "paste-a-valid-user-uuid-here"
+        }
+    ],
+    "item": [
+        {
+            "name": "1. Login (Admin)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"admin@taskhive.com\",\n    \"password\": \"Admin@123\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/login",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "login"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Admin login successful (200)', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.data.user.role).to.eql('ADMIN');",
+                            "",
+                            "    pm.collectionVariables.set('accessToken', json.data.accessToken);",
+                            "    pm.collectionVariables.set('adminUserId', json.data.user.id);",
+                            "    console.log('Admin logged in. userId: ' + json.data.user.id);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "2. Export Own Data (Admin — own userId)",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                    }
+                ],
+                "url": {
+                    "raw": "{{baseUrl}}/users/{{adminUserId}}/data-export",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "users",
+                        "{{adminUserId}}",
+                        "data-export"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Data export returns 200 with user data', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "",
+                            "    pm.expect(json).to.have.property('user');",
+                            "    pm.expect(json.user).to.have.property('id');",
+                            "    pm.expect(json.user).to.have.property('email');",
+                            "    pm.expect(json.user).to.have.property('firstName');",
+                            "    pm.expect(json.user).to.have.property('status');",
+                            "",
+                            "    pm.expect(json).to.have.property('tasksCreated');",
+                            "    pm.expect(json).to.have.property('tasksAssigned');",
+                            "    pm.expect(json).to.have.property('comments');",
+                            "    pm.expect(json).to.have.property('notificationCount');",
+                            "    pm.expect(json).to.have.property('auditLogCount');",
+                            "    pm.expect(json).to.have.property('exportedAt');",
+                            "",
+                            "    console.log('Export: ' + json.user.email + ' | tasks created: ' + json.tasksCreated.length + ' | tasks assigned: ' + json.tasksAssigned.length);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "3. Export Another User's Data (Admin — targetUserId)",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                    }
+                ],
+                "url": {
+                    "raw": "{{baseUrl}}/users/{{targetUserId}}/data-export",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "users",
+                        "{{targetUserId}}",
+                        "data-export"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Admin can export any users data (200)', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.user).to.have.property('email');",
+                            "    console.log('Target user: ' + json.user.email);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "4. Export Data — No Auth (expect 401)",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/users/{{targetUserId}}/data-export",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "users",
+                        "{{targetUserId}}",
+                        "data-export"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Unauthenticated request returns 401', function () {",
+                            "    pm.response.to.have.status(401);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "5. Login (Employee — to test 403)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"change-to-an-employee-email@example.com\",\n    \"password\": \"Employee@123\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/login",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "login"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Employee login successful (200)', function () {",
+                            "    if (pm.response.code === 200) {",
+                            "        var json = pm.response.json();",
+                            "        pm.collectionVariables.set('employeeAccessToken', json.data.accessToken);",
+                            "        console.log('Employee logged in. Token saved.');",
+                            "    } else {",
+                            "        console.warn('Employee login failed — update the email/password in this request body.');",
+                            "    }",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "6. Export Another User's Data as Employee (expect 403)",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{employeeAccessToken}}"
+                    }
+                ],
+                "url": {
+                    "raw": "{{baseUrl}}/users/{{adminUserId}}/data-export",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "users",
+                        "{{adminUserId}}",
+                        "data-export"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Employee cannot access another users data (403)', function () {",
+                            "    pm.response.to.have.status(403);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.false;",
+                            "    console.log('Access denied as expected.');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "7. GDPR Delete — Anonymize User (Admin)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                    }
+                ],
+                "url": {
+                    "raw": "{{baseUrl}}/users/{{targetUserId}}/gdpr-delete",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "users",
+                        "{{targetUserId}}",
+                        "gdpr-delete"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('GDPR anonymization returns 200', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json.message).to.include('anonymized');",
+                            "    console.log('User anonymized. Verify in DB: email=deleted_xxx@anonymized.local, firstName=[DELETED]');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "8. Try to Export Anonymized User (expect 404)",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                    }
+                ],
+                "url": {
+                    "raw": "{{baseUrl}}/users/{{targetUserId}}/data-export",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "users",
+                        "{{targetUserId}}",
+                        "data-export"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Anonymized user is no longer findable (404)', function () {",
+                            "    pm.response.to.have.status(404);",
+                            "    console.log('Correct — user was soft-deleted after anonymization.');",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "9. GDPR Delete — No Auth (expect 401)",
+            "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/users/{{targetUserId}}/gdpr-delete",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "users",
+                        "{{targetUserId}}",
+                        "gdpr-delete"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Unauthenticated GDPR delete returns 401', function () {",
+                            "    pm.response.to.have.status(401);",
+                            "});"
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}

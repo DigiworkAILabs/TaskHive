@@ -18,6 +18,11 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
 
         Optional<Task> findByIdAndIsDeletedFalse(UUID id);
 
+        // GDPR — fetch all tasks for a user (unbounded, for data export only)
+        List<Task> findByCreatedByAndIsDeletedFalse(UUID createdBy);
+
+        List<Task> findByAssignedToAndIsDeletedFalse(UUID assignedTo);
+
         @Query(value = "SELECT * FROM tasks t WHERE t.is_deleted = false " +
                         "AND (CAST(:status AS VARCHAR) IS NULL OR t.status = :status) " +
                         "AND (CAST(:priority AS VARCHAR) IS NULL OR t.priority = :priority) " +
