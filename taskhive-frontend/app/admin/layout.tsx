@@ -85,6 +85,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     return (
         <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#0a0a0a' }}>
+            {/* ── Skip to Content (WCAG 2.4.1) ─────────────────────────── */}
+            <a href="#main-content" className="skip-to-content">
+                Skip to content
+            </a>
+
             {/* ── Mobile Overlay ──────────────────────────────────────────── */}
             {sidebarOpen && (
                 <div
@@ -126,7 +131,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </div>
 
                 {/* Nav */}
-                <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+                <nav aria-label="Main navigation" style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
                     {navItems.map((item) => {
                         const isActive = pathname.startsWith(item.href) && item.href !== '#';
                         const Icon = item.icon;
@@ -218,6 +223,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <button
                         onClick={handleLogout}
                         title="Logout"
+                        aria-label="Logout"
                         style={{
                             background: 'none', border: 'none', cursor: 'pointer',
                             color: '#52525b', padding: '4px', transition: 'color 0.15s',
@@ -312,7 +318,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </header>
 
                 {/* Page content */}
-                <main className="flex-1 p-4 md:p-7">
+                <main id="main-content" className="flex-1 p-4 md:p-7">
                     {children}
                 </main>
             </div>
