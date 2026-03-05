@@ -1,11 +1,13 @@
 # OSX
-taskhive-flutter/
 .idea/
+taskhive-flutter/
+node_modules/
 #
 .DS_Store
 
 # Xcode
-#
+.env
+
 build/
 *.pbxuser
 !default.pbxuser
