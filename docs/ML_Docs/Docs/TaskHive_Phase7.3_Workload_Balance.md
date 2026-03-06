@@ -1,0 +1,205 @@
+# TaskHive — Phase 7.3: ML Feature 3 — Workload Balance Recommendation
+## SRS v2.4 | Company: Digiwork | Base Package: `com.digiwork.taskhive`
+
+---
+
+## Phase Summary
+
+| Field | Detail |
+|-------|--------|
+| **Phase** | 7.3 of 7.4 |
+| **Name** | ML Feature 3 — Workload Balance Recommendation |
+| **Depends On** | Phase 7.1 + 7.2 complete |
+| **Duration** | ~2 days |
+| **Model** | Weighted Scoring Model |
+| **Synthetic Records** | 2,000 assignment scenarios |
+
+### Deliverable
+When Admin opens Task Create form and selects a department/assignee, a "Recommend Assignee" button appears. On click, ML scores all active employees and highlights the best fit in the Assignee dropdown with a score badge. Admin can still pick anyone — fully non-blocking.
+
+---
+
+## API Endpoints
+
+```
+# FastAPI (port 8000)
+POST   /ml/recommend/workload-balance
+
+# Spring Boot (port 8080)
+POST   /api/v1/ml/recommend/workload-balance   # ADMIN only
+```
+
+---
+
+## Functional Requirements
+
+| ID | Priority | Requirement |
+|----|----------|-------------|
+| FR-ML-03 | High | System shall recommend best employee based on current workload and performance |
+| FR-ML-05 | Critical | Recommendation is non-blocking — admin can pick anyone |
+| FR-ML-06 | Critical | Circuit Breaker — app never fails if ML server is down |
+| FR-ML-09 | Medium | Response shall include score breakdown per employee |
+
+---
+
+## Request / Response
+
+**Spring Boot receives from Next.js:**
+```json
+{
+  "taskTitle": "Build payment integration",
+  "taskPriority": "HIGH",
+  "taskEstimatedHours": 8.0,
+  "candidateEmployeeIds": ["uuid1", "uuid2", "uuid3"]
+}
+```
+
+**Spring Boot enriches + sends to FastAPI:**
+```json
+{
+  "task_priority": "HIGH",
+  "task_estimated_hours": 8.0,
+  "candidates": [
+    {
+      "employee_id": "uuid1",
+      "active_tasks": 2,
+      "completion_rate": 0.91,
+      "on_time_rate": 0.85,
+      "avg_hours_per_task": 4.5,
+      "dept_match": true
+    },
+    {
+      "employee_id": "uuid2",
+      "active_tasks": 6,
+      "completion_rate": 0.72,
+      "on_time_rate": 0.65,
+      "avg_hours_per_task": 6.1,
+      "dept_match": true
+    }
+  ]
+}
+```
+
+**FastAPI returns:**
+```json
+{
+  "recommended_employee_id": "uuid1",
+  "score_breakdown": [
+    { "employee_id": "uuid1", "score": 87.4 },
+    { "employee_id": "uuid2", "score": 52.1 }
+  ],
+  "reasoning": "uuid1 has low active tasks (2) and high completion rate (91%)"
+}
+```
+
+**Spring Boot returns to Next.js:**
+```json
+{
+  "success": true,
+  "data": {
+    "recommendedEmployeeId": "uuid1",
+    "scoreBreakdown": [...],
+    "reasoning": "...",
+    "fallbackUsed": false
+  }
+}
+```
+
+---
+
+## Synthetic Data
+
+**File:** `training/data/workload_data.csv`
+
+**Columns:** `active_tasks, completion_rate, on_time_rate, dept_match, task_priority_encoded, was_best_fit`
+
+**Generation logic (`generate_workload_data.py`):**
+- Score = (completion_rate * 30) + (on_time_rate * 25) + ((10 - active_tasks) * 3) + (dept_match * 20)
+- was_best_fit = 1 if highest score among candidates else 0
+- Add noise to scores (±10%)
+
+**Note:** This is essentially a ranking/scoring problem. Model learns the weight formula from synthetic data.
+
+---
+
+## Model
+
+**Algorithm:** Weighted scoring (trained via linear regression on synthetic data to learn weights)
+**Features:** active_tasks + completion_rate + on_time_rate + dept_match + task_priority_encoded
+**Target:** score (0–100)
+**Train script:** `training/train_workload.py`
+**Output:** `inference-server/models/workload_model.pkl`
+
+---
+
+## FastAPI Files (this phase)
+
+```
+ml/inference-server/
+├── main.py                              # MODIFY: include workload router
+├── api/
+│   ├── routes/
+│   │   └── workload_balance.py          # NEW
+│   └── schemas/
+│       ├── request.py                   # ADD: WorkloadBalanceRequest
+│       └── response.py                  # ADD: WorkloadBalanceResponse
+├── models/
+│   ├── loader.py                        # ADD: load workload_model.pkl
+│   └── workload_model.pkl               # GENERATED
+└── services/
+    └── workload_service.py              # NEW
+
+ml/training/
+├── data/
+│   └── workload_data.csv               # GENERATED
+├── generate_workload_data.py            # NEW
+└── train_workload.py                    # NEW
+```
+
+---
+
+## Spring Boot Files (this phase)
+
+```
+module/ml/
+├── controller/
+│   └── MLController.java               # MODIFY: add workload endpoint
+├── service/
+│   └── MLService.java                  # MODIFY: add candidate enrichment logic
+│   └── MLClientService.java            # MODIFY: add workload CB method
+└── dto/
+    ├── WorkloadBalanceRequest.java      # NEW
+    └── WorkloadBalanceResponse.java     # NEW
+```
+
+**Enrichment:** MLService fetches each candidateEmployeeId's stats from existing `TaskRepository` and `EmployeeRepository` — no new repos needed.
+
+**Fallback:** `{ recommendedEmployeeId: null, reasoning: "Please select manually", fallbackUsed: true }`
+
+---
+
+## Frontend Files (this phase)
+
+```
+src/features/ml/
+├── components/
+│   └── WorkloadRecommendation.tsx      # NEW
+├── hooks/
+│   └── useWorkloadRecommendation.ts    # NEW
+├── services/
+│   └── mlService.ts                    # MODIFY: add workload method
+└── types/
+    └── ml.types.ts                     # MODIFY: add workload types
+```
+
+**Integration:** `src/app/(admin)/tasks/new/page.tsx` — MODIFY (add "Recommend Assignee" button, highlight recommended employee in dropdown)
+
+---
+
+## File Count Summary
+
+| Layer | New Files | Modified Files |
+|-------|-----------|----------------|
+| FastAPI | 3 (route, service, train+generate) | main.py, schemas, loader |
+| Spring Boot | 2 DTOs | MLController, MLService, MLClientService |
+| Next.js | 2 (component, hook) | mlService.ts, ml.types.ts, tasks/new/page.tsx |
