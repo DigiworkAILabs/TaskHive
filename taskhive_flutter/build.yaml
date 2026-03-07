@@ -1,0 +1,12 @@
+targets:
+  $default:
+    builders:
+      # Run json_serializable before freezed to avoid ordering issues
+      json_serializable:
+        options:
+          explicit_to_json: true
+          include_if_null: false
+      # Riverpod generator runs independently
+      riverpod_generator:
+        options:
+          riverpod_version: 2

@@ -1,0 +1,23 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    # Exclude all generated files from analysis
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+  errors:
+    # Treat these as info (not errors) since generated code triggers them
+    invalid_annotation_target: ignore
+    missing_required_param: error
+    missing_return: error
+
+linter:
+  rules:
+    # Enforce good practices
+    prefer_const_constructors: true
+    prefer_const_literals_to_create_immutables: true
+    avoid_print: true           # Use logger instead
+    use_super_parameters: true
+    prefer_single_quotes: true
+    # Disable rules that conflict with generated code patterns
+    always_put_required_named_parameters_first: false
