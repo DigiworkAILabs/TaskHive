@@ -10,6 +10,13 @@ import '../../features/auth/presentation/screens/activate_account_screen.dart';
 import '../../features/auth/presentation/screens/change_password_screen.dart';
 import '../../features/admin/presentation/screens/admin_shell_screen.dart';
 import '../../features/employee/presentation/screens/employee_shell_screen.dart';
+
+import '../../features/employee/presentation/screens/admin/employee_list_screen.dart';
+import '../../features/employee/presentation/screens/admin/employee_detail_screen.dart';
+import '../../features/employee/presentation/screens/admin/create_employee_screen.dart';
+import '../../features/employee/presentation/screens/admin/edit_employee_screen.dart';
+import '../../features/employee/presentation/screens/employee/my_profile_screen.dart';
+
 import 'app_routes.dart';
 
 // ── Placeholder screens (replaced phase by phase) ──────────────────────────
@@ -140,7 +147,25 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(routes: [
             GoRoute(
               path: AppRoutes.adminEmployees,
-              builder: (_, __) => const _PlaceholderScreen(title: 'Employees'),
+              builder: (_, __) => const EmployeeListScreen(),
+              routes: [
+                GoRoute(
+                  path: 'create',
+                  builder: (_, __) => const CreateEmployeeScreen(),
+                ),
+                GoRoute(
+                  path: ':id',
+                  builder: (_, state) => EmployeeDetailScreen(
+                    employeeId: state.pathParameters['id']!,
+                  ),
+                ),
+                GoRoute(
+                  path: ':id/edit',
+                  builder: (_, state) => EditEmployeeScreen(
+                    employeeId: state.pathParameters['id']!,
+                  ),
+                ),
+              ],
             ),
           ]),
           StatefulShellBranch(routes: [
@@ -191,7 +216,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(routes: [
             GoRoute(
               path: AppRoutes.employeeProfile,
-              builder: (_, __) => const _PlaceholderScreen(title: 'My Profile'),
+              builder: (_, __) => const MyProfileScreen(),
             ),
           ]),
         ],

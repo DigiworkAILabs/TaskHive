@@ -31,6 +31,8 @@ final Provider<Dio> dioClientProvider = Provider<Dio>((ref) {
       receiveTimeout: const Duration(seconds: 15),
       sendTimeout: const Duration(seconds: 15),
       headers: const {'Content-Type': 'application/json'},
+      // Required for Web browsers to attach cross-origin cookies.
+      extra: const {'withCredentials': true},
     ),
   );
 

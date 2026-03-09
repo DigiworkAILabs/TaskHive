@@ -7,8 +7,10 @@ class AppTextField extends StatefulWidget {
   final String? hint;
   final TextInputType keyboardType;
   final Widget? prefixIcon;
+  final Widget? suffixIcon;
   final String? Function(String?)? validator;
   final bool readOnly;
+  final ValueChanged<String>? onChanged;
 
   const AppTextField({
     super.key,
@@ -18,8 +20,10 @@ class AppTextField extends StatefulWidget {
     this.hint,
     this.keyboardType = TextInputType.text,
     this.prefixIcon,
+    this.suffixIcon,
     this.validator,
     this.readOnly = false,
+    this.onChanged,
   });
 
   @override
@@ -42,6 +46,7 @@ class _AppTextFieldState extends State<AppTextField> {
           keyboardType: widget.keyboardType,
           readOnly: widget.readOnly,
           validator: widget.validator,
+          onChanged: widget.onChanged,
           decoration: InputDecoration(
             hintText: widget.hint,
             prefixIcon: widget.prefixIcon,
@@ -52,7 +57,7 @@ class _AppTextFieldState extends State<AppTextField> {
                     ),
                     onPressed: () => setState(() => _hidden = !_hidden),
                   )
-                : null,
+                : widget.suffixIcon,
           ),
         ),
       ],
