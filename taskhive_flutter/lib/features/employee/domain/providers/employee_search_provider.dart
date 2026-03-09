@@ -16,7 +16,15 @@ part 'employee_search_provider.g.dart';
 @riverpod
 Future<List<EmployeeModel>> employeeSearch(
     EmployeeSearchRef ref, String query) async {
-  if (query.trim().isEmpty) return [];
   final repo = ref.watch(employeeRepositoryProvider);
+
+  // If query is empty, return up to 100 employees to populate dropdowns menus initially
+  if (query.trim().isEmpty) {
+    final data = await repo.getEmployees(size: 100);
+    final content = (data['content'] as List<dynamic>)
+        .map((e) => EmployeeModel.fromJson(e as Map<String, dynamic>))
+        .toList();
+    return content;
+  }
   return repo.searchEmployees(query.trim());
 }

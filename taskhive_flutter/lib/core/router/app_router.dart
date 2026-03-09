@@ -17,6 +17,13 @@ import '../../features/employee/presentation/screens/admin/create_employee_scree
 import '../../features/employee/presentation/screens/admin/edit_employee_screen.dart';
 import '../../features/employee/presentation/screens/employee/my_profile_screen.dart';
 
+import '../../features/task/presentation/screens/admin/admin_task_list_screen.dart';
+import '../../features/task/presentation/screens/admin/admin_task_detail_screen.dart';
+import '../../features/task/presentation/screens/admin/create_task_screen.dart';
+import '../../features/task/presentation/screens/admin/edit_task_screen.dart';
+import '../../features/task/presentation/screens/employee/my_tasks_screen.dart';
+import '../../features/task/presentation/screens/employee/employee_task_detail_screen.dart';
+
 import 'app_routes.dart';
 
 // ── Placeholder screens (replaced phase by phase) ──────────────────────────
@@ -171,7 +178,25 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(routes: [
             GoRoute(
               path: AppRoutes.adminTasks,
-              builder: (_, __) => const _PlaceholderScreen(title: 'Tasks'),
+              builder: (_, __) => const AdminTaskListScreen(),
+              routes: [
+                GoRoute(
+                  path: 'create',
+                  builder: (_, __) => const CreateTaskScreen(),
+                ),
+                GoRoute(
+                  path: ':id',
+                  builder: (_, state) => AdminTaskDetailScreen(
+                    taskId: state.pathParameters['id']!,
+                  ),
+                ),
+                GoRoute(
+                  path: ':id/edit',
+                  builder: (_, state) => EditTaskScreen(
+                    taskId: state.pathParameters['id']!,
+                  ),
+                ),
+              ],
             ),
           ]),
           StatefulShellBranch(routes: [
@@ -203,7 +228,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(routes: [
             GoRoute(
               path: AppRoutes.employeeTasks,
-              builder: (_, __) => const _PlaceholderScreen(title: 'My Tasks'),
+              builder: (_, __) => const MyTasksScreen(),
+              routes: [
+                GoRoute(
+                  path: ':id',
+                  builder: (_, state) => EmployeeTaskDetailScreen(
+                    taskId: state.pathParameters['id']!,
+                  ),
+                ),
+              ],
             ),
           ]),
           StatefulShellBranch(routes: [

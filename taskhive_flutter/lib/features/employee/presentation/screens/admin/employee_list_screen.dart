@@ -74,7 +74,7 @@ class _EmployeeListScreenState extends ConsumerState<EmployeeListScreen> {
           EmployeeSearchBar(
             key: _searchBarKey,
             onSearch: (q) {
-              _filter = _filter.copyWith(search: q);
+              setState(() => _filter = _filter.copyWith(search: q));
               ref
                   .read(employeeListNotifierProvider.notifier)
                   .applyFilter(_filter);
@@ -83,7 +83,7 @@ class _EmployeeListScreenState extends ConsumerState<EmployeeListScreen> {
           EmployeeFilterBar(
             filter: _filter,
             onFilterChanged: (f) {
-              _filter = f;
+              setState(() => _filter = f);
               ref
                   .read(employeeListNotifierProvider.notifier)
                   .applyFilter(_filter);

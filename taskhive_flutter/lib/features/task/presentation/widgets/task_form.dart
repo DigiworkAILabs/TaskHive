@@ -1,0 +1,250 @@
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
+import '../../data/models/create_task_request.dart';
+import '../../data/models/update_task_request.dart';
+import '../../domain/enums/task_priority.dart';
+import 'assignee_picker.dart';
+import 'due_date_picker.dart';
+import 'priority_selector.dart';
+import 'tags_input_field.dart';
+
+/// Reusable form for both create and edit task flows.
+///
+/// - [initialTitle], [initialDescription], etc. are pre-filled for edit mode.
+/// - [onCreateSubmit] is non-null for create; [onUpdateSubmit] for edit.
+/// - Exactly one of them must be provided.
+class TaskForm extends StatefulWidget {
+  // Initial values for edit mode
+  final String? initialTitle;
+  final String? initialDescription;
+  final TaskPriority? initialPriority;
+  final String? initialAssigneeId;
+  final DateTime? initialDueDate;
+  final double? initialEstimatedHours;
+  final List<String> initialTags;
+
+  /// Called on create form submission with the full request object.
+  final Future<void> Function(CreateTaskRequest)? onCreateSubmit;
+
+  /// Called on edit form submission with the partial update request.
+  final Future<void> Function(UpdateTaskRequest)? onUpdateSubmit;
+
+  const TaskForm({
+    super.key,
+    this.initialTitle,
+    this.initialDescription,
+    this.initialPriority,
+    this.initialAssigneeId,
+    this.initialDueDate,
+    this.initialEstimatedHours,
+    this.initialTags = const [],
+    this.onCreateSubmit,
+    this.onUpdateSubmit,
+  }) : assert(
+          (onCreateSubmit != null) ^ (onUpdateSubmit != null),
+          'Exactly one of onCreateSubmit or onUpdateSubmit must be provided',
+        );
+
+  @override
+  State<TaskForm> createState() => _TaskFormState();
+}
+
+class _TaskFormState extends State<TaskForm> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _titleController;
+  late final TextEditingController _descriptionController;
+  late final TextEditingController _hoursController;
+
+  TaskPriority? _priority;
+  String? _assigneeId;
+  DateTime? _dueDate;
+  List<String> _tags = [];
+  bool _submitting = false;
+
+  bool get _isCreate => widget.onCreateSubmit != null;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController(text: widget.initialTitle ?? '');
+    _descriptionController =
+        TextEditingController(text: widget.initialDescription ?? '');
+    _hoursController = TextEditingController(
+      text: widget.initialEstimatedHours?.toString() ?? '',
+    );
+    _priority = widget.initialPriority;
+    _assigneeId = widget.initialAssigneeId;
+    _dueDate = widget.initialDueDate;
+    _tags = List<String>.from(widget.initialTags);
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    _hoursController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    if (_priority == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a priority')),
+      );
+      return;
+    }
+
+    setState(() => _submitting = true);
+    try {
+      if (_isCreate) {
+        final request = CreateTaskRequest(
+          title: _titleController.text.trim(),
+          description: _descriptionController.text.trim(),
+          priority: _priority!,
+          assignedTo: _assigneeId!,
+          dueDate: DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(
+            _dueDate!.copyWith(hour: 17, minute: 0, second: 0),
+          ),
+          estimatedHours: double.tryParse(_hoursController.text),
+          tags: _tags,
+        );
+        await widget.onCreateSubmit!(request);
+      } else {
+        final request = UpdateTaskRequest(
+          title: _titleController.text.trim().isEmpty
+              ? null
+              : _titleController.text.trim(),
+          description: _descriptionController.text.trim().isEmpty
+              ? null
+              : _descriptionController.text.trim(),
+          priority: _priority,
+          assignedTo: _assigneeId,
+          dueDate: _dueDate != null
+              ? DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(_dueDate!)
+              : null,
+          estimatedHours: double.tryParse(_hoursController.text),
+          tags: _tags,
+        );
+        await widget.onUpdateSubmit!(request);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Form(
+      key: _formKey,
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          // Title
+          TextFormField(
+            controller: _titleController,
+            decoration: const InputDecoration(
+              labelText: 'Title *',
+              border: OutlineInputBorder(),
+            ),
+            validator: (v) =>
+                (v == null || v.trim().isEmpty) ? 'Title is required' : null,
+            maxLength: 200,
+          ),
+          const SizedBox(height: 16),
+
+          // Description
+          TextFormField(
+            controller: _descriptionController,
+            decoration: const InputDecoration(
+              labelText: 'Description',
+              border: OutlineInputBorder(),
+              alignLabelWithHint: true,
+            ),
+            maxLines: 4,
+          ),
+          const SizedBox(height: 16),
+
+          // Priority
+          PrioritySelector(
+            selected: _priority,
+            onChanged: (p) => setState(() => _priority = p),
+          ),
+          const SizedBox(height: 16),
+
+          // Assignee
+          if (_isCreate)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: AssigneePicker(
+                initialAssigneeId: _assigneeId,
+                onChanged: (id) => setState(() => _assigneeId = id),
+              ),
+            ),
+
+          // Due Date
+          DueDatePicker(
+            initialDate: _dueDate,
+            onChanged: (d) => setState(() => _dueDate = d),
+          ),
+          const SizedBox(height: 16),
+
+          // Estimated Hours
+          TextFormField(
+            controller: _hoursController,
+            decoration: const InputDecoration(
+              labelText: 'Estimated Hours',
+              border: OutlineInputBorder(),
+              suffixText: 'hrs',
+            ),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            validator: (v) {
+              if (v == null || v.isEmpty) return null;
+              if (double.tryParse(v) == null) return 'Enter a valid number';
+              return null;
+            },
+          ),
+          const SizedBox(height: 16),
+
+          // Tags
+          TagsInputField(
+            initialTags: _tags,
+            onChanged: (tags) => setState(() => _tags = tags),
+          ),
+          const SizedBox(height: 24),
+
+          // Submit
+          FilledButton(
+            onPressed: _submitting ? null : _submit,
+            child: _submitting
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white),
+                  )
+                : Text(_isCreate ? 'Create Task' : 'Save Changes'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+extension on DateTime {
+  DateTime copyWith({int? hour, int? minute, int? second}) => DateTime(
+        year,
+        month,
+        day,
+        hour ?? this.hour,
+        minute ?? this.minute,
+        second ?? this.second,
+      );
+}
