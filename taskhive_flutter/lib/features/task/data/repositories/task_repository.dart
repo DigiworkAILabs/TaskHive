@@ -222,4 +222,19 @@ class TaskRepository {
       throw ApiException.fromDioError(e);
     }
   }
+
+  /// Predict task priority using ML backend.
+  Future<TaskPriorityPrediction> predictTaskPriority(
+      TaskPriorityRequestDto request) async {
+    try {
+      final response = await _dio.post(
+        ApiEndpoints.mlPredictTaskPriority,
+        data: request.toJson(),
+      );
+      return TaskPriorityPrediction.fromJson(
+          response.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
 }
