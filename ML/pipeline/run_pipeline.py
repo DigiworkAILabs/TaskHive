@@ -9,11 +9,13 @@ ML_ROOT = Path(__file__).parent.parent
 # Step 1: Data Generation
 GENERATORS = [
     ML_ROOT / "training" / "training_generator" / "generate_priority_data.py",
+    ML_ROOT / "training" / "training_generator" / "generate_completion_data.py",
 ]
 
 # Step 2: Training
 TRAINERS = [
     ML_ROOT / "training" / "scripts" / "train_priority.py",
+    ML_ROOT / "training" / "scripts" / "train_completion.py",
 ]
 
 def run_script(script_path):

@@ -2,6 +2,8 @@ package com.digiwork.taskhive.module.ml.service;
 
 import com.digiwork.taskhive.module.ml.dto.TaskPriorityRequest;
 import com.digiwork.taskhive.module.ml.dto.TaskPriorityResponse;
+import com.digiwork.taskhive.module.ml.dto.CompletionTimeRequest;
+import com.digiwork.taskhive.module.ml.dto.CompletionTimeResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -78,6 +80,40 @@ public class MLService {
         return mlClientService.predictPriority(payload);
     }
 
+    /**
+     * Predict completion time for a task.
+     *
+     * @param request DTO from frontend
+     * @return Predicted hours, confidence range, and reasoning
+     */
+    public CompletionTimeResponse predictCompletionTime(CompletionTimeRequest request) {
+        log.info("[MLService] Predicting completion time for task: '{}' (Priority: {})",
+                request.getTaskTitle(), request.getPriority());
+
+        // 1. Enrich with employee performance metrics
+        // Phase 7.2: using safe defaults. Later will query DB.
+        double empOnTimeRate = getEmpOnTimeRate(request.getEmployeeId());
+        double empAvgHoursHigh = getEmpAvgHoursHigh(request.getEmployeeId());
+        double empAvgHoursMedium = getEmpAvgHoursMedium(request.getEmployeeId());
+        int empActiveTasks = getEmpActiveTasks(request.getEmployeeId());
+
+        // 2. Build FastAPI payload
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("task_title", request.getTaskTitle());
+        payload.put("task_description", request.getTaskDescription() != null ? request.getTaskDescription() : "");
+        payload.put("priority", request.getPriority());
+        payload.put("emp_on_time_rate", empOnTimeRate);
+        payload.put("emp_avg_hours_high", empAvgHoursHigh);
+        payload.put("emp_avg_hours_medium", empAvgHoursMedium);
+        payload.put("emp_active_tasks", empActiveTasks);
+        payload.put("manual_estimate", request.getEstimatedHours());
+
+        log.debug("[MLService] Enriched completion payload: {}", payload);
+
+        // 3. Delegate to HTTP client
+        return mlClientService.predictCompletionTime(payload);
+    }
+
     // ── Private enrichment helpers ────────────────────────────────────────────
     // Phase 7.1: returns safe defaults.
     // Phase 7.2+: replace with DB queries to employee_performance_cache.
@@ -96,5 +132,23 @@ public class MLService {
     private String getDepartment(UUID employeeId) {
         // TODO Phase 7.2: query employees.department by employeeId
         return "Unknown";
+    }
+
+    private double getEmpOnTimeRate(UUID employeeId) {
+        // TODO Phase 7.2: query employee_performance_cache.on_time_rate
+        return 0.78;
+    }
+
+    private double getEmpAvgHoursHigh(UUID employeeId) {
+        return 6.2;
+    }
+
+    private double getEmpAvgHoursMedium(UUID employeeId) {
+        return 3.8;
+    }
+
+    private int getEmpActiveTasks(UUID employeeId) {
+        // TODO Phase 7.2: count active tasks in task table
+        return 3;
     }
 }
