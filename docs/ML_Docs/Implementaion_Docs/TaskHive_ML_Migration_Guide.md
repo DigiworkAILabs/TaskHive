@@ -557,77 +557,42 @@ After ML integration:
 
 ### 8.1 Updated Folder Structure
 
-```
+```text
 ml/
-├── inference-server/
-│   ├── api/
-│   │   ├── main.py                          # FastAPI app — registers all routes
-│   │   ├── routes/
-│   │   │   ├── health.py                    # GET /health
-│   │   │   ├── predict_priority.py          # POST /predict/priority       ← Feature 1
-│   │   │   ├── predict_completion.py        # POST /predict/completion-time ← Feature 2
-│   │   │   ├── recommend_workload.py        # POST /recommend/workload-balance ← Feature 3 (NEW)
-│   │   │   └── productivity_score.py        # GET  /productivity-score/{id} ← Feature 4 (NEW)
-│   │   └── schemas/
-│   │       ├── request.py                   # Pydantic request models
-│   │       └── response.py                  # Pydantic response models
-│   ├── models/
-│   │   ├── loader.py                        # Loads .pkl files on startup
-│   │   ├── priority_model.pkl               # Trained Random Forest / BERT
-│   │   ├── completion_model.pkl             # Trained Gradient Boosting Regressor
-│   │   ├── workload_model.pkl               # Trained Multi-Armed Bandit (NEW)
-│   │   └── productivity_model.pkl           # Trained Weighted Ensemble (NEW)
-│   ├── preprocessing/
-│   │   ├── feature_engineering.py           # Feature transforms for inference
-│   │   └── text_processing.py              # Text cleaning for BERT
-│   ├── config/
-│   │   └── settings.py                     # ENV vars, model paths, config
-│   ├── requirements.txt
-│   └── Dockerfile
+├── pipeline/
+│   └── run_pipeline.py                  # Master orchestration script
 │
 ├── training/
+│   ├── .gitignore                       # Excludes *.csv
+│   ├── requirements.txt                 # Training-specific deps
 │   ├── data/
-│   │   ├── raw/                             # Raw data from PostgreSQL
-│   │   ├── processed/                       # Cleaned, encoded data
-│   │   └── datasets/                        # Train / val / test splits
-│   ├── notebooks/
-│   │   ├── 01_exploratory_analysis.ipynb    # Understand your data
-│   │   ├── 02_feature_engineering.ipynb     # Build features
-│   │   └── 03_model_experiments.ipynb       # Try algorithms, compare results
-│   ├── experiments/
-│   │   ├── priority_classification/
-│   │   │   ├── config.yaml
-│   │   │   ├── train.py
-│   │   │   └── evaluate.py
-│   │   ├── completion_time_regression/
-│   │   │   ├── config.yaml
-│   │   │   ├── train.py
-│   │   │   └── evaluate.py
-│   │   ├── workload_balancing/              # NEW
-│   │   │   ├── config.yaml
-│   │   │   ├── train.py
-│   │   │   └── evaluate.py
-│   │   └── productivity_scoring/            # NEW
-│   │       ├── config.yaml
-│   │       ├── train.py
-│   │       └── evaluate.py
-│   ├── models/
-│   │   ├── checkpoints/                     # Intermediate training saves
-│   │   └── production/                      # Final .pkl files for deployment
-│   └── pipelines/
-│       ├── data_extraction.py               # Pulls from PostgreSQL
-│       ├── preprocessing.py                 # Cleans + encodes
-│       ├── training.py                      # Trains all 4 models
-│       └── evaluation.py                    # Evaluates all 4 models
+│   │   └── priority_data.csv            # Generated synthetic data
+│   ├── training_generator/
+│   │   └── generate_priority_data.py    # Data generation scripts
+│   └── scripts/
+│       └── train_priority.py            # Model training scripts
 │
-└── shared/
-    ├── features/                            # Shared feature definitions
-    ├── evaluation/                          # Shared metrics (accuracy, F1, MAE)
-    └── utils/                               # Shared utility functions
+└── inference-server/
+    ├── main.py                          # FastAPI entry point
+    ├── check_health.py                  # CLI Health Check utility
+    ├── requirements.txt                 # Production-only deps
+    ├── .gitignore                       # Excludes *.pkl
+    ├── artifacts/                       # PRODUCTION MODELS STORED HERE
+    │   └── priority_model.pkl           # Saved model pipeline
+    ├── api/
+    │   ├── routes/
+    │   │   ├── health.py
+    │   │   └── predict_priority.py
+    │   └── schemas/
+    │       ├── request.py
+    │       └── response.py
+    ├── models/
+    │   └── loader.py                    # Loads from ../artifacts/
+    ├── preprocessing/
+    │   └── transformers.py              # Shared transformers
+    └── config/
+        └── settings.py
 ```
-
-### 8.2 FastAPI Endpoints
-
 ```python
 # ml/inference-server/api/main.py
 
@@ -719,81 +684,21 @@ class ProductivityResponse(BaseModel):
 
 ### 9.2 Training Steps — In Order
 
+```bash
+# STEP 1 — Run the automated pipeline
+# This generates data, trains models, and saves them to inference-server/artifacts
+cd ml/pipeline
+python run_pipeline.py
 ```
-STEP 1 — Data Extraction
-─────────────────────────
-Run: python training/pipelines/data_extraction.py
 
-Connects to PostgreSQL
-Pulls all tables listed above
-Saves raw CSV files to training/data/raw/
+### 9.3 Manual Maintenance (When Feature logic changes)
 
-STEP 2 — Exploratory Analysis
-──────────────────────────────
-Open: training/notebooks/01_exploratory_analysis.ipynb
+| Script | Location | Purpose |
+| :--- | :--- | :--- |
+| **Data Gen** | `training/training_generator/` | Update logic for synthetic record creation |
+| **Training** | `training/scripts/` | Tune hyper-parameters or change algorithms |
 
-Check data quality:
-  - How many tasks? How many employees?
-  - Priority distribution (is data balanced?)
-  - Missing values?
-  - Outliers in completion time?
-
-STEP 3 — Feature Engineering
-─────────────────────────────
-Open: training/notebooks/02_feature_engineering.ipynb
-Run: python training/pipelines/preprocessing.py
-
-Build features:
-  For Priority model:    title length, keyword presence, description length
-  For Completion model:  priority score, employee on-time rate, department avg
-  For Workload model:    current open tasks per employee, upcoming due dates
-  For Productivity:      on-time rate (40%) + completion rate (30%) + speed (30%)
-
-Saves processed data to training/data/processed/
-
-STEP 4 — Model Experiments
-────────────────────────────
-Open: training/notebooks/03_model_experiments.ipynb
-
-Try multiple algorithms for each feature:
-  Priority:    Random Forest vs Logistic Regression vs BERT
-  Completion:  Gradient Boosting vs Linear Regression vs XGBoost
-  Workload:    Epsilon-Greedy MAB vs UCB MAB
-  Productivity: Weighted formula vs Neural Network
-
-Pick best performing algorithm for each.
-
-STEP 5 — Training
-──────────────────
-Run: python training/pipelines/training.py
-
-Trains all 4 models using best algorithms from Step 4.
-Uses cross-validation (5-fold).
-Saves best model to training/models/checkpoints/
-
-STEP 6 — Evaluation
-────────────────────
-Run: python training/pipelines/evaluation.py
-
-Checks accuracy on held-out test set.
-
-Minimum thresholds before deploying:
-  Priority model:     Accuracy > 80%, F1-score > 0.78
-  Completion model:   MAE < 2 hours, R² > 0.70
-  Workload model:     On-time rate improvement > 10% vs random
-  Productivity model: Pearson correlation > 0.75 vs manual scores
-
-If any model fails threshold → go back to Step 4, tune, retrain.
-If all pass → proceed to Step 7.
-
-STEP 7 — Copy models to inference server
-─────────────────────────────────────────
-Copy from training/models/production/ to inference-server/models/
-  priority_model.pkl
-  completion_model.pkl
-  workload_model.pkl
-  productivity_model.pkl
-```
+---
 
 ---
 
@@ -802,36 +707,19 @@ Copy from training/models/production/ to inference-server/models/
 ### Before connecting to Spring Boot — test FastAPI standalone
 
 ```bash
-# Step 1 — Start FastAPI server locally
+# Step 1 — Start FastAPI server
 cd ml/inference-server
-pip install -r requirements.txt
-uvicorn api.main:app --reload --port 8000
+python main.py
 
-# Step 2 — Check health
-curl http://localhost:8000/health
-# Expected: { "status": "ok", "models_loaded": 4 }
+# Step 2 — Run CLI Health Check
+python check_health.py
+# Expected result: ✅ ML Server is healthy! Status: ok, Models Loaded: ['priority']
 
-# Step 3 — Test Feature 1: Priority Suggestion
-curl -X POST http://localhost:8000/predict/priority \
+# Step 3 — Manual Priority Prediction Test
+curl -X POST http://localhost:8000/ml/predict/task-priority \
   -H "Content-Type: application/json" \
-  -d '{"title": "Fix login bug", "description": "Users cannot login after reset"}'
-# Expected: { "priority": "HIGH", "confidence": 0.91 }
-
-# Step 4 — Test Feature 2: Completion Time
-curl -X POST http://localhost:8000/predict/completion-time \
-  -H "Content-Type: application/json" \
-  -d '{"title": "Fix login bug", "priority": "HIGH", "assigned_to": "uuid", "historical_completion_rate": 0.87}'
-# Expected: { "estimated_hours": 4.5, "confidence": 0.82 }
-
-# Step 5 — Test Feature 3: Workload Balance
-curl -X POST http://localhost:8000/recommend/workload-balance \
-  -H "Content-Type: application/json" \
-  -d '{"priority": "HIGH", "due_date": "2026-04-01", "active_employees": ["uuid1", "uuid2", "uuid3"]}'
-# Expected: { "recommended_employee_id": "uuid1", "score": 0.92, "ranked_employees": [...] }
-
-# Step 6 — Test Feature 4: Productivity Score
-curl http://localhost:8000/productivity-score/employee-uuid
-# Expected: { "employee_id": "uuid", "score": 87, "grade": "A" }
+  -d '{"title": "Fix login bug", "description": "Users cannot login"}'
+# Expected: { "predicted_priority": "HIGH", "confidence": 0.90 }
 ```
 
 ### Acceptance Criteria before connecting to Spring Boot

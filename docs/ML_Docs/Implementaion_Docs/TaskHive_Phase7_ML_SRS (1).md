@@ -148,7 +148,7 @@ Since real data requires 6+ months, models are trained on synthetic data generat
 | Workload Balance | workload_data.csv | 2,000 | score = (completion_rate×30) + (on_time_rate×25) + ((10−active_tasks)×3) + (dept_match×20) + noise |
 | Productivity Score | productivity_data.csv | 3,000 | score = (completion_rate×35) + (on_time_rate×30) − (overdue_rate×20) + (engagement×15) + noise |
 
-**Retraining**: When real data accumulates, run `training/train_all.py` → new `.pkl` files replace old ones → restart ML server. Zero code change.
+**Retraining**: When real data accumulates, run `pipeline/run_pipeline.py` → new `.pkl` files are saved to `inference-server/artifacts/` → restart ML server. Zero code change.
 
 ---
 
@@ -156,59 +156,44 @@ Since real data requires 6+ months, models are trained on synthetic data generat
 
 ```
 ml/
+├── pipeline/
+│   └── run_pipeline.py                  # Master orchestration script
+│
+├── training/
+│   ├── requirements.txt                 # Training-specific deps
+│   ├── .gitignore                       # Ignores data/*.csv
+│   ├── data/
+│   │   └── priority_data.csv            # Generated synthetic data
+│   ├── training_generator/
+│   │   └── generate_priority_data.py    # Data generation scripts
+│   └── scripts/
+│       └── train_priority.py            # Model training scripts
+│
 ├── inference-server/
-│   ├── main.py
+│   ├── main.py                          # FastAPI entry point
+│   ├── check_health.py                  # CLI Health Check utility
+│   ├── requirements.txt                 # Production-only deps
+│   ├── .gitignore                       # Ignores artifacts/*.pkl
+│   │
+│   ├── artifacts/                       # NEW: Production model storage
+│   │   └── priority_model.pkl           # Saved model pipeline
 │   │
 │   ├── api/
 │   │   ├── routes/
 │   │   │   ├── health.py
-│   │   │   ├── predict_priority.py
-│   │   │   ├── predict_completion.py
-│   │   │   ├── workload_balance.py
-│   │   │   └── productivity_score.py
+│   │   │   └── predict_priority.py
 │   │   └── schemas/
-│   │       ├── request.py               # All 4 Pydantic request models
-│   │       └── response.py              # All 4 Pydantic response models
+│   │       ├── request.py
+│   │       └── response.py
 │   │
 │   ├── models/
-│   │   ├── loader.py
-│   │   ├── priority_model.pkl
-│   │   ├── completion_model.pkl
-│   │   ├── workload_model.pkl
-│   │   └── productivity_model.pkl
-│   │
-│   ├── services/
-│   │   ├── priority_service.py
-│   │   ├── completion_service.py
-│   │   ├── workload_service.py
-│   │   └── productivity_service.py
+│   │   └── loader.py                    # Loads from ../artifacts/
 │   │
 │   ├── preprocessing/
-│   │   ├── feature_engineering.py       # Shared across all features
-│   │   └── text_processing.py           # Shared across all features
+│   │   └── transformers.py              # Shared ML transformers
 │   │
-│   ├── config/
-│   │   └── settings.py
-│   │
-│   ├── requirements.txt
-│   ├── Dockerfile
-│   └── .env.example
-│
-└── training/
-    ├── generate_priority_data.py
-    ├── generate_completion_data.py
-    ├── generate_workload_data.py
-    ├── generate_productivity_data.py
-    ├── train_priority.py
-    ├── train_completion.py
-    ├── train_workload.py
-    ├── train_productivity.py
-    ├── train_all.py                     # Runs all 4 train scripts
-    └── data/
-        ├── priority_data.csv
-        ├── completion_data.csv
-        ├── workload_data.csv
-        └── productivity_data.csv
+│   └── config/
+│       └── settings.py
 ```
 
 ---
@@ -348,7 +333,7 @@ ml-server:
   ports:
     - "8000:8000"
   volumes:
-    - ./ml/inference-server/models:/app/models
+    - ./ml/inference-server/artifacts:/app/artifacts
   healthcheck:
     test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
     interval: 30s
