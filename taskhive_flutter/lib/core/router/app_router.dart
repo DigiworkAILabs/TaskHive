@@ -27,6 +27,8 @@ import '../../features/task/presentation/screens/employee/employee_task_detail_s
 import '../../features/notification/presentation/screens/notification_list_screen.dart';
 import '../../features/notification/presentation/screens/notification_preferences_screen.dart';
 import '../../features/notification/presentation/widgets/notification_badge.dart';
+import '../../features/audit/presentation/screens/audit_screen.dart';
+import '../../features/audit/presentation/screens/entity_timeline_screen.dart';
 
 import 'app_routes.dart';
 
@@ -168,7 +170,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(routes: [
             GoRoute(
               path: AppRoutes.adminDashboard,
-              builder: (_, __) => _PlaceholderScreen(
+              builder: (_, __) => const _PlaceholderScreen(
                   title: 'Admin Dashboard', showNotificationBell: true),
             ),
           ]),
@@ -230,8 +232,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(routes: [
             GoRoute(
               path: AppRoutes.adminAudit,
-              builder: (_, __) => const _PlaceholderScreen(
-                  title: 'Audit', showNotificationBell: true),
+              builder: (_, __) => const AuditScreen(),
+              routes: [
+                GoRoute(
+                  path: 'entity/:type/:id',
+                  builder: (_, state) => EntityTimelineScreen(
+                    entityType: state.pathParameters['type']!,
+                    entityId: state.pathParameters['id']!,
+                  ),
+                ),
+              ],
             ),
           ]),
         ],

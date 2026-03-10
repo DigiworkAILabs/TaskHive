@@ -7,7 +7,7 @@ import '../widgets/notification_list_tile.dart';
 import '../../../../core/services/notification_navigation_service.dart';
 
 class NotificationListScreen extends ConsumerStatefulWidget {
-  const NotificationListScreen({Key? key}) : super(key: key);
+  const NotificationListScreen({super.key});
 
   @override
   ConsumerState<NotificationListScreen> createState() =>
