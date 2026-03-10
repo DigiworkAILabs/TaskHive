@@ -14,6 +14,7 @@ import '../../../data/models/employee_model.dart';
 import '../../widgets/employee_filter_bar.dart';
 import '../../widgets/employee_list_tile.dart';
 import '../../widgets/employee_search_bar.dart';
+import '../../../../notification/presentation/widgets/notification_badge.dart';
 
 class EmployeeListScreen extends ConsumerStatefulWidget {
   const EmployeeListScreen({super.key});
@@ -66,6 +67,13 @@ class _EmployeeListScreenState extends ConsumerState<EmployeeListScreen> {
             icon: const Icon(Icons.person_add_alt_1_outlined),
             tooltip: 'Add Employee',
             onPressed: () => context.go(AppRoutes.adminCreateEmployee),
+          ),
+          NotificationBadge(
+            child: IconButton(
+              icon: const Icon(Icons.notifications_outlined),
+              tooltip: 'Notifications',
+              onPressed: () => context.push('/admin/notifications'),
+            ),
           ),
         ],
       ),

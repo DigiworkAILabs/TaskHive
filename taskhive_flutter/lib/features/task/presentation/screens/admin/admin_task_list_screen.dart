@@ -10,6 +10,7 @@ import '../../../domain/providers/task_actions_provider.dart';
 import '../../../domain/providers/task_list_provider.dart';
 import '../../widgets/task_filter_bar.dart';
 import '../../widgets/task_list_tile.dart';
+import '../../../../notification/presentation/widgets/notification_badge.dart';
 
 /// Admin task list screen.
 /// Shows paginated list with status/priority filter chips, overdue badge, and FAB to create.
@@ -58,6 +59,13 @@ class _AdminTaskListScreenState extends ConsumerState<AdminTaskListScreen> {
             icon: const Icon(Icons.refresh),
             onPressed: () =>
                 ref.read(taskListNotifierProvider.notifier).refresh(),
+          ),
+          NotificationBadge(
+            child: IconButton(
+              icon: const Icon(Icons.notifications_outlined),
+              tooltip: 'Notifications',
+              onPressed: () => context.push('/admin/notifications'),
+            ),
           ),
         ],
       ),
@@ -245,16 +253,16 @@ class _TaskList extends ConsumerWidget {
       BuildContext context, WidgetRef ref, TaskModel task) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Delete Task?'),
         content: Text('Are you sure you want to delete "${task.title}"?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(_, false),
+            onPressed: () => Navigator.pop(dialogContext, false),
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () => Navigator.pop(_, true),
+            onPressed: () => Navigator.pop(dialogContext, true),
             style: FilledButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.error),
             child: const Text('Delete'),

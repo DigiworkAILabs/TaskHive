@@ -9,6 +9,10 @@ class CacheService {
   static const _notificationsBox = 'notifications_box';
   static const _analyticsBox = 'analytics_box';
 
+  /// Raw box access for providers that need granular key-value caching
+  static Box get notificationsBox => Hive.box(_notificationsBox);
+  static Box get analyticsBox => Hive.box(_analyticsBox);
+
   // Employees (Phase 2)
   Future<void> cacheEmployees(List<Map<String, dynamic>> data) =>
       Hive.box(_employeesBox).put('list', data);

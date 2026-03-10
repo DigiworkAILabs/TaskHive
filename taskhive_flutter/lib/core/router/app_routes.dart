@@ -29,6 +29,7 @@ class AppRoutes {
   static const String adminAudit = '/admin/audit';
   static const String adminAuditEntityTimeline =
       '/admin/audit/entity/:type/:id';
+  static const String adminNotifications = '/admin/notifications';
 
   // Employee shell branches
   static const String employeeDashboard = '/employee/dashboard';
