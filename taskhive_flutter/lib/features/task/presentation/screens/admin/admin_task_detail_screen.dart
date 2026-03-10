@@ -160,7 +160,7 @@ class AdminTaskDetailScreen extends ConsumerWidget {
     final commentController = TextEditingController();
     final comment = await showDialog<String>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: Text('Change to "${newStatus.label}"?'),
         content: TextField(
           controller: commentController,
@@ -172,9 +172,11 @@ class AdminTaskDetailScreen extends ConsumerWidget {
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(_), child: const Text('Cancel')),
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel')),
           FilledButton(
-              onPressed: () => Navigator.pop(_, commentController.text),
+              onPressed: () =>
+                  Navigator.pop(dialogContext, commentController.text),
               child: const Text('Confirm')),
         ],
       ),

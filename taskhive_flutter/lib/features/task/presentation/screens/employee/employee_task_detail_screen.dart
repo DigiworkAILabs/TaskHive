@@ -162,7 +162,7 @@ class EmployeeTaskDetailScreen extends ConsumerWidget {
     final commentController = TextEditingController();
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: Text('Move to "${newStatus.label}"?'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -181,10 +181,10 @@ class EmployeeTaskDetailScreen extends ConsumerWidget {
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(_, false),
+              onPressed: () => Navigator.pop(dialogContext, false),
               child: const Text('Cancel')),
           FilledButton(
-              onPressed: () => Navigator.pop(_, true),
+              onPressed: () => Navigator.pop(dialogContext, true),
               child: const Text('Confirm')),
         ],
       ),

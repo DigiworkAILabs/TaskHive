@@ -24,16 +24,37 @@ import '../../features/task/presentation/screens/admin/edit_task_screen.dart';
 import '../../features/task/presentation/screens/employee/my_tasks_screen.dart';
 import '../../features/task/presentation/screens/employee/employee_task_detail_screen.dart';
 
+import '../../features/notification/presentation/screens/notification_list_screen.dart';
+import '../../features/notification/presentation/screens/notification_preferences_screen.dart';
+import '../../features/notification/presentation/widgets/notification_badge.dart';
+
 import 'app_routes.dart';
 
 // ── Placeholder screens (replaced phase by phase) ──────────────────────────
 
 class _PlaceholderScreen extends StatelessWidget {
   final String title;
-  const _PlaceholderScreen({required this.title});
+  final bool showNotificationBell;
+  const _PlaceholderScreen({
+    required this.title,
+    this.showNotificationBell = false,
+  });
+
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: Text(title)),
+        appBar: AppBar(
+          title: Text(title),
+          actions: [
+            if (showNotificationBell)
+              NotificationBadge(
+                child: IconButton(
+                  icon: const Icon(Icons.notifications_outlined),
+                  tooltip: 'Notifications',
+                  onPressed: () => context.push('/admin/notifications'),
+                ),
+              ),
+          ],
+        ),
         body: Center(
           child: Text('$title\n(Coming in a future phase)',
               textAlign: TextAlign.center),
@@ -147,8 +168,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(routes: [
             GoRoute(
               path: AppRoutes.adminDashboard,
-              builder: (_, __) =>
-                  const _PlaceholderScreen(title: 'Admin Dashboard'),
+              builder: (_, __) => _PlaceholderScreen(
+                  title: 'Admin Dashboard', showNotificationBell: true),
             ),
           ]),
           StatefulShellBranch(routes: [
@@ -202,13 +223,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(routes: [
             GoRoute(
               path: AppRoutes.adminAnalytics,
-              builder: (_, __) => const _PlaceholderScreen(title: 'Analytics'),
+              builder: (_, __) => const _PlaceholderScreen(
+                  title: 'Analytics', showNotificationBell: true),
             ),
           ]),
           StatefulShellBranch(routes: [
             GoRoute(
               path: AppRoutes.adminAudit,
-              builder: (_, __) => const _PlaceholderScreen(title: 'Audit'),
+              builder: (_, __) => const _PlaceholderScreen(
+                  title: 'Audit', showNotificationBell: true),
             ),
           ]),
         ],
@@ -242,8 +265,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(routes: [
             GoRoute(
               path: AppRoutes.employeeNotifications,
-              builder: (_, __) =>
-                  const _PlaceholderScreen(title: 'Notifications'),
+              builder: (_, __) => const NotificationListScreen(),
             ),
           ]),
           StatefulShellBranch(routes: [
@@ -253,6 +275,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ),
           ]),
         ],
+      ),
+
+      // ── Push Routes (Outside Shell) ─────────────────────────────────────────────────
+      GoRoute(
+        path: AppRoutes.adminNotifications,
+        builder: (_, __) => const NotificationListScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.employeeNotificationPreferences,
+        builder: (_, __) => const NotificationPreferencesScreen(),
       ),
     ],
   );
