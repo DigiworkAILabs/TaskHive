@@ -16,6 +16,16 @@ interface TaskFormProps {
     error: string | null;
     success: boolean;
     backHref?: string;
+    /** ML-accepted priority — overrides internal state when set */
+    initialPriority?: TaskPriority;
+    /** Notifies parent of field changes for ML context (non-blocking) */
+    onFieldChange?: (fields: {
+        title?: string;
+        description?: string;
+        assignedTo?: string;
+        tags?: string;
+        estimatedHours?: string;
+    }) => void;
 }
 
 // ── Shared input style ────────────────────────────────────────────────────────
@@ -46,11 +56,11 @@ function FormField({ label, required, children }: { label: string; required?: bo
 
 // ── Main Component ────────────────────────────────────────────────────────────
 
-export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoading, error, success, backHref = '/admin/tasks' }) => {
+export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoading, error, success, backHref = '/admin/tasks', initialPriority, onFieldChange }) => {
     const [formData, setFormData] = useState({
         title: '',
         description: '',
-        priority: 'MEDIUM' as TaskPriority,
+        priority: (initialPriority ?? 'MEDIUM') as TaskPriority,
         assignedTo: '',
         dueDate: '',
         dueTime: '17:00',
@@ -107,9 +117,19 @@ export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoad
         return Object.keys(errors).length === 0;
     };
 
+    // Sync ML-accepted priority into form state
+    useEffect(() => {
+        if (initialPriority) {
+            setFormData(prev => ({ ...prev, priority: initialPriority }));
+        }
+    }, [initialPriority]);
+
     const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-        setFormData((prev) => ({ ...prev, [field]: e.target.value }));
+        const value = e.target.value;
+        setFormData((prev) => ({ ...prev, [field]: value }));
         if (fieldErrors[field]) setFieldErrors((prev) => { const n = { ...prev }; delete n[field]; return n; });
+        // Notify parent for ML context
+        if (onFieldChange) onFieldChange({ [field]: value });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
