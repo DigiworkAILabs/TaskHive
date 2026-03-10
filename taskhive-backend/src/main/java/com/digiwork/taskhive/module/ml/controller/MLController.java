@@ -3,6 +3,8 @@ package com.digiwork.taskhive.module.ml.controller;
 import com.digiwork.taskhive.common.dto.ApiResponse;
 import com.digiwork.taskhive.module.ml.dto.TaskPriorityRequest;
 import com.digiwork.taskhive.module.ml.dto.TaskPriorityResponse;
+import com.digiwork.taskhive.module.ml.dto.CompletionTimeRequest;
+import com.digiwork.taskhive.module.ml.dto.CompletionTimeResponse;
 import com.digiwork.taskhive.module.ml.service.MLService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -31,27 +33,47 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class MLController {
 
-    private final MLService mlService;
+        private final MLService mlService;
 
-    /**
-     * POST /api/v1/ml/predict/task-priority
-     *
-     * Receives task details from the admin's Create Task form,
-     * enriches with employee data, forwards to FastAPI, returns prediction.
-     *
-     * Always returns 200 OK — fallback MEDIUM is returned if ML is down.
-     */
-    @PostMapping("/predict/task-priority")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<TaskPriorityResponse>> predictTaskPriority(
-            @RequestBody @Valid TaskPriorityRequest request) {
+        /**
+         * POST /api/v1/ml/predict/task-priority
+         *
+         * Receives task details from the admin's Create Task form,
+         * enriches with employee data, forwards to FastAPI, returns prediction.
+         *
+         * Always returns 200 OK — fallback MEDIUM is returned if ML is down.
+         */
+        @PostMapping("/predict/task-priority")
+        @PreAuthorize("hasRole('ADMIN')")
+        public ResponseEntity<ApiResponse<TaskPriorityResponse>> predictTaskPriority(
+                        @RequestBody @Valid TaskPriorityRequest request) {
 
-        log.info("[MLController] Task priority prediction requested for: '{}'",
-                request.getTaskTitle());
+                log.info("[MLController] Task priority prediction requested for: '{}'",
+                                request.getTaskTitle());
 
-        TaskPriorityResponse prediction = mlService.predictPriority(request);
+                TaskPriorityResponse prediction = mlService.predictPriority(request);
 
-        return ResponseEntity.ok(
-                ApiResponse.success("Priority prediction successful", prediction));
-    }
+                return ResponseEntity.ok(
+                                ApiResponse.success("Priority prediction successful", prediction));
+        }
+
+        /**
+         * POST /api/v1/ml/predict/completion-time
+         *
+         * Receives completion time details (with selected priority and employee).
+         * Enriches with employee data, forwards to FastAPI, returns range prediction.
+         */
+        @PostMapping("/predict/completion-time")
+        @PreAuthorize("hasRole('ADMIN')")
+        public ResponseEntity<ApiResponse<CompletionTimeResponse>> predictCompletionTime(
+                        @RequestBody @Valid CompletionTimeRequest request) {
+
+                log.info("[MLController] Completion time prediction requested for: '{}'",
+                                request.getTaskTitle());
+
+                CompletionTimeResponse prediction = mlService.predictCompletionTime(request);
+
+                return ResponseEntity.ok(
+                                ApiResponse.success("Completion time prediction successful", prediction));
+        }
 }

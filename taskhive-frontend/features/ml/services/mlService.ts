@@ -13,6 +13,9 @@ import type {
     TaskPriorityRequestDto,
     TaskPriorityPrediction,
     TaskPriorityApiResponse,
+    CompletionTimeRequestDto,
+    CompletionTimePrediction,
+    CompletionTimeApiResponse,
 } from '../types/ml.types';
 
 const ML_BASE = '/ml';
@@ -34,6 +37,25 @@ export const mlService = {
     ): Promise<TaskPriorityPrediction> => {
         const response = await apiClient.post<TaskPriorityApiResponse>(
             `${ML_BASE}/predict/task-priority`,
+            data
+        );
+        return response.data.data;
+    },
+
+    /**
+     * Feature 2 — Task Completion Time Estimation
+     *
+     * Sends task title, description, selected priority, and employee ID.
+     * Spring Boot enriches it and fetches from FastAPI.
+     *
+     * @param data Request payload
+     * @returns Prediction with confidence range and reasoning
+     */
+    predictCompletionTime: async (
+        data: CompletionTimeRequestDto
+    ): Promise<CompletionTimePrediction> => {
+        const response = await apiClient.post<CompletionTimeApiResponse>(
+            `${ML_BASE}/predict/completion-time`,
             data
         );
         return response.data.data;

@@ -2,7 +2,8 @@
 api/schemas/request.py
 ───────────────────────
 Pydantic request schemas for the ML Inference Server.
-Phase 7.1: TaskPriorityRequest only.
+Phase 7.1: TaskPriorityRequest
+Phase 7.2: CompletionTimeRequest
 """
 
 from pydantic import BaseModel, Field, field_validator
@@ -97,6 +98,80 @@ class TaskPriorityRequest(BaseModel):
                 "emp_completion_rate": 0.87,
                 "emp_avg_hours": 4.2,
                 "department": "Engineering",
+            }
+        }
+    }
+
+
+class CompletionTimeRequest(BaseModel):
+    """
+    Incoming request body for POST /ml/predict/completion-time.
+    Sent by Spring Boot after enriching with assignee stats.
+    """
+
+    task_title: str = Field(..., min_length=2, max_length=500)
+    task_description: str = Field(default="", max_length=5000)
+    priority: str = Field(
+        ...,
+        pattern="^(LOW|MEDIUM|HIGH|CRITICAL)$",
+        description="Task priority"
+    )
+
+    # Employee metrics enriched by Spring Boot
+    emp_on_time_rate: float = Field(
+        default=0.75,
+        ge=0.0,
+        le=1.0,
+        description="Assignee historical on-time task completion rate (0.0–1.0)"
+    )
+
+    emp_avg_hours_high: float = Field(
+        default=5.0,
+        ge=0.0,
+        description="Assignee average hours per HIGH/CRITICAL priority task"
+    )
+    
+    emp_avg_hours_medium: float = Field(
+        default=3.0,
+        ge=0.0,
+        description="Assignee average hours per MEDIUM/LOW priority task"
+    )
+
+    emp_active_tasks: int = Field(
+        default=0,
+        ge=0,
+        description="Number of currently active tasks for this assignee"
+    )
+
+    manual_estimate: Optional[float] = Field(
+        default=None,
+        ge=0.0,
+        description="Admin's manually entered estimate (if any)"
+    )
+
+    @field_validator("task_title")
+    @classmethod
+    def title_not_blank(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("task_title must not be blank")
+        return v.strip()
+
+    @field_validator("task_description")
+    @classmethod
+    def strip_description(cls, v: str) -> str:
+        return v.strip() if v else ""
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "task_title": "Build dashboard charts",
+                "task_description": "Add pie and bar charts to analytics page",
+                "priority": "HIGH",
+                "emp_on_time_rate": 0.78,
+                "emp_avg_hours_high": 6.2,
+                "emp_avg_hours_medium": 3.8,
+                "emp_active_tasks": 3,
+                "manual_estimate": 5.0
             }
         }
     }
