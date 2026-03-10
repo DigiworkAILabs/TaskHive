@@ -22,10 +22,13 @@ interface TaskFormProps {
     onFieldChange?: (fields: {
         title?: string;
         description?: string;
+        priority?: string;
         assignedTo?: string;
         tags?: string;
         estimatedHours?: string;
     }) => void;
+    /** ML Feature 2: Node to render below Estimated Hours */
+    completionEstimateNode?: React.ReactNode;
 }
 
 // ── Shared input style ────────────────────────────────────────────────────────
@@ -56,7 +59,7 @@ function FormField({ label, required, children }: { label: string; required?: bo
 
 // ── Main Component ────────────────────────────────────────────────────────────
 
-export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoading, error, success, backHref = '/admin/tasks', initialPriority, onFieldChange }) => {
+export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoading, error, success, backHref = '/admin/tasks', initialPriority, onFieldChange, completionEstimateNode }) => {
     const [formData, setFormData] = useState({
         title: '',
         description: '',
@@ -328,6 +331,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoad
                                     style={{ ...inputStyle('estimatedHours'), paddingLeft: '36px' }}
                                 />
                             </div>
+                            {completionEstimateNode}
                         </FormField>
                     </div>
 

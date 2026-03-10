@@ -3,6 +3,7 @@ main.py
 ────────
 TaskHive ML Inference Server — FastAPI entry point.
 Phase 7.1: Priority prediction route added.
+Phase 7.2: Completion time prediction route added.
 """
 
 import logging
@@ -65,9 +66,8 @@ app.add_middleware(
 app.include_router(health.router)                  # GET  /health
 app.include_router(predict_priority.router)        # POST /ml/predict/task-priority
 
-# Future routes — added phase by phase:
-# from api.routes import predict_completion
-# app.include_router(predict_completion.router)    # POST /ml/predict/completion-time
+from api.routes import predict_completion
+app.include_router(predict_completion.router)    # POST /ml/predict/completion-time
 
 # from api.routes import recommend_workload
 # app.include_router(recommend_workload.router)    # POST /ml/recommend/workload-balance
