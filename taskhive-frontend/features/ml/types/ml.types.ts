@@ -5,6 +5,7 @@
  * Phase 7.1: Task Priority Suggestion
  * Phase 7.2: Task Completion Time Estimation
  * Phase 7.3: Workload Balance Recommendation
+ Phase 7.4: Employee Productivity Scoring
  */
 
 // ── Shared ────────────────────────────────────────────────────────────────────
@@ -122,5 +123,37 @@ export interface WorkloadRecommendationApiResponse {
     success: boolean;
     message: string;
     data: WorkloadRecommendation;
+    timestamp: string;
+}
+// ── Feature 4: Employee Productivity Scoring ──────────────────────────
+
+export interface ProductivityBreakdown {
+    completion_rate_score: number;
+    on_time_score: number;
+    overdue_penalty: number;
+    engagement_score: number;
+}
+
+export type PerformanceTrend = 'improving' | 'stable' | 'declining';
+
+/**
+ * Inner data object for Productivity Score.
+ */
+export interface ProductivityScore {
+    score: number;
+    grade: 'A' | 'B' | 'C' | 'D' | 'F';
+    breakdown: ProductivityBreakdown;
+    trend: PerformanceTrend;
+    reasoning: string;
+    fallbackUsed: boolean;
+}
+
+/**
+ * Full Spring Boot ApiResponse<ProductivityScoreResponse> shape.
+ */
+export interface ProductivityScoreApiResponse {
+    success: boolean;
+    message: string;
+    data: ProductivityScore;
     timestamp: string;
 }

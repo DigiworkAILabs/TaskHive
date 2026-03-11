@@ -57,6 +57,12 @@ def get_model(name: str):
     return _models.get(name)
 
 
+def load_priority_model(): return get_model("priority")
+def load_completion_model(): return get_model("completion")
+def load_workload_model(): return get_model("workload")
+def load_productivity_model(): return get_model("productivity")
+
+
 def get_loaded_models() -> list:
     """Return list of currently loaded model names."""
     return list(_models.keys())

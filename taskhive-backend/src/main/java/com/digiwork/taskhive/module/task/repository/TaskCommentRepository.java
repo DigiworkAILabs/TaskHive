@@ -16,4 +16,6 @@ public interface TaskCommentRepository extends JpaRepository<TaskComment, UUID> 
 
     // GDPR — fetch all comments by a user (for data export)
     List<TaskComment> findByAuthorId(UUID authorId);
+
+    long countByAuthorIdAndCreatedAtAfter(UUID authorId, java.time.LocalDateTime date);
 }

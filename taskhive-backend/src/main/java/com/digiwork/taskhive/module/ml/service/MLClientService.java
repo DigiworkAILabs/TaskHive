@@ -109,6 +109,34 @@ public class MLClientService {
         return WorkloadRecommendationResponse.fallback();
     }
 
+    // ── Productivity ──────────────────────────────────────────────────────────
+
+    @CircuitBreaker(name = "mlService", fallbackMethod = "predictProductivityFallback")
+    public ProductivityScoreResponse predictProductivityScore(Map<String, Object> mlPayload) {
+        if (!mlEnabled)
+            return ProductivityScoreResponse.fallback();
+        String url = mlBaseUrl + "/ml/score/employee";
+        ResponseEntity<MLProductivityApiResponse> response = mlRestTemplate.postForEntity(url, mlPayload,
+                MLProductivityApiResponse.class);
+        MLProductivityApiResponse body = response.getBody();
+        if (body == null)
+            throw new MLServiceUnavailableException("Empty response");
+
+        return ProductivityScoreResponse.builder()
+                .score(body.getScore())
+                .grade(body.getGrade())
+                .breakdown(body.getBreakdown())
+                .trend(body.getTrend())
+                .reasoning(body.getReasoning())
+                .fallbackUsed(body.getFallbackUsed() != null ? body.getFallbackUsed() : false)
+                .build();
+    }
+
+    private ProductivityScoreResponse predictProductivityFallback(Map<String, Object> payload, Throwable t) {
+        log.warn("[MLClient] Productivity fallback: {}", t.getMessage());
+        return ProductivityScoreResponse.fallback();
+    }
+
     // ── Mapping DTOs ─────────────────────────────────────────────────────────
 
     @lombok.Data
@@ -174,5 +202,16 @@ public class MLClientService {
         @JsonProperty("employee_id")
         private String employeeId;
         private Double score;
+    }
+
+    @lombok.Data
+    static class MLProductivityApiResponse {
+        private Double score;
+        private String grade;
+        private Map<String, Double> breakdown;
+        private String trend;
+        private String reasoning;
+        @JsonProperty("fallback_used")
+        private Boolean fallbackUsed;
     }
 }

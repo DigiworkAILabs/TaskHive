@@ -71,8 +71,8 @@ app.include_router(recommend_workload.router)      # POST /ml/recommend/workload
 from api.routes import predict_completion
 app.include_router(predict_completion.router)    # POST /ml/predict/completion-time
 
-# from api.routes import productivity_score
-# app.include_router(productivity_score.router)    # GET  /ml/productivity-score/{employeeId}
+from api.routes import productivity_score
+app.include_router(productivity_score.router)    # POST /ml/score/employee
 
 
 # ──────────────────────────────────────────────
