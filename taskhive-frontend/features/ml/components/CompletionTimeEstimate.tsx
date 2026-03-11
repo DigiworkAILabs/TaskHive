@@ -35,38 +35,55 @@ export const CompletionTimeEstimate: React.FC<CompletionTimeEstimateProps> = ({
         return null;
     }
 
-    // Determine color based on confidence bounds tightness (optional UX enhancement)
-    const rangeSize = prediction.confidenceRange.high - prediction.confidenceRange.low;
-    const isTightEstimation = rangeSize <= 2.0;
+    // Determine color based on confidence bounds tightness
+    const low = prediction.confidenceRange?.low ?? prediction.estimatedHours ?? 0;
+    const high = prediction.confidenceRange?.high ?? prediction.estimatedHours ?? 0;
+    const rangeSize = high - low;
+    const isTightEstimation = rangeSize > 0 && rangeSize <= 2.0;
 
     return (
-        <div className="mt-2 text-sm rounded-md bg-purple-50 p-3 border border-purple-100 flex items-start group relative">
-            <Zap className={`w-4 h-4 mr-2 mt-0.5 flex-shrink-0 ${prediction.fallbackUsed ? 'text-gray-400' : 'text-purple-600'}`} />
-            <div className="flex-1">
-                <div className="font-medium text-purple-900 flex items-center justify-between">
+        <div style={{
+            marginTop: '12px',
+            fontSize: '13px',
+            borderRadius: '10px',
+            backgroundColor: 'rgba(168, 85, 247, 0.12)',
+            padding: '12px 16px',
+            border: '1px solid rgba(168, 85, 247, 0.3)',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '12px',
+            boxShadow: '0 4px 12px rgba(168, 85, 247, 0.1)'
+        }}>
+            <Zap
+                size={16}
+                style={{
+                    marginTop: '2px',
+                    flexShrink: 0,
+                    color: prediction.fallbackUsed ? '#a1a1aa' : '#c084fc'
+                }}
+            />
+            <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600, color: '#f3e8ff', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <span>
                         AI Suggests:{' '}
                         {prediction.fallbackUsed ? (
-                            <span className="text-gray-600 italic">Manual Mode</span>
+                            <span style={{ color: '#a1a1aa', fontStyle: 'italic', fontWeight: 400 }}>Manual Mode</span>
                         ) : (
-                            <span className={isTightEstimation ? 'text-green-700' : 'text-purple-700'}>
-                                ~{prediction.confidenceRange.low.toFixed(1)} – {prediction.confidenceRange.high.toFixed(1)} hours
+                            <span style={{ color: isTightEstimation ? '#4ade80' : '#d8b4fe' }}>
+                                ~{low.toFixed(1)} – {high.toFixed(1)} hours
                             </span>
                         )}
                     </span>
 
-                    {/* Tooltip for reasoning */}
+                    {/* Reasoning Tooltip Icon */}
                     {!prediction.fallbackUsed && (
-                        <div className="relative flex items-center">
-                            <HelpCircle className="w-4 h-4 text-purple-400 hover:text-purple-600 cursor-help transition-colors" />
-                            <div className="absolute right-0 bottom-full mb-2 hidden group-hover:block w-64 bg-gray-900 text-white text-xs rounded shadow-lg p-2 z-10 transition-opacity whitespace-normal leading-relaxed before:content-[''] before:absolute before:border-4 before:border-transparent before:border-t-gray-900 before:top-full before:right-1.5">
-                                {prediction.reasoning}
-                            </div>
+                        <div title={prediction.reasoning} style={{ cursor: 'help' }}>
+                            <HelpCircle size={15} style={{ color: '#c084fc', opacity: 0.8 }} />
                         </div>
                     )}
                 </div>
                 {prediction.fallbackUsed && (
-                    <p className="text-gray-500 mt-1 text-xs">
+                    <p style={{ color: '#a1a1aa', marginTop: '4px', fontSize: '12px', lineHeight: 1.4 }}>
                         {prediction.reasoning}
                     </p>
                 )}

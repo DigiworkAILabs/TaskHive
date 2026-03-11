@@ -4,6 +4,7 @@ api/schemas/request.py
 Pydantic request schemas for the ML Inference Server.
 Phase 7.1: TaskPriorityRequest
 Phase 7.2: CompletionTimeRequest
+Phase 7.3: WorkloadBalanceRequest
 """
 
 from pydantic import BaseModel, Field, field_validator
@@ -101,6 +102,80 @@ class TaskPriorityRequest(BaseModel):
             }
         }
     }
+
+
+class CandidateEmployee(BaseModel):
+    """Individual candidate employee with performance stats."""
+
+    employee_id: str = Field(
+        ...,
+        description="UUID of the candidate employee",
+        examples=["550e8400-e29b-41d4-a716-446655440000"],
+    )
+
+    active_tasks: int = Field(
+        ...,
+        ge=0,
+        le=100,
+        description="Number of currently assigned active tasks",
+        examples=[3],
+    )
+
+    completion_rate: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+        description="Historical task completion rate (0.0–1.0)",
+        examples=[0.91],
+    )
+
+    on_time_rate: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+        description="Historical on-time delivery rate (0.0–1.0)",
+        examples=[0.85],
+    )
+
+    avg_hours_per_task: float = Field(
+        default=4.0,
+        ge=0.0,
+        le=24.0,
+        description="Average hours per task for this employee",
+        examples=[4.5],
+    )
+
+    dept_match: bool = Field(
+        ...,
+        description="True if employee's department matches the task",
+        examples=[True],
+    )
+
+
+class WorkloadBalanceRequest(BaseModel):
+    """
+    Incoming request body for POST /ml/recommend/workload-balance.
+    """
+
+    task_priority: str = Field(
+        ...,
+        description="Task priority: LOW / MEDIUM / HIGH / CRITICAL",
+        examples=["HIGH"],
+    )
+
+    task_estimated_hours: float = Field(
+        default=4.0,
+        ge=0.0,
+        le=500.0,
+        description="Estimated hours for this task",
+        examples=[8.0],
+    )
+
+    candidates: List[CandidateEmployee] = Field(
+        ...,
+        min_length=1,
+        description="List of candidate employees with their performance stats",
+    )
 
 
 class CompletionTimeRequest(BaseModel):

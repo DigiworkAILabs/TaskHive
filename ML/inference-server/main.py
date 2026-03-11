@@ -14,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from api.routes import health
 from api.routes import predict_priority
+from api.routes import recommend_workload
 from models.loader import load_all_models
 from config.settings import settings
 
@@ -65,12 +66,10 @@ app.add_middleware(
 
 app.include_router(health.router)                  # GET  /health
 app.include_router(predict_priority.router)        # POST /ml/predict/task-priority
+app.include_router(recommend_workload.router)      # POST /ml/recommend/workload-balance
 
 from api.routes import predict_completion
 app.include_router(predict_completion.router)    # POST /ml/predict/completion-time
-
-# from api.routes import recommend_workload
-# app.include_router(recommend_workload.router)    # POST /ml/recommend/workload-balance
 
 # from api.routes import productivity_score
 # app.include_router(productivity_score.router)    # GET  /ml/productivity-score/{employeeId}

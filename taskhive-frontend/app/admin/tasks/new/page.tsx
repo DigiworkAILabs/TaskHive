@@ -13,7 +13,7 @@
  *   - All ML interactions are non-blocking (form works normally without them)
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 
@@ -44,14 +44,14 @@ export default function NewTaskPage() {
     // Accepted priority — passed down to TaskForm to override its internal state
     const [acceptedPriority, setAcceptedPriority] = useState<TaskPriority | null>(null);
 
-    const handleSubmit = async (data: any) => {
+    const handleSubmit = useCallback(async (data: any) => {
         await createTask(data as CreateTaskData);
         resetML();
         setAcceptedPriority(null);
-    };
+    }, [createTask, resetML]);
 
     /** Called by TaskForm whenever its fields change (lifted state for ML) */
-    const handleFormChange = (fields: {
+    const handleFormChange = useCallback((fields: {
         title?: string;
         description?: string;
         priority?: string;
@@ -59,6 +59,7 @@ export default function NewTaskPage() {
         tags?: string;
         estimatedHours?: string;
     }) => {
+        console.log('[NewTaskPage] Field change:', fields);
         setMLFormData(prev => ({
             ...prev,
             taskTitle: fields.title ?? prev.taskTitle,
@@ -72,11 +73,17 @@ export default function NewTaskPage() {
                 ? (fields.estimatedHours ? parseFloat(fields.estimatedHours) : undefined)
                 : prev.estimatedHours,
         }));
-    };
+    }, []);
 
     /** Auto-trigger Completion Time Prediction */
     useEffect(() => {
+        console.log('[NewTaskPage] ML State check:', {
+            priority: mlFormData.priority,
+            employeeId: mlFormData.employeeId,
+            titleLength: mlFormData.taskTitle.trim().length
+        });
         if (mlFormData.priority && mlFormData.employeeId && mlFormData.taskTitle.trim().length >= 2) {
+            console.log('[NewTaskPage] Triggering completion time prediction');
             const timer = setTimeout(() => {
                 checkCompletionTime({
                     taskTitle: mlFormData.taskTitle,
@@ -93,7 +100,7 @@ export default function NewTaskPage() {
     }, [mlFormData.priority, mlFormData.employeeId, mlFormData.taskTitle, mlFormData.taskDescription, mlFormData.estimatedHours, checkCompletionTime, clearComp]);
 
     /** Fired when admin clicks "Suggest Priority" */
-    const handleSuggestPriority = async () => {
+    const handleSuggestPriority = useCallback(async () => {
         await predict({
             taskTitle: mlFormData.taskTitle,
             taskDescription: mlFormData.taskDescription,
@@ -101,12 +108,12 @@ export default function NewTaskPage() {
             tags: mlFormData.tags,
             estimatedHours: mlFormData.estimatedHours,
         });
-    };
+    }, [predict, mlFormData]);
 
     /** Fired when admin clicks "Accept" on the badge */
-    const handleAcceptPriority = (priority: TaskPriority) => {
+    const handleAcceptPriority = useCallback((priority: TaskPriority) => {
         setAcceptedPriority(priority);
-    };
+    }, []);
 
     const canSuggest = mlFormData.taskTitle.trim().length >= 2;
 

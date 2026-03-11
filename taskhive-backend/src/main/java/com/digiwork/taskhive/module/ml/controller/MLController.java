@@ -1,10 +1,7 @@
 package com.digiwork.taskhive.module.ml.controller;
 
 import com.digiwork.taskhive.common.dto.ApiResponse;
-import com.digiwork.taskhive.module.ml.dto.TaskPriorityRequest;
-import com.digiwork.taskhive.module.ml.dto.TaskPriorityResponse;
-import com.digiwork.taskhive.module.ml.dto.CompletionTimeRequest;
-import com.digiwork.taskhive.module.ml.dto.CompletionTimeResponse;
+import com.digiwork.taskhive.module.ml.dto.*;
 import com.digiwork.taskhive.module.ml.service.MLService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,11 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
  * ─────────────
  * Exposes ML suggestion endpoints to the Next.js frontend.
  * All endpoints are ADMIN-only and non-blocking.
- *
- * Phase 7.1 endpoint:
- * POST /api/v1/ml/predict/task-priority
- *
- * Phase 7.2–7.4 endpoints will be added here as separate @PostMapping methods.
  */
 @Slf4j
 @RestController
@@ -37,43 +29,38 @@ public class MLController {
 
         /**
          * POST /api/v1/ml/predict/task-priority
-         *
-         * Receives task details from the admin's Create Task form,
-         * enriches with employee data, forwards to FastAPI, returns prediction.
-         *
-         * Always returns 200 OK — fallback MEDIUM is returned if ML is down.
          */
         @PostMapping("/predict/task-priority")
         @PreAuthorize("hasRole('ADMIN')")
         public ResponseEntity<ApiResponse<TaskPriorityResponse>> predictTaskPriority(
                         @RequestBody @Valid TaskPriorityRequest request) {
-
-                log.info("[MLController] Task priority prediction requested for: '{}'",
-                                request.getTaskTitle());
-
-                TaskPriorityResponse prediction = mlService.predictPriority(request);
-
-                return ResponseEntity.ok(
-                                ApiResponse.success("Priority prediction successful", prediction));
+                log.info("[MLController] Priority prediction for: '{}'", request.getTaskTitle());
+                return ResponseEntity.ok(ApiResponse.success("Priority prediction successful",
+                                mlService.predictPriority(request)));
         }
 
         /**
          * POST /api/v1/ml/predict/completion-time
-         *
-         * Receives completion time details (with selected priority and employee).
-         * Enriches with employee data, forwards to FastAPI, returns range prediction.
          */
         @PostMapping("/predict/completion-time")
         @PreAuthorize("hasRole('ADMIN')")
         public ResponseEntity<ApiResponse<CompletionTimeResponse>> predictCompletionTime(
                         @RequestBody @Valid CompletionTimeRequest request) {
+                log.info("[MLController] Completion time prediction for: '{}'", request.getTaskTitle());
+                return ResponseEntity.ok(ApiResponse.success("Completion time prediction successful",
+                                mlService.predictCompletionTime(request)));
+        }
 
-                log.info("[MLController] Completion time prediction requested for: '{}'",
-                                request.getTaskTitle());
-
-                CompletionTimeResponse prediction = mlService.predictCompletionTime(request);
-
-                return ResponseEntity.ok(
-                                ApiResponse.success("Completion time prediction successful", prediction));
+        /**
+         * POST /api/v1/ml/recommend/workload-balance
+         */
+        @PostMapping("/recommend/workload-balance")
+        @PreAuthorize("hasRole('ADMIN')")
+        public ResponseEntity<ApiResponse<WorkloadRecommendationResponse>> recommendWorkloadBalance(
+                        @RequestBody @Valid WorkloadRecommendationRequest request) {
+                log.info("[MLController] Workload recommendation for {} candidates",
+                                request.getCandidateEmployeeIds().size());
+                return ResponseEntity.ok(ApiResponse.success("Workload recommendation successful",
+                                mlService.recommendWorkloadBalance(request)));
         }
 }

@@ -2,7 +2,9 @@
  * features/ml/services/mlService.ts
  * ────────────────────────────────────
  * API service layer for all ML feature HTTP calls.
- * Phase 7.1: predictTaskPriority only.
+ * Phase 7.1: Task Priority Suggestion
+ * Phase 7.2: Task Completion Time Estimation
+ * Phase 7.3: Workload Balance Recommendation
  *
  * Uses the shared apiClient (axios with cookie auth) — same as taskService.ts.
  * Spring Boot endpoint is ADMIN-only; auth cookie is attached automatically.
@@ -16,6 +18,9 @@ import type {
     CompletionTimeRequestDto,
     CompletionTimePrediction,
     CompletionTimeApiResponse,
+    WorkloadRecommendationRequestDto,
+    WorkloadRecommendation,
+    WorkloadRecommendationApiResponse,
 } from '../types/ml.types';
 
 const ML_BASE = '/ml';
@@ -56,6 +61,28 @@ export const mlService = {
     ): Promise<CompletionTimePrediction> => {
         const response = await apiClient.post<CompletionTimeApiResponse>(
             `${ML_BASE}/predict/completion-time`,
+            data
+        );
+        return response.data.data;
+    },
+
+    /**
+     * Feature 3 — Workload Balance Recommendation
+     *
+     * Sends task info + list of candidate employee IDs to Spring Boot.
+     * Spring Boot enriches each candidate with performance stats and
+     * forwards to FastAPI for ranking.
+     *
+     * Always resolves — returns null recommendation if ML is down.
+     *
+     * @param data   Request payload with task info and candidate IDs
+     * @returns      Recommended employee ID and score breakdown
+     */
+    recommendWorkload: async (
+        data: WorkloadRecommendationRequestDto
+    ): Promise<WorkloadRecommendation> => {
+        const response = await apiClient.post<WorkloadRecommendationApiResponse>(
+            `${ML_BASE}/recommend/workload-balance`,
             data
         );
         return response.data.data;

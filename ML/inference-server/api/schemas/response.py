@@ -4,10 +4,11 @@ api/schemas/response.py
 Pydantic response schemas for the ML Inference Server.
 Phase 7.1: TaskPriorityResponse
 Phase 7.2: CompletionTimeResponse
+Phase 7.3: WorkloadBalanceResponse
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 from enum import Enum
 
 
@@ -72,6 +73,8 @@ class FallbackPriorityResponse(TaskPriorityResponse):
     fallback_used: bool = True
 
 
+# ── Phase 7.2: Task Completion Time Estimation ────────────────────────────────
+
 class ConfidenceRange(BaseModel):
     low: float
     high: float
@@ -123,4 +126,79 @@ class FallbackCompletionResponse(CompletionTimeResponse):
     estimated_hours: float = 0.0
     confidence_range: ConfidenceRange = ConfidenceRange(low=0.0, high=0.0)
     reasoning: str = "ML model unavailable — manual estimate or default 0.0 returned."
+    fallback_used: bool = True
+
+
+# ── Phase 7.3: Workload Balance Recommendation ────────────────────────────────
+
+class EmployeeScore(BaseModel):
+    """Score breakdown for a single candidate employee."""
+
+    employee_id: str = Field(
+        ...,
+        description="UUID of the candidate employee",
+        examples=["550e8400-e29b-41d4-a716-446655440000"],
+    )
+
+    score: float = Field(
+        ...,
+        ge=0.0,
+        le=100.0,
+        description="Suitability score (0–100)",
+        examples=[87.4],
+    )
+
+
+class WorkloadBalanceResponse(BaseModel):
+    """
+    Response body for POST /ml/recommend/workload-balance.
+    Spring Boot wraps this in its standard ApiResponse envelope.
+    """
+
+    recommended_employee_id: Optional[str] = Field(
+        ...,
+        description="UUID of the best-fit employee, or null on fallback",
+        examples=["550e8400-e29b-41d4-a716-446655440000"],
+    )
+
+    score_breakdown: List[EmployeeScore] = Field(
+        default_factory=list,
+        description="All candidates ranked by score descending",
+    )
+
+    reasoning: str = Field(
+        ...,
+        description="Human-readable explanation of the recommendation",
+        examples=["uuid1 has low active tasks (2) and high completion rate (91%)"],
+    )
+
+    fallback_used: bool = Field(
+        default=False,
+        description="True when ML model was unavailable and a default was returned",
+    )
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "recommended_employee_id": "uuid1",
+                "score_breakdown": [
+                    {"employee_id": "uuid1", "score": 87.4},
+                    {"employee_id": "uuid2", "score": 52.1},
+                ],
+                "reasoning": "uuid1 has low active tasks (2) and high completion rate (91%)",
+                "fallback_used": False,
+            }
+        }
+    }
+
+
+class FallbackWorkloadResponse(WorkloadBalanceResponse):
+    """
+    Used when the workload model is unavailable.
+    Returns null recommendation per SRS specification.
+    """
+
+    recommended_employee_id: Optional[str] = None
+    score_breakdown: List[EmployeeScore] = []
+    reasoning: str = "Please select manually"
     fallback_used: bool = True

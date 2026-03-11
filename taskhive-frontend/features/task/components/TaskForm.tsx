@@ -7,6 +7,9 @@ import Link from 'next/link';
 import { employeeService } from '@/features/employee/services/employeeService';
 import { EmployeeListItem } from '@/features/employee/types/employee.types';
 import { DatePicker } from '@/features/employee/components/DatePicker';
+import { useRecommendWorkload } from '@/features/ml/hooks/useRecommendWorkload';
+import WorkloadRecommendationComponent from '@/features/ml/components/WorkloadRecommendation';
+import { Brain, Sparkles } from 'lucide-react';
 
 interface TaskFormProps {
     mode: 'create' | 'edit';
@@ -76,6 +79,15 @@ export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoad
     const [employees, setEmployees] = useState<EmployeeListItem[]>([]);
     const [isFetchingEmployees, setIsFetchingEmployees] = useState(false);
 
+    // AI Workload Recommendation Hook
+    const {
+        recommend,
+        recommendation,
+        isLoading: isRecommending,
+        error: recommendError,
+        reset: resetRecommendation
+    } = useRecommendWorkload();
+
     useEffect(() => {
         if (mode === 'edit' && task) {
             let editTime = '17:00';
@@ -122,17 +134,47 @@ export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoad
 
     // Sync ML-accepted priority into form state
     useEffect(() => {
-        if (initialPriority) {
+        if (initialPriority && initialPriority !== formData.priority) {
             setFormData(prev => ({ ...prev, priority: initialPriority }));
+            // Notify parent to sync ML context (essential for Completion Time prediction)
+            if (onFieldChange) {
+                onFieldChange({ priority: initialPriority });
+            }
         }
-    }, [initialPriority]);
+    }, [initialPriority, formData.priority, onFieldChange]);
 
     const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const value = e.target.value;
+        console.log(`[TaskForm] Change ${field}:`, value);
         setFormData((prev) => ({ ...prev, [field]: value }));
         if (fieldErrors[field]) setFieldErrors((prev) => { const n = { ...prev }; delete n[field]; return n; });
         // Notify parent for ML context
-        if (onFieldChange) onFieldChange({ [field]: value });
+        if (onFieldChange) {
+            console.log(`[TaskForm] Notifying parent of ${field}`);
+            onFieldChange({ [field]: value });
+        }
+    };
+
+    const handleRecommendAssignee = async () => {
+        if (!formData.title.trim() || employees.length === 0) return;
+
+        const candidateIds = employees.map(emp => emp.id);
+
+        await recommend({
+            taskTitle: formData.title,
+            taskPriority: formData.priority,
+            taskEstimatedHours: formData.estimatedHours ? parseFloat(formData.estimatedHours) : undefined,
+            candidateEmployeeIds: candidateIds
+        });
+    };
+
+    const handleApplyRecommendation = (empId: string) => {
+        setFormData(prev => ({ ...prev, assignedTo: empId }));
+        // Sync parent ML state so Completion Time can trigger
+        if (onFieldChange) {
+            onFieldChange({ assignedTo: empId });
+        }
+        resetRecommendation(); // Clear the recommendation UI after applying
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -252,6 +294,33 @@ export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoad
 
                         <FormField label="Assigned To" required={mode === 'create'}>
                             <div style={{ position: 'relative' }}>
+                                {/* AI Recommend Toggle */}
+                                <button
+                                    type="button"
+                                    onClick={handleRecommendAssignee}
+                                    disabled={isRecommending || !formData.title.trim() || employees.length === 0}
+                                    style={{
+                                        position: 'absolute',
+                                        right: '0',
+                                        top: '-26px',
+                                        backgroundColor: 'transparent',
+                                        border: 'none',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
+                                        color: isRecommending ? '#f97316' : '#a1a1aa',
+                                        fontSize: '11px',
+                                        fontWeight: 600,
+                                        cursor: (isRecommending || !formData.title.trim()) ? 'not-allowed' : 'pointer',
+                                        transition: 'color 0.2s',
+                                    }}
+                                    onMouseEnter={(e) => !isRecommending && (e.currentTarget.style.color = '#f97316')}
+                                    onMouseLeave={(e) => !isRecommending && (e.currentTarget.style.color = '#a1a1aa')}
+                                >
+                                    {isRecommending ? <Loader2 size={11} className="animate-spin" /> : <Brain size={11} />}
+                                    {isRecommending ? 'Analyzing...' : 'Recommend Best Fit'}
+                                </button>
+
                                 <User size={14} color="#52525b" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', zIndex: 1, pointerEvents: 'none' }} />
                                 <select
                                     value={formData.assignedTo}
@@ -270,6 +339,17 @@ export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoad
                                 </select>
                                 <ChevronDown size={14} color="#52525b" style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
                             </div>
+
+                            {/* AI Recommendation Result UI */}
+                            {recommendation && (
+                                <WorkloadRecommendationComponent
+                                    recommendation={recommendation}
+                                    onAccept={handleApplyRecommendation}
+                                    isLoading={isRecommending}
+                                    employees={employees}
+                                />
+                            )}
+
                             {fieldErrors.assignedTo && <p style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>{fieldErrors.assignedTo}</p>}
                         </FormField>
                     </div>
