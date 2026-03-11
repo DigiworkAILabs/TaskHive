@@ -7,8 +7,10 @@ import 'package:intl/intl.dart';
 import '../../data/models/create_task_request.dart';
 import '../../data/models/update_task_request.dart';
 import '../../domain/enums/task_priority.dart';
+import '../../domain/providers/completion_time_prediction_provider.dart';
 import '../../domain/providers/priority_prediction_provider.dart';
 import 'assignee_picker.dart';
+import 'completion_time_estimate.dart';
 import 'due_date_picker.dart';
 import 'priority_selector.dart';
 import 'priority_suggestion_badge.dart';
@@ -84,29 +86,57 @@ class _TaskFormState extends ConsumerState<TaskForm> {
     _dueDate = widget.initialDueDate;
     _tags = List<String>.from(widget.initialTags);
 
-    _titleController.addListener(_onTitleChanged);
+    _titleController.addListener(_onInputChanged);
+    _descriptionController.addListener(_onInputChanged);
+    _hoursController.addListener(_onInputChanged);
   }
 
-  void _onTitleChanged() {
-    if (!_isCreate) return; // Only suggest priority on creation
+  void _onInputChanged() {
+    if (!_isCreate) return; // Only suggest on creation
     if (_debounce?.isActive ?? false) _debounce!.cancel();
 
     _debounce = Timer(const Duration(milliseconds: 600), () {
-      final text = _titleController.text.trim();
-      if (text.length >= 2) {
-        ref.read(priorityPredictionProvider.notifier).predict(
-              TaskPriorityRequestDto(
-                taskTitle: text,
-                taskDescription: _descriptionController.text.trim(),
-                tags: _tags,
-                estimatedHours: double.tryParse(_hoursController.text),
-                employeeId: _assigneeId,
+      final title = _titleController.text.trim();
+      if (title.length < 2) {
+        ref.read(priorityPredictionProvider.notifier).reset();
+        ref.read(completionTimePredictionNotifierProvider.notifier).clear();
+        return;
+      }
+
+      final description = _descriptionController.text.trim();
+      final hours = double.tryParse(_hoursController.text);
+
+      // Trigger Priority Prediction
+      ref.read(priorityPredictionProvider.notifier).predict(
+            TaskPriorityRequestDto(
+              taskTitle: title,
+              taskDescription: description,
+              tags: _tags,
+              estimatedHours: hours,
+              employeeId: _assigneeId,
+            ),
+          );
+
+      // Trigger Completion Time Prediction if priority and assignee are set
+      if (_priority != null && _assigneeId != null) {
+        ref.read(completionTimePredictionNotifierProvider.notifier).predict(
+              TaskCompletionTimeRequestDto(
+                taskTitle: title,
+                taskDescription: description,
+                priority: _priority!.backendValue,
+                employeeId: _assigneeId!,
+                estimatedHours: hours,
               ),
             );
-      } else {
-        ref.read(priorityPredictionProvider.notifier).reset();
       }
     });
+  }
+
+  void _onTargetFieldsChanged() {
+    if (!_isCreate) return;
+    // Debounce to avoid spamming when choosing priority/assignee quickly
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), _onInputChanged);
   }
 
   @override
@@ -210,7 +240,7 @@ class _TaskFormState extends ConsumerState<TaskForm> {
             selected: _priority,
             onChanged: (p) {
               setState(() => _priority = p);
-              ref.read(priorityPredictionProvider.notifier).reset();
+              _onTargetFieldsChanged();
             },
           ),
           if (_isCreate &&
@@ -224,7 +254,7 @@ class _TaskFormState extends ConsumerState<TaskForm> {
                   : null,
               onAccept: (p) {
                 setState(() => _priority = p);
-                ref.read(priorityPredictionProvider.notifier).reset();
+                _onTargetFieldsChanged();
               },
               onIgnore: () {
                 ref.read(priorityPredictionProvider.notifier).reset();
@@ -238,7 +268,10 @@ class _TaskFormState extends ConsumerState<TaskForm> {
               padding: const EdgeInsets.only(bottom: 16),
               child: AssigneePicker(
                 initialAssigneeId: _assigneeId,
-                onChanged: (id) => setState(() => _assigneeId = id),
+                onChanged: (id) {
+                  setState(() => _assigneeId = id);
+                  _onTargetFieldsChanged();
+                },
               ),
             ),
 
@@ -264,6 +297,20 @@ class _TaskFormState extends ConsumerState<TaskForm> {
               return null;
             },
           ),
+          if (_isCreate)
+            Consumer(
+              builder: (context, ref, _) {
+                final prediction =
+                    ref.watch(completionTimePredictionNotifierProvider);
+                return CompletionTimeEstimate(
+                  prediction: prediction.value,
+                  isLoading: prediction.isLoading,
+                  error: prediction.hasError
+                      ? prediction.error.toString()
+                      : null,
+                );
+              },
+            ),
           const SizedBox(height: 16),
 
           // Tags

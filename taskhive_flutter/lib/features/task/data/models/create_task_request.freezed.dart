@@ -783,3 +783,669 @@ abstract class _TaskPriorityPrediction implements TaskPriorityPrediction {
   _$$TaskPriorityPredictionImplCopyWith<_$TaskPriorityPredictionImpl>
       get copyWith => throw _privateConstructorUsedError;
 }
+
+TaskCompletionTimeRequestDto _$TaskCompletionTimeRequestDtoFromJson(
+    Map<String, dynamic> json) {
+  return _TaskCompletionTimeRequestDto.fromJson(json);
+}
+
+/// @nodoc
+mixin _$TaskCompletionTimeRequestDto {
+  String get taskTitle => throw _privateConstructorUsedError;
+  String? get taskDescription => throw _privateConstructorUsedError;
+  String get priority => throw _privateConstructorUsedError;
+  String get employeeId => throw _privateConstructorUsedError;
+  double? get estimatedHours => throw _privateConstructorUsedError;
+
+  /// Serializes this TaskCompletionTimeRequestDto to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of TaskCompletionTimeRequestDto
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $TaskCompletionTimeRequestDtoCopyWith<TaskCompletionTimeRequestDto>
+      get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $TaskCompletionTimeRequestDtoCopyWith<$Res> {
+  factory $TaskCompletionTimeRequestDtoCopyWith(
+          TaskCompletionTimeRequestDto value,
+          $Res Function(TaskCompletionTimeRequestDto) then) =
+      _$TaskCompletionTimeRequestDtoCopyWithImpl<$Res,
+          TaskCompletionTimeRequestDto>;
+  @useResult
+  $Res call(
+      {String taskTitle,
+      String? taskDescription,
+      String priority,
+      String employeeId,
+      double? estimatedHours});
+}
+
+/// @nodoc
+class _$TaskCompletionTimeRequestDtoCopyWithImpl<$Res,
+        $Val extends TaskCompletionTimeRequestDto>
+    implements $TaskCompletionTimeRequestDtoCopyWith<$Res> {
+  _$TaskCompletionTimeRequestDtoCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of TaskCompletionTimeRequestDto
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? taskTitle = null,
+    Object? taskDescription = freezed,
+    Object? priority = null,
+    Object? employeeId = null,
+    Object? estimatedHours = freezed,
+  }) {
+    return _then(_value.copyWith(
+      taskTitle: null == taskTitle
+          ? _value.taskTitle
+          : taskTitle // ignore: cast_nullable_to_non_nullable
+              as String,
+      taskDescription: freezed == taskDescription
+          ? _value.taskDescription
+          : taskDescription // ignore: cast_nullable_to_non_nullable
+              as String?,
+      priority: null == priority
+          ? _value.priority
+          : priority // ignore: cast_nullable_to_non_nullable
+              as String,
+      employeeId: null == employeeId
+          ? _value.employeeId
+          : employeeId // ignore: cast_nullable_to_non_nullable
+              as String,
+      estimatedHours: freezed == estimatedHours
+          ? _value.estimatedHours
+          : estimatedHours // ignore: cast_nullable_to_non_nullable
+              as double?,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$TaskCompletionTimeRequestDtoImplCopyWith<$Res>
+    implements $TaskCompletionTimeRequestDtoCopyWith<$Res> {
+  factory _$$TaskCompletionTimeRequestDtoImplCopyWith(
+          _$TaskCompletionTimeRequestDtoImpl value,
+          $Res Function(_$TaskCompletionTimeRequestDtoImpl) then) =
+      __$$TaskCompletionTimeRequestDtoImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {String taskTitle,
+      String? taskDescription,
+      String priority,
+      String employeeId,
+      double? estimatedHours});
+}
+
+/// @nodoc
+class __$$TaskCompletionTimeRequestDtoImplCopyWithImpl<$Res>
+    extends _$TaskCompletionTimeRequestDtoCopyWithImpl<$Res,
+        _$TaskCompletionTimeRequestDtoImpl>
+    implements _$$TaskCompletionTimeRequestDtoImplCopyWith<$Res> {
+  __$$TaskCompletionTimeRequestDtoImplCopyWithImpl(
+      _$TaskCompletionTimeRequestDtoImpl _value,
+      $Res Function(_$TaskCompletionTimeRequestDtoImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of TaskCompletionTimeRequestDto
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? taskTitle = null,
+    Object? taskDescription = freezed,
+    Object? priority = null,
+    Object? employeeId = null,
+    Object? estimatedHours = freezed,
+  }) {
+    return _then(_$TaskCompletionTimeRequestDtoImpl(
+      taskTitle: null == taskTitle
+          ? _value.taskTitle
+          : taskTitle // ignore: cast_nullable_to_non_nullable
+              as String,
+      taskDescription: freezed == taskDescription
+          ? _value.taskDescription
+          : taskDescription // ignore: cast_nullable_to_non_nullable
+              as String?,
+      priority: null == priority
+          ? _value.priority
+          : priority // ignore: cast_nullable_to_non_nullable
+              as String,
+      employeeId: null == employeeId
+          ? _value.employeeId
+          : employeeId // ignore: cast_nullable_to_non_nullable
+              as String,
+      estimatedHours: freezed == estimatedHours
+          ? _value.estimatedHours
+          : estimatedHours // ignore: cast_nullable_to_non_nullable
+              as double?,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$TaskCompletionTimeRequestDtoImpl
+    implements _TaskCompletionTimeRequestDto {
+  const _$TaskCompletionTimeRequestDtoImpl(
+      {required this.taskTitle,
+      this.taskDescription,
+      required this.priority,
+      required this.employeeId,
+      this.estimatedHours});
+
+  factory _$TaskCompletionTimeRequestDtoImpl.fromJson(
+          Map<String, dynamic> json) =>
+      _$$TaskCompletionTimeRequestDtoImplFromJson(json);
+
+  @override
+  final String taskTitle;
+  @override
+  final String? taskDescription;
+  @override
+  final String priority;
+  @override
+  final String employeeId;
+  @override
+  final double? estimatedHours;
+
+  @override
+  String toString() {
+    return 'TaskCompletionTimeRequestDto(taskTitle: $taskTitle, taskDescription: $taskDescription, priority: $priority, employeeId: $employeeId, estimatedHours: $estimatedHours)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$TaskCompletionTimeRequestDtoImpl &&
+            (identical(other.taskTitle, taskTitle) ||
+                other.taskTitle == taskTitle) &&
+            (identical(other.taskDescription, taskDescription) ||
+                other.taskDescription == taskDescription) &&
+            (identical(other.priority, priority) ||
+                other.priority == priority) &&
+            (identical(other.employeeId, employeeId) ||
+                other.employeeId == employeeId) &&
+            (identical(other.estimatedHours, estimatedHours) ||
+                other.estimatedHours == estimatedHours));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, taskTitle, taskDescription,
+      priority, employeeId, estimatedHours);
+
+  /// Create a copy of TaskCompletionTimeRequestDto
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$TaskCompletionTimeRequestDtoImplCopyWith<
+          _$TaskCompletionTimeRequestDtoImpl>
+      get copyWith => __$$TaskCompletionTimeRequestDtoImplCopyWithImpl<
+          _$TaskCompletionTimeRequestDtoImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$TaskCompletionTimeRequestDtoImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _TaskCompletionTimeRequestDto
+    implements TaskCompletionTimeRequestDto {
+  const factory _TaskCompletionTimeRequestDto(
+      {required final String taskTitle,
+      final String? taskDescription,
+      required final String priority,
+      required final String employeeId,
+      final double? estimatedHours}) = _$TaskCompletionTimeRequestDtoImpl;
+
+  factory _TaskCompletionTimeRequestDto.fromJson(Map<String, dynamic> json) =
+      _$TaskCompletionTimeRequestDtoImpl.fromJson;
+
+  @override
+  String get taskTitle;
+  @override
+  String? get taskDescription;
+  @override
+  String get priority;
+  @override
+  String get employeeId;
+  @override
+  double? get estimatedHours;
+
+  /// Create a copy of TaskCompletionTimeRequestDto
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$TaskCompletionTimeRequestDtoImplCopyWith<
+          _$TaskCompletionTimeRequestDtoImpl>
+      get copyWith => throw _privateConstructorUsedError;
+}
+
+ConfidenceRange _$ConfidenceRangeFromJson(Map<String, dynamic> json) {
+  return _ConfidenceRange.fromJson(json);
+}
+
+/// @nodoc
+mixin _$ConfidenceRange {
+  double get low => throw _privateConstructorUsedError;
+  double get high => throw _privateConstructorUsedError;
+
+  /// Serializes this ConfidenceRange to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of ConfidenceRange
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $ConfidenceRangeCopyWith<ConfidenceRange> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $ConfidenceRangeCopyWith<$Res> {
+  factory $ConfidenceRangeCopyWith(
+          ConfidenceRange value, $Res Function(ConfidenceRange) then) =
+      _$ConfidenceRangeCopyWithImpl<$Res, ConfidenceRange>;
+  @useResult
+  $Res call({double low, double high});
+}
+
+/// @nodoc
+class _$ConfidenceRangeCopyWithImpl<$Res, $Val extends ConfidenceRange>
+    implements $ConfidenceRangeCopyWith<$Res> {
+  _$ConfidenceRangeCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of ConfidenceRange
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? low = null,
+    Object? high = null,
+  }) {
+    return _then(_value.copyWith(
+      low: null == low
+          ? _value.low
+          : low // ignore: cast_nullable_to_non_nullable
+              as double,
+      high: null == high
+          ? _value.high
+          : high // ignore: cast_nullable_to_non_nullable
+              as double,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$ConfidenceRangeImplCopyWith<$Res>
+    implements $ConfidenceRangeCopyWith<$Res> {
+  factory _$$ConfidenceRangeImplCopyWith(_$ConfidenceRangeImpl value,
+          $Res Function(_$ConfidenceRangeImpl) then) =
+      __$$ConfidenceRangeImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({double low, double high});
+}
+
+/// @nodoc
+class __$$ConfidenceRangeImplCopyWithImpl<$Res>
+    extends _$ConfidenceRangeCopyWithImpl<$Res, _$ConfidenceRangeImpl>
+    implements _$$ConfidenceRangeImplCopyWith<$Res> {
+  __$$ConfidenceRangeImplCopyWithImpl(
+      _$ConfidenceRangeImpl _value, $Res Function(_$ConfidenceRangeImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of ConfidenceRange
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? low = null,
+    Object? high = null,
+  }) {
+    return _then(_$ConfidenceRangeImpl(
+      low: null == low
+          ? _value.low
+          : low // ignore: cast_nullable_to_non_nullable
+              as double,
+      high: null == high
+          ? _value.high
+          : high // ignore: cast_nullable_to_non_nullable
+              as double,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$ConfidenceRangeImpl implements _ConfidenceRange {
+  const _$ConfidenceRangeImpl({required this.low, required this.high});
+
+  factory _$ConfidenceRangeImpl.fromJson(Map<String, dynamic> json) =>
+      _$$ConfidenceRangeImplFromJson(json);
+
+  @override
+  final double low;
+  @override
+  final double high;
+
+  @override
+  String toString() {
+    return 'ConfidenceRange(low: $low, high: $high)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ConfidenceRangeImpl &&
+            (identical(other.low, low) || other.low == low) &&
+            (identical(other.high, high) || other.high == high));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, low, high);
+
+  /// Create a copy of ConfidenceRange
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ConfidenceRangeImplCopyWith<_$ConfidenceRangeImpl> get copyWith =>
+      __$$ConfidenceRangeImplCopyWithImpl<_$ConfidenceRangeImpl>(
+          this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$ConfidenceRangeImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _ConfidenceRange implements ConfidenceRange {
+  const factory _ConfidenceRange(
+      {required final double low,
+      required final double high}) = _$ConfidenceRangeImpl;
+
+  factory _ConfidenceRange.fromJson(Map<String, dynamic> json) =
+      _$ConfidenceRangeImpl.fromJson;
+
+  @override
+  double get low;
+  @override
+  double get high;
+
+  /// Create a copy of ConfidenceRange
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$ConfidenceRangeImplCopyWith<_$ConfidenceRangeImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+TaskCompletionTimePrediction _$TaskCompletionTimePredictionFromJson(
+    Map<String, dynamic> json) {
+  return _TaskCompletionTimePrediction.fromJson(json);
+}
+
+/// @nodoc
+mixin _$TaskCompletionTimePrediction {
+  double get estimatedHours => throw _privateConstructorUsedError;
+  ConfidenceRange get confidenceRange => throw _privateConstructorUsedError;
+  String get reasoning => throw _privateConstructorUsedError;
+  bool get fallbackUsed => throw _privateConstructorUsedError;
+
+  /// Serializes this TaskCompletionTimePrediction to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of TaskCompletionTimePrediction
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $TaskCompletionTimePredictionCopyWith<TaskCompletionTimePrediction>
+      get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $TaskCompletionTimePredictionCopyWith<$Res> {
+  factory $TaskCompletionTimePredictionCopyWith(
+          TaskCompletionTimePrediction value,
+          $Res Function(TaskCompletionTimePrediction) then) =
+      _$TaskCompletionTimePredictionCopyWithImpl<$Res,
+          TaskCompletionTimePrediction>;
+  @useResult
+  $Res call(
+      {double estimatedHours,
+      ConfidenceRange confidenceRange,
+      String reasoning,
+      bool fallbackUsed});
+
+  $ConfidenceRangeCopyWith<$Res> get confidenceRange;
+}
+
+/// @nodoc
+class _$TaskCompletionTimePredictionCopyWithImpl<$Res,
+        $Val extends TaskCompletionTimePrediction>
+    implements $TaskCompletionTimePredictionCopyWith<$Res> {
+  _$TaskCompletionTimePredictionCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of TaskCompletionTimePrediction
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? estimatedHours = null,
+    Object? confidenceRange = null,
+    Object? reasoning = null,
+    Object? fallbackUsed = null,
+  }) {
+    return _then(_value.copyWith(
+      estimatedHours: null == estimatedHours
+          ? _value.estimatedHours
+          : estimatedHours // ignore: cast_nullable_to_non_nullable
+              as double,
+      confidenceRange: null == confidenceRange
+          ? _value.confidenceRange
+          : confidenceRange // ignore: cast_nullable_to_non_nullable
+              as ConfidenceRange,
+      reasoning: null == reasoning
+          ? _value.reasoning
+          : reasoning // ignore: cast_nullable_to_non_nullable
+              as String,
+      fallbackUsed: null == fallbackUsed
+          ? _value.fallbackUsed
+          : fallbackUsed // ignore: cast_nullable_to_non_nullable
+              as bool,
+    ) as $Val);
+  }
+
+  /// Create a copy of TaskCompletionTimePrediction
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $ConfidenceRangeCopyWith<$Res> get confidenceRange {
+    return $ConfidenceRangeCopyWith<$Res>(_value.confidenceRange, (value) {
+      return _then(_value.copyWith(confidenceRange: value) as $Val);
+    });
+  }
+}
+
+/// @nodoc
+abstract class _$$TaskCompletionTimePredictionImplCopyWith<$Res>
+    implements $TaskCompletionTimePredictionCopyWith<$Res> {
+  factory _$$TaskCompletionTimePredictionImplCopyWith(
+          _$TaskCompletionTimePredictionImpl value,
+          $Res Function(_$TaskCompletionTimePredictionImpl) then) =
+      __$$TaskCompletionTimePredictionImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {double estimatedHours,
+      ConfidenceRange confidenceRange,
+      String reasoning,
+      bool fallbackUsed});
+
+  @override
+  $ConfidenceRangeCopyWith<$Res> get confidenceRange;
+}
+
+/// @nodoc
+class __$$TaskCompletionTimePredictionImplCopyWithImpl<$Res>
+    extends _$TaskCompletionTimePredictionCopyWithImpl<$Res,
+        _$TaskCompletionTimePredictionImpl>
+    implements _$$TaskCompletionTimePredictionImplCopyWith<$Res> {
+  __$$TaskCompletionTimePredictionImplCopyWithImpl(
+      _$TaskCompletionTimePredictionImpl _value,
+      $Res Function(_$TaskCompletionTimePredictionImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of TaskCompletionTimePrediction
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? estimatedHours = null,
+    Object? confidenceRange = null,
+    Object? reasoning = null,
+    Object? fallbackUsed = null,
+  }) {
+    return _then(_$TaskCompletionTimePredictionImpl(
+      estimatedHours: null == estimatedHours
+          ? _value.estimatedHours
+          : estimatedHours // ignore: cast_nullable_to_non_nullable
+              as double,
+      confidenceRange: null == confidenceRange
+          ? _value.confidenceRange
+          : confidenceRange // ignore: cast_nullable_to_non_nullable
+              as ConfidenceRange,
+      reasoning: null == reasoning
+          ? _value.reasoning
+          : reasoning // ignore: cast_nullable_to_non_nullable
+              as String,
+      fallbackUsed: null == fallbackUsed
+          ? _value.fallbackUsed
+          : fallbackUsed // ignore: cast_nullable_to_non_nullable
+              as bool,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$TaskCompletionTimePredictionImpl
+    implements _TaskCompletionTimePrediction {
+  const _$TaskCompletionTimePredictionImpl(
+      {required this.estimatedHours,
+      required this.confidenceRange,
+      required this.reasoning,
+      required this.fallbackUsed});
+
+  factory _$TaskCompletionTimePredictionImpl.fromJson(
+          Map<String, dynamic> json) =>
+      _$$TaskCompletionTimePredictionImplFromJson(json);
+
+  @override
+  final double estimatedHours;
+  @override
+  final ConfidenceRange confidenceRange;
+  @override
+  final String reasoning;
+  @override
+  final bool fallbackUsed;
+
+  @override
+  String toString() {
+    return 'TaskCompletionTimePrediction(estimatedHours: $estimatedHours, confidenceRange: $confidenceRange, reasoning: $reasoning, fallbackUsed: $fallbackUsed)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$TaskCompletionTimePredictionImpl &&
+            (identical(other.estimatedHours, estimatedHours) ||
+                other.estimatedHours == estimatedHours) &&
+            (identical(other.confidenceRange, confidenceRange) ||
+                other.confidenceRange == confidenceRange) &&
+            (identical(other.reasoning, reasoning) ||
+                other.reasoning == reasoning) &&
+            (identical(other.fallbackUsed, fallbackUsed) ||
+                other.fallbackUsed == fallbackUsed));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(
+      runtimeType, estimatedHours, confidenceRange, reasoning, fallbackUsed);
+
+  /// Create a copy of TaskCompletionTimePrediction
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$TaskCompletionTimePredictionImplCopyWith<
+          _$TaskCompletionTimePredictionImpl>
+      get copyWith => __$$TaskCompletionTimePredictionImplCopyWithImpl<
+          _$TaskCompletionTimePredictionImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$TaskCompletionTimePredictionImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _TaskCompletionTimePrediction
+    implements TaskCompletionTimePrediction {
+  const factory _TaskCompletionTimePrediction(
+      {required final double estimatedHours,
+      required final ConfidenceRange confidenceRange,
+      required final String reasoning,
+      required final bool fallbackUsed}) = _$TaskCompletionTimePredictionImpl;
+
+  factory _TaskCompletionTimePrediction.fromJson(Map<String, dynamic> json) =
+      _$TaskCompletionTimePredictionImpl.fromJson;
+
+  @override
+  double get estimatedHours;
+  @override
+  ConfidenceRange get confidenceRange;
+  @override
+  String get reasoning;
+  @override
+  bool get fallbackUsed;
+
+  /// Create a copy of TaskCompletionTimePrediction
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$TaskCompletionTimePredictionImplCopyWith<
+          _$TaskCompletionTimePredictionImpl>
+      get copyWith => throw _privateConstructorUsedError;
+}

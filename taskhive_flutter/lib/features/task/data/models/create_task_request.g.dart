@@ -76,3 +76,56 @@ Map<String, dynamic> _$$TaskPriorityPredictionImplToJson(
       'reasoning': instance.reasoning,
       'fallbackUsed': instance.fallbackUsed,
     };
+
+_$TaskCompletionTimeRequestDtoImpl _$$TaskCompletionTimeRequestDtoImplFromJson(
+        Map<String, dynamic> json) =>
+    _$TaskCompletionTimeRequestDtoImpl(
+      taskTitle: json['taskTitle'] as String,
+      taskDescription: json['taskDescription'] as String?,
+      priority: json['priority'] as String,
+      employeeId: json['employeeId'] as String,
+      estimatedHours: (json['estimatedHours'] as num?)?.toDouble(),
+    );
+
+Map<String, dynamic> _$$TaskCompletionTimeRequestDtoImplToJson(
+        _$TaskCompletionTimeRequestDtoImpl instance) =>
+    <String, dynamic>{
+      'taskTitle': instance.taskTitle,
+      if (instance.taskDescription case final value?) 'taskDescription': value,
+      'priority': instance.priority,
+      'employeeId': instance.employeeId,
+      if (instance.estimatedHours case final value?) 'estimatedHours': value,
+    };
+
+_$ConfidenceRangeImpl _$$ConfidenceRangeImplFromJson(
+        Map<String, dynamic> json) =>
+    _$ConfidenceRangeImpl(
+      low: (json['low'] as num).toDouble(),
+      high: (json['high'] as num).toDouble(),
+    );
+
+Map<String, dynamic> _$$ConfidenceRangeImplToJson(
+        _$ConfidenceRangeImpl instance) =>
+    <String, dynamic>{
+      'low': instance.low,
+      'high': instance.high,
+    };
+
+_$TaskCompletionTimePredictionImpl _$$TaskCompletionTimePredictionImplFromJson(
+        Map<String, dynamic> json) =>
+    _$TaskCompletionTimePredictionImpl(
+      estimatedHours: (json['estimatedHours'] as num).toDouble(),
+      confidenceRange: ConfidenceRange.fromJson(
+          json['confidenceRange'] as Map<String, dynamic>),
+      reasoning: json['reasoning'] as String,
+      fallbackUsed: json['fallbackUsed'] as bool,
+    );
+
+Map<String, dynamic> _$$TaskCompletionTimePredictionImplToJson(
+        _$TaskCompletionTimePredictionImpl instance) =>
+    <String, dynamic>{
+      'estimatedHours': instance.estimatedHours,
+      'confidenceRange': instance.confidenceRange.toJson(),
+      'reasoning': instance.reasoning,
+      'fallbackUsed': instance.fallbackUsed,
+    };
