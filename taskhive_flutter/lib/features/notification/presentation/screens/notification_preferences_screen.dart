@@ -4,7 +4,7 @@ import '../../domain/providers/notification_preference_provider.dart';
 import '../widgets/notification_preference_tile.dart';
 
 class NotificationPreferencesScreen extends ConsumerWidget {
-  const NotificationPreferencesScreen({Key? key}) : super(key: key);
+  const NotificationPreferencesScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

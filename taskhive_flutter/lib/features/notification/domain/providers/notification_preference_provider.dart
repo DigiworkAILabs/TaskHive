@@ -23,7 +23,7 @@ class NotificationPreferenceNotifier extends _$NotificationPreferenceNotifier {
           .read(notificationRepositoryProvider)
           .updatePreferences(newPrefs);
       state = AsyncData(result);
-    } catch (e, st) {
+    } catch (e) {
       appLogger.e('Failed to update preferences: $e');
       // Revert on failure
       state = oldState;

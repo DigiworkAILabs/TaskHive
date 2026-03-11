@@ -237,4 +237,20 @@ class TaskRepository {
       throw ApiException.fromDioError(e);
     }
   }
+
+  /// Predict completion time (estimated hours) using ML backend.
+  Future<TaskCompletionTimePrediction> predictCompletionTime(
+      TaskCompletionTimeRequestDto request) async {
+    try {
+      final response = await _dio.post(
+        ApiEndpoints.mlPredictCompletionTime,
+        data: request.toJson(),
+      );
+      return TaskCompletionTimePrediction.fromJson(
+        response.data['data'] as Map<String, dynamic>,
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
 }
