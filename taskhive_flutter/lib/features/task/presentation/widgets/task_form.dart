@@ -1,12 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../data/models/create_task_request.dart';
 import '../../data/models/update_task_request.dart';
 import '../../domain/enums/task_priority.dart';
+import '../../domain/providers/priority_prediction_provider.dart';
 import 'assignee_picker.dart';
 import 'due_date_picker.dart';
 import 'priority_selector.dart';
+import 'priority_suggestion_badge.dart';
 import 'tags_input_field.dart';
 
 /// Reusable form for both create and edit task flows.
@@ -14,7 +19,7 @@ import 'tags_input_field.dart';
 /// - [initialTitle], [initialDescription], etc. are pre-filled for edit mode.
 /// - [onCreateSubmit] is non-null for create; [onUpdateSubmit] for edit.
 /// - Exactly one of them must be provided.
-class TaskForm extends StatefulWidget {
+class TaskForm extends ConsumerStatefulWidget {
   // Initial values for edit mode
   final String? initialTitle;
   final String? initialDescription;
@@ -47,10 +52,10 @@ class TaskForm extends StatefulWidget {
         );
 
   @override
-  State<TaskForm> createState() => _TaskFormState();
+  ConsumerState<TaskForm> createState() => _TaskFormState();
 }
 
-class _TaskFormState extends State<TaskForm> {
+class _TaskFormState extends ConsumerState<TaskForm> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _titleController;
   late final TextEditingController _descriptionController;
@@ -61,6 +66,7 @@ class _TaskFormState extends State<TaskForm> {
   DateTime? _dueDate;
   List<String> _tags = [];
   bool _submitting = false;
+  Timer? _debounce;
 
   bool get _isCreate => widget.onCreateSubmit != null;
 
@@ -77,10 +83,35 @@ class _TaskFormState extends State<TaskForm> {
     _assigneeId = widget.initialAssigneeId;
     _dueDate = widget.initialDueDate;
     _tags = List<String>.from(widget.initialTags);
+
+    _titleController.addListener(_onTitleChanged);
+  }
+
+  void _onTitleChanged() {
+    if (!_isCreate) return; // Only suggest priority on creation
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+
+    _debounce = Timer(const Duration(milliseconds: 600), () {
+      final text = _titleController.text.trim();
+      if (text.length >= 2) {
+        ref.read(priorityPredictionProvider.notifier).predict(
+              TaskPriorityRequestDto(
+                taskTitle: text,
+                taskDescription: _descriptionController.text.trim(),
+                tags: _tags,
+                estimatedHours: double.tryParse(_hoursController.text),
+                employeeId: _assigneeId,
+              ),
+            );
+      } else {
+        ref.read(priorityPredictionProvider.notifier).reset();
+      }
+    });
   }
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _titleController.dispose();
     _descriptionController.dispose();
     _hoursController.dispose();
@@ -142,6 +173,8 @@ class _TaskFormState extends State<TaskForm> {
 
   @override
   Widget build(BuildContext context) {
+    final predictionState = ref.watch(priorityPredictionProvider);
+
     return Form(
       key: _formKey,
       child: ListView(
@@ -175,8 +208,28 @@ class _TaskFormState extends State<TaskForm> {
           // Priority
           PrioritySelector(
             selected: _priority,
-            onChanged: (p) => setState(() => _priority = p),
+            onChanged: (p) {
+              setState(() => _priority = p);
+              ref.read(priorityPredictionProvider.notifier).reset();
+            },
           ),
+          if (_isCreate &&
+              (predictionState.isLoading ||
+                  (predictionState.hasValue && predictionState.value != null)))
+            PrioritySuggestionBadge(
+              prediction: predictionState.value,
+              isLoading: predictionState.isLoading,
+              error: predictionState.hasError
+                  ? predictionState.error.toString()
+                  : null,
+              onAccept: (p) {
+                setState(() => _priority = p);
+                ref.read(priorityPredictionProvider.notifier).reset();
+              },
+              onIgnore: () {
+                ref.read(priorityPredictionProvider.notifier).reset();
+              },
+            ),
           const SizedBox(height: 16),
 
           // Assignee

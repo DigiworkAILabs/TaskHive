@@ -1,7 +1,6 @@
 package com.digiwork.taskhive.module.ml.service;
 
-import com.digiwork.taskhive.module.ml.dto.TaskPriorityResponse;
-import com.digiwork.taskhive.module.ml.dto.WorkloadRecommendationResponse;
+import com.digiwork.taskhive.module.ml.dto.*;
 import com.digiwork.taskhive.module.ml.exception.MLServiceUnavailableException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
@@ -22,10 +21,6 @@ import java.util.stream.Collectors;
  * MLClientService
  * ────────────────
  * HTTP client layer that calls the FastAPI ML inference server.
- *
- * Circuit Breaker (Resilience4j):
- * - Name: "mlService"
- * - On failure → fallback methods return graceful default/fallback DTOs.
  */
 @Slf4j
 @Service
@@ -40,116 +35,136 @@ public class MLClientService {
     @Value("${ml.enabled:true}")
     private boolean mlEnabled;
 
-    // ── Feature 1: Task Priority Suggestion ──────────────────────────────────
+    // ── Priority ─────────────────────────────────────────────────────────────
 
     @CircuitBreaker(name = "mlService", fallbackMethod = "predictPriorityFallback")
     public TaskPriorityResponse predictPriority(Map<String, Object> mlPayload) {
-        if (!mlEnabled) {
+        if (!mlEnabled)
             return TaskPriorityResponse.fallback();
-        }
-
         String url = mlBaseUrl + "/ml/predict/task-priority";
-        try {
-            ResponseEntity<MLPriorityApiResponse> response = mlRestTemplate.postForEntity(
-                    url,
-                    mlPayload,
-                    MLPriorityApiResponse.class);
-
-            MLPriorityApiResponse body = response.getBody();
-            if (body == null)
-                throw new MLServiceUnavailableException("Empty response");
-
-            return TaskPriorityResponse.of(
-                    body.getPredictedPriority(),
-                    body.getConfidence(),
-                    body.getReasoning());
-
-        } catch (RestClientException ex) {
-            log.warn("[MLClient] Priority ML unreachable: {}", ex.getMessage());
-            throw new MLServiceUnavailableException("ML unreachable", ex);
-        }
+        ResponseEntity<MLPriorityApiResponse> response = mlRestTemplate.postForEntity(url, mlPayload,
+                MLPriorityApiResponse.class);
+        MLPriorityApiResponse body = response.getBody();
+        if (body == null)
+            throw new MLServiceUnavailableException("Empty response");
+        return TaskPriorityResponse.of(body.getPredictedPriority(), body.getConfidence(), body.getReasoning());
     }
 
     private TaskPriorityResponse predictPriorityFallback(Map<String, Object> payload, Throwable t) {
-        log.warn("[MLClient] Priority fallback triggered: {}", t.getMessage());
+        log.warn("[MLClient] Priority fallback: {}", t.getMessage());
         return TaskPriorityResponse.fallback();
     }
 
-    // ── Feature 3: Workload Balance Recommendation ───────────────────────────
+    // ── Completion Time ──────────────────────────────────────────────────────
+
+    @CircuitBreaker(name = "mlService", fallbackMethod = "predictCompletionFallback")
+    public CompletionTimeResponse predictCompletionTime(Map<String, Object> mlPayload) {
+        if (!mlEnabled)
+            return CompletionTimeResponse.fallback((Double) mlPayload.get("manual_estimate"));
+        String url = mlBaseUrl + "/ml/predict/completion-time";
+        log.info("[MLClient] Calling completion estimation: {} with payload: {}", url, mlPayload);
+        ResponseEntity<MLCompletionApiResponse> response = mlRestTemplate.postForEntity(url, mlPayload,
+                MLCompletionApiResponse.class);
+        MLCompletionApiResponse body = response.getBody();
+        log.info("[MLClient] Received response from {}: {}", url, body);
+        if (body == null)
+            throw new MLServiceUnavailableException("Empty response from ML server at " + url);
+        return CompletionTimeResponse.builder()
+                .estimatedHours(body.getEstimatedHours())
+                .confidenceRange(new CompletionTimeResponse.ConfidenceRange(
+                        body.getConfidenceRange() != null ? body.getConfidenceRange().getLow() : null,
+                        body.getConfidenceRange() != null ? body.getConfidenceRange().getHigh() : null))
+                .reasoning(body.getReasoning())
+                .fallbackUsed(body.getFallbackUsed())
+                .build();
+    }
+
+    private CompletionTimeResponse predictCompletionFallback(Map<String, Object> payload, Throwable t) {
+        log.warn("[MLClient] Completion fallback: {}", t.getMessage());
+        return CompletionTimeResponse.fallback((Double) payload.get("manual_estimate"));
+    }
+
+    // ── Workload ─────────────────────────────────────────────────────────────
 
     @CircuitBreaker(name = "mlService", fallbackMethod = "recommendWorkloadFallback")
     public WorkloadRecommendationResponse recommendWorkloadBalance(Map<String, Object> mlPayload) {
-        if (!mlEnabled) {
-            return WorkloadRecommendationResponse.fallback("ML is disabled in configuration.");
-        }
-
+        if (!mlEnabled)
+            return WorkloadRecommendationResponse.fallback();
         String url = mlBaseUrl + "/ml/recommend/workload-balance";
-        try {
-            ResponseEntity<MLWorkloadApiResponse> response = mlRestTemplate.postForEntity(
-                    url,
-                    mlPayload,
-                    MLWorkloadApiResponse.class);
-
-            MLWorkloadApiResponse body = response.getBody();
-            if (body == null)
-                throw new MLServiceUnavailableException("Empty response");
-
-            List<WorkloadRecommendationResponse.EmployeeScoreBreakdown> scores = body.getScoreBreakdown().stream()
-                    .map(entry -> new WorkloadRecommendationResponse.EmployeeScoreBreakdown(
-                            entry.getEmployeeId(),
-                            entry.getScore()))
-                    .collect(Collectors.toList());
-
-            return new WorkloadRecommendationResponse(
-                    body.getRecommendedEmployeeId(),
-                    scores,
-                    body.getReasoning(),
-                    body.getFallbackUsed() != null ? body.getFallbackUsed() : false);
-
-        } catch (RestClientException ex) {
-            log.warn("[MLClient] Workload ML unreachable: {}", ex.getMessage());
-            throw new MLServiceUnavailableException("ML unreachable", ex);
-        }
+        ResponseEntity<MLWorkloadApiResponse> response = mlRestTemplate.postForEntity(url, mlPayload,
+                MLWorkloadApiResponse.class);
+        MLWorkloadApiResponse body = response.getBody();
+        if (body == null)
+            throw new MLServiceUnavailableException("Empty response");
+        List<WorkloadRecommendationResponse.EmployeeScoreBreakdown> scores = body.getScoreBreakdown().stream()
+                .map(entry -> new WorkloadRecommendationResponse.EmployeeScoreBreakdown(entry.getEmployeeId(),
+                        entry.getScore()))
+                .collect(Collectors.toList());
+        return new WorkloadRecommendationResponse(body.getRecommendedEmployeeId(), scores, body.getReasoning(),
+                body.getFallbackUsed() != null ? body.getFallbackUsed() : false);
     }
 
     private WorkloadRecommendationResponse recommendWorkloadFallback(Map<String, Object> payload, Throwable t) {
-        log.warn("[MLClient] Workload fallback triggered: {}", t.getMessage());
-        return WorkloadRecommendationResponse
-                .fallback("AI Recommendation service is currently unavailable. Please select an assignee manually.");
+        log.warn("[MLClient] Workload fallback: {}", t.getMessage());
+        return WorkloadRecommendationResponse.fallback();
     }
 
-    // ── Internal DTOs for FastAPI Response Mapping ───────────────────────────
+    // ── Mapping DTOs ─────────────────────────────────────────────────────────
 
     @lombok.Data
     static class MLPriorityApiResponse {
         @JsonProperty("predicted_priority")
-        private String predicted_priority;
+        private String predictedPriority;
         private Double confidence;
         private String reasoning;
 
         public String getPredictedPriority() {
-            return predicted_priority;
+            return predictedPriority;
+        }
+    }
+
+    @lombok.Data
+    static class MLCompletionApiResponse {
+        @JsonProperty("estimated_hours")
+        private Double estimatedHours;
+
+        @JsonProperty("confidence_range")
+        private MLConfidenceRange confidenceRange;
+
+        private String reasoning;
+
+        @JsonProperty("fallback_used")
+        private Boolean fallbackUsed;
+
+        public Double getEstimatedHours() {
+            return estimatedHours != null ? estimatedHours : 0.0;
         }
 
-        public Double getConfidence() {
-            return confidence != null ? confidence : 0.5;
+        public MLConfidenceRange getConfidenceRange() {
+            return confidenceRange;
         }
 
-        public String getReasoning() {
-            return reasoning != null ? reasoning : "";
+        public Boolean getFallbackUsed() {
+            return fallbackUsed != null ? fallbackUsed : false;
         }
+    }
+
+    @lombok.Data
+    static class MLConfidenceRange {
+        @JsonProperty("low")
+        private Double low;
+
+        @JsonProperty("high")
+        private Double high;
     }
 
     @lombok.Data
     static class MLWorkloadApiResponse {
         @JsonProperty("recommended_employee_id")
         private String recommendedEmployeeId;
-
         @JsonProperty("score_breakdown")
         private List<MLWorkloadScoreEntry> scoreBreakdown;
-
         private String reasoning;
-
         @JsonProperty("fallback_used")
         private Boolean fallbackUsed;
     }

@@ -2,7 +2,9 @@
  * ml.types.ts
  * ────────────
  * TypeScript types for all ML feature API contracts.
- * Phase 7.1: Task Priority Suggestion types only.
+ * Phase 7.1: Task Priority Suggestion
+ * Phase 7.2: Task Completion Time Estimation
+ * Phase 7.3: Workload Balance Recommendation
  */
 
 // ── Shared ────────────────────────────────────────────────────────────────────
@@ -42,6 +44,46 @@ export interface TaskPriorityApiResponse {
     data: TaskPriorityPrediction;
     timestamp: string;
 }
+
+// ── Feature 2: Task Completion Time Estimation ───────────────────────────────
+
+/**
+ * Request body sent from Next.js to Spring Boot.
+ * POST /api/v1/ml/predict/completion-time
+ */
+export interface CompletionTimeRequestDto {
+    taskTitle: string;
+    taskDescription?: string;
+    priority: TaskPriority;
+    employeeId: string;
+    estimatedHours?: number; // admin manual input
+}
+
+export interface ConfidenceRange {
+    low: number;
+    high: number;
+}
+
+/**
+ * Inner data object returned by Spring Boot's ApiResponse<CompletionTimeResponse>.
+ */
+export interface CompletionTimePrediction {
+    estimatedHours: number;
+    confidenceRange: ConfidenceRange;
+    reasoning: string;
+    fallbackUsed: boolean;
+}
+
+/**
+ * Full Spring Boot ApiResponse<CompletionTimeResponse> shape.
+ */
+export interface CompletionTimeApiResponse {
+    success: boolean;
+    message: string;
+    data: CompletionTimePrediction;
+    timestamp: string;
+}
+
 // ── Feature 3: Workload Balance Recommendation ──────────────────────────
 
 /**

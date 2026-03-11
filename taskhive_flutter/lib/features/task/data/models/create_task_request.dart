@@ -20,3 +20,30 @@ class CreateTaskRequest with _$CreateTaskRequest {
   factory CreateTaskRequest.fromJson(Map<String, dynamic> json) =>
       _$CreateTaskRequestFromJson(json);
 }
+
+@freezed
+class TaskPriorityRequestDto with _$TaskPriorityRequestDto {
+  const factory TaskPriorityRequestDto({
+    required String taskTitle,
+    String? taskDescription,
+    String? employeeId,
+    List<String>? tags,
+    double? estimatedHours,
+  }) = _TaskPriorityRequestDto;
+
+  factory TaskPriorityRequestDto.fromJson(Map<String, dynamic> json) =>
+      _$TaskPriorityRequestDtoFromJson(json);
+}
+
+@freezed
+class TaskPriorityPrediction with _$TaskPriorityPrediction {
+  const factory TaskPriorityPrediction({
+    required String predictedPriority,
+    required double confidence,
+    required String reasoning,
+    required bool fallbackUsed,
+  }) = _TaskPriorityPrediction;
+
+  factory TaskPriorityPrediction.fromJson(Map<String, dynamic> json) =>
+      _$TaskPriorityPredictionFromJson(json);
+}

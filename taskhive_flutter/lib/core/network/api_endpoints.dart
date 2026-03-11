@@ -35,6 +35,9 @@ class ApiEndpoints {
   static const String overdueTasks = '/tasks/overdue';
   static const String taskSearch = '/tasks/search';
 
+  // ML (Phase 7.1)
+  static const String mlPredictTaskPriority = '/ml/predict/task-priority';
+
   // Notification (Phase 4)
   static const String notifications = '/notifications';
   static const String notificationsUnread = '/notifications/unread';

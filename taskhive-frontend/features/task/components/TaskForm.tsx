@@ -25,10 +25,13 @@ interface TaskFormProps {
     onFieldChange?: (fields: {
         title?: string;
         description?: string;
+        priority?: string;
         assignedTo?: string;
         tags?: string;
         estimatedHours?: string;
     }) => void;
+    /** ML Feature 2: Node to render below Estimated Hours */
+    completionEstimateNode?: React.ReactNode;
 }
 
 // ── Shared input style ────────────────────────────────────────────────────────
@@ -59,7 +62,7 @@ function FormField({ label, required, children }: { label: string; required?: bo
 
 // ── Main Component ────────────────────────────────────────────────────────────
 
-export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoading, error, success, backHref = '/admin/tasks', initialPriority, onFieldChange }) => {
+export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoading, error, success, backHref = '/admin/tasks', initialPriority, onFieldChange, completionEstimateNode }) => {
     const [formData, setFormData] = useState({
         title: '',
         description: '',
@@ -131,17 +134,25 @@ export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoad
 
     // Sync ML-accepted priority into form state
     useEffect(() => {
-        if (initialPriority) {
+        if (initialPriority && initialPriority !== formData.priority) {
             setFormData(prev => ({ ...prev, priority: initialPriority }));
+            // Notify parent to sync ML context (essential for Completion Time prediction)
+            if (onFieldChange) {
+                onFieldChange({ priority: initialPriority });
+            }
         }
-    }, [initialPriority]);
+    }, [initialPriority, formData.priority, onFieldChange]);
 
     const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const value = e.target.value;
+        console.log(`[TaskForm] Change ${field}:`, value);
         setFormData((prev) => ({ ...prev, [field]: value }));
         if (fieldErrors[field]) setFieldErrors((prev) => { const n = { ...prev }; delete n[field]; return n; });
         // Notify parent for ML context
-        if (onFieldChange) onFieldChange({ [field]: value });
+        if (onFieldChange) {
+            console.log(`[TaskForm] Notifying parent of ${field}`);
+            onFieldChange({ [field]: value });
+        }
     };
 
     const handleRecommendAssignee = async () => {
@@ -159,6 +170,10 @@ export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoad
 
     const handleApplyRecommendation = (empId: string) => {
         setFormData(prev => ({ ...prev, assignedTo: empId }));
+        // Sync parent ML state so Completion Time can trigger
+        if (onFieldChange) {
+            onFieldChange({ assignedTo: empId });
+        }
         resetRecommendation(); // Clear the recommendation UI after applying
     };
 
@@ -396,6 +411,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoad
                                     style={{ ...inputStyle('estimatedHours'), paddingLeft: '36px' }}
                                 />
                             </div>
+                            {completionEstimateNode}
                         </FormField>
                     </div>
 
