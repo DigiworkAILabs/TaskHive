@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../../features/auth/domain/providers/auth_provider.dart';
 import '../../../data/models/employee_model.dart';
 import '../../widgets/employee_status_badge.dart';
+import '../../../../ml/domain/providers/productivity_score_provider.dart';
+import '../../../../ml/presentation/widgets/productivity_score_card.dart';
 
 /// The employee's own profile screen. Simplified to match Next.js frontend
 /// which doesn't show a full editable profile for employees.
@@ -19,6 +21,8 @@ class MyProfileScreen extends ConsumerWidget {
     if (currentUser == null) {
       return const Scaffold(body: Center(child: Text('Not logged in.')));
     }
+
+    final scoreAsync = ref.watch(productivityScoreProvider(currentUser.id));
 
     return Scaffold(
       appBar: AppBar(title: const Text('My Profile')),
@@ -58,7 +62,55 @@ class MyProfileScreen extends ConsumerWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
+            
+            // AI Productivity Section
+            Row(
+              children: [
+                const Icon(Icons.psychology, size: 20, color: Colors.indigo),
+                const SizedBox(width: 8),
+                Text(
+                  'AI PERFORMANCE INSIGHTS',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.1,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            scoreAsync.when(
+              data: (score) => ProductivityScoreCard(scoreData: score),
+              loading: () => const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(32),
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+              error: (e, _) => Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.red.withOpacity(0.1)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.error_outline, color: Colors.red, size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Unable to load productivity score: ${e.toString()}',
+                        style: const TextStyle(color: Colors.red, fontSize: 13),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 32),
+
             // Read-only fields from Auth User
             _ReadOnlyField(label: 'Email', value: currentUser.email),
             _ReadOnlyField(label: 'Role', value: currentUser.role),

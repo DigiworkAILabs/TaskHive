@@ -12,6 +12,8 @@ import '../../../auth/domain/providers/auth_provider.dart';
 import '../../domain/providers/employee_dashboard_provider.dart';
 import '../../data/models/task_distribution_response.dart';
 import '../widgets/task_status_pie_chart.dart';
+import '../../../ml/domain/providers/productivity_score_provider.dart';
+import '../../../ml/presentation/widgets/productivity_score_card.dart';
 
 class _SectionHeader extends StatelessWidget {
   final String title;
@@ -179,6 +181,58 @@ class _EmployeeDashboardScreenState extends ConsumerState<EmployeeDashboardScree
                     },
                   ),
 
+                  const SizedBox(height: 24),
+
+                  // AI Productivity Section
+                  Row(
+                    children: [
+                      const Icon(Icons.psychology, size: 20, color: Colors.indigo),
+                      const SizedBox(width: 8),
+                      Text(
+                        'AI PERFORMANCE INSIGHTS',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.1,
+                              color: Colors.grey.shade600,
+                            ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  if (user != null)
+                    ref.watch(productivityScoreProvider(user.id)).when(
+                          data: (score) =>
+                              ProductivityScoreCard(scoreData: score),
+                          loading: () => const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(32),
+                              child: CircularProgressIndicator(),
+                            ),
+                          ),
+                          error: (e, _) => Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.red.withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                  color: Colors.red.withOpacity(0.1)),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.error_outline,
+                                    color: Colors.red, size: 20),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    'Unable to load productivity score: ${e.toString()}',
+                                    style: const TextStyle(
+                                        color: Colors.red, fontSize: 13),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                   const SizedBox(height: 24),
 
                   const SizedBox(height: 24),

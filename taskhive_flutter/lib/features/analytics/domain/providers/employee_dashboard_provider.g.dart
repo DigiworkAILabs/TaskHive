@@ -7,7 +7,7 @@ part of 'employee_dashboard_provider.dart';
 // **************************************************************************
 
 String _$employeeDashboardNotifierHash() =>
-    r'63f68543e64babe6996ee3ec483640f9b3e55589';
+    r'1bb3b398494b67f913640fd47a01b5a9fa50b1de';
 
 /// See also [EmployeeDashboardNotifier].
 @ProviderFor(EmployeeDashboardNotifier)
