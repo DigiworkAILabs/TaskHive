@@ -1,14 +1,21 @@
 package com.digiwork.taskhive.module.ml.service;
 
 import com.digiwork.taskhive.module.ml.dto.*;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.digiwork.taskhive.module.employee.model.Employee;
 import com.digiwork.taskhive.module.employee.repository.EmployeeRepository;
 import com.digiwork.taskhive.module.task.model.Task;
 import com.digiwork.taskhive.module.task.repository.TaskRepository;
+import com.digiwork.taskhive.module.ml.model.MLPredictionLog;
+import com.digiwork.taskhive.module.ml.repository.MLPredictionLogRepository;
+import com.digiwork.taskhive.module.task.repository.TaskCommentRepository;
+import com.digiwork.taskhive.module.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 /**
@@ -24,6 +31,9 @@ public class MLService {
     private final MLClientService mlClientService;
     private final TaskRepository taskRepository;
     private final EmployeeRepository employeeRepository;
+    private final TaskCommentRepository taskCommentRepository;
+    private final MLPredictionLogRepository predictionLogRepository;
+    private final UserRepository userRepository;
 
     // ── Feature 1: Task Priority Suggestion ──────────────────────────────────
 
@@ -102,6 +112,79 @@ public class MLService {
                 request.getTaskEstimatedHours() != null ? request.getTaskEstimatedHours() : 4.0);
         payload.put("candidates", enrichedCandidates);
         return mlClientService.recommendWorkloadBalance(payload);
+    }
+
+    // ── Feature 4: Employee Productivity Scoring ──────────────────────────
+
+    public ProductivityScoreResponse predictProductivityScore(UUID employeeId, int periodDays) {
+        log.info("[MLService] Calculating productivity score for employee: {}, period: {} days", employeeId, periodDays);
+
+        LocalDateTime startDate = LocalDateTime.now().minusDays(periodDays);
+        List<Task> tasks = taskRepository.findByAssignedToAndIsDeletedFalse(employeeId);
+
+        long tasksAssigned = tasks.stream()
+                .filter(t -> t.getCreatedAt().isAfter(startDate))
+                .count();
+
+        long tasksCompleted = tasks.stream()
+                .filter(t -> "DONE".equals(t.getStatus()) && t.getCompletedAt() != null && t.getCompletedAt().isAfter(startDate))
+                .count();
+
+        long tasksOverdue = tasks.stream()
+                .filter(t -> t.getDueDate() != null && t.getDueDate().isBefore(LocalDateTime.now()) && !"DONE".equals(t.getStatus()))
+                .count();
+
+        double onTimeRate = tasksCompleted > 0 ? (double) tasks.stream()
+                .filter(t -> "DONE".equals(t.getStatus()) && t.getCompletedAt() != null
+                        && t.getDueDate() != null && !t.getCompletedAt().isAfter(t.getDueDate())
+                        && t.getCompletedAt().isAfter(startDate))
+                .count() / tasksCompleted : 0.75;
+
+        double avgCompletionHours = tasks.stream()
+                .filter(t -> "DONE".equals(t.getStatus()) && t.getEstimatedHours() != null && t.getCompletedAt() != null && t.getCompletedAt().isAfter(startDate))
+                .mapToDouble(t -> t.getEstimatedHours().doubleValue())
+                .average().orElse(4.0);
+
+        long commentActivity = taskCommentRepository.countByAuthorIdAndCreatedAtAfter(employeeId, startDate);
+
+        // Fetch previous score for trend
+        Double prevScore = predictionLogRepository.findLatestByFeatureAndEmployee("PRODUCTIVITY", employeeId)
+                .map(log -> (Double) log.getOutputData().get("score"))
+                .orElse(null);
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("employee_id", employeeId.toString());
+        payload.put("period_days", periodDays);
+        payload.put("tasks_assigned", (int) tasksAssigned);
+        payload.put("tasks_completed", (int) tasksCompleted);
+        payload.put("tasks_overdue", (int) tasksOverdue);
+        payload.put("on_time_rate", onTimeRate);
+        payload.put("avg_completion_hours", avgCompletionHours);
+        payload.put("comment_activity", (int) commentActivity);
+        payload.put("prev_score", prevScore);
+
+        ProductivityScoreResponse response = mlClientService.predictProductivityScore(payload);
+
+        // Log the prediction for future trend/retraining
+        savePredictionLog("PRODUCTIVITY", employeeId, payload, response);
+
+        return response;
+    }
+
+    private void savePredictionLog(String type, UUID employeeId, Map<String, Object> input, Object output) {
+        try {
+            Map<String, Object> outputMap = new ObjectMapper().convertValue(output, new TypeReference<Map<String, Object>>() {});
+            MLPredictionLog logEntry = MLPredictionLog.builder()
+                    .featureType(type)
+                    .employee(userRepository.findById(employeeId).orElse(null))
+                    .inputData(input)
+                    .outputData(outputMap)
+                    .fallbackUsed(outputMap.get("fallbackUsed") != null && (boolean) outputMap.get("fallbackUsed"))
+                    .build();
+            predictionLogRepository.save(logEntry);
+        } catch (Exception e) {
+            log.error("[MLService] Failed to save ML log: {}", e.getMessage());
+        }
     }
 
     // ── Metric Helpers ───────────────────────────────────────────────────────

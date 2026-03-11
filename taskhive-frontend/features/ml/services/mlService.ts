@@ -21,6 +21,8 @@ import type {
     WorkloadRecommendationRequestDto,
     WorkloadRecommendation,
     WorkloadRecommendationApiResponse,
+    ProductivityScore,
+    ProductivityScoreApiResponse,
 } from '../types/ml.types';
 
 const ML_BASE = '/ml';
@@ -84,6 +86,27 @@ export const mlService = {
         const response = await apiClient.post<WorkloadRecommendationApiResponse>(
             `${ML_BASE}/recommend/workload-balance`,
             data
+        );
+        return response.data.data;
+    },
+    
+    /**
+     * Feature 4 — Employee Productivity Scoring
+     *
+     * Fetches productivity score for a specific employee.
+     * Accessible by ADMIN and the EMPLOYEE themselves.
+     *
+     * @param employeeId   UUID of the employee
+     * @param periodDays   Review period in days (default 30)
+     * @returns            Productivity score, grade, and reasoning
+     */
+    getProductivityScore: async (
+        employeeId: string,
+        periodDays: number = 30
+    ): Promise<ProductivityScore> => {
+        const response = await apiClient.get<ProductivityScoreApiResponse>(
+            `${ML_BASE}/score/employee/${employeeId}`,
+            { params: { periodDays } }
         );
         return response.data.data;
     },

@@ -11,8 +11,10 @@ import { EmployeeForm } from './EmployeeForm';
 import { UpdateEmployeeData, EmployeeStatus } from '../types/employee.types';
 import {
     ArrowLeft, Pencil, Trash2, UserCheck, UserX,
-    Mail, Phone, Building2, Calendar, Loader2, AlertCircle,
+    Mail, Phone, Building2, Calendar, Loader2, AlertCircle, BrainCircuit
 } from 'lucide-react';
+import { useProductivityScore } from '../../ml/hooks/useProductivityScore';
+import { ProductivityScoreCard } from '../../ml/components/ProductivityScoreCard';
 import Link from 'next/link';
 
 const statusConfig: Record<EmployeeStatus, { label: string; color: string; bg: string }> = {
@@ -29,6 +31,11 @@ export const EmployeeDetail: React.FC = () => {
     const { employee, isLoading, error, refetch } = useEmployee(id);
     const { updateEmployee, isLoading: isUpdating, error: updateError, success: updateSuccess } = useUpdateEmployee();
     const { deleteEmployee, isLoading: isDeleting } = useDeleteEmployee();
+    const { 
+        scoreData, 
+        isLoading: isLoadingScore, 
+        error: scoreError 
+    } = useProductivityScore(id);
 
     const [isEditing, setIsEditing] = useState(false);
     const [statusLoading, setStatusLoading] = useState(false);
@@ -238,9 +245,26 @@ export const EmployeeDetail: React.FC = () => {
             </div>
 
             {/* Info Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
                 <InfoCard icon={<Building2 size={18} />} label="Department" value={employee.department || '—'} />
                 <InfoCard icon={<Calendar size={18} />} label="Join Date" value={employee.joinDate ? new Date(employee.joinDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—'} />
+            </div>
+
+            {/* AI Productivity Section */}
+            <div style={{ marginBottom: '24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                    <BrainCircuit size={18} color="#6366f1" />
+                    <h2 style={{ color: "#ffffff", fontSize: "16px", fontWeight: 600, margin: 0 }}>
+                        AI Productivity Insights
+                    </h2>
+                </div>
+                <div style={{ maxWidth: '600px' }}>
+                    <ProductivityScoreCard 
+                        scoreData={scoreData}
+                        isLoading={isLoadingScore}
+                        error={scoreError}
+                    />
+                </div>
             </div>
 
             {/* Action Bar */}

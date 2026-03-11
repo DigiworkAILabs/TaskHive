@@ -5,6 +5,7 @@ Pydantic request schemas for the ML Inference Server.
 Phase 7.1: TaskPriorityRequest
 Phase 7.2: CompletionTimeRequest
 Phase 7.3: WorkloadBalanceRequest
+Phase 7.4: ProductivityScoreRequest
 """
 
 from pydantic import BaseModel, Field, field_validator
@@ -247,6 +248,36 @@ class CompletionTimeRequest(BaseModel):
                 "emp_avg_hours_medium": 3.8,
                 "emp_active_tasks": 3,
                 "manual_estimate": 5.0
+            }
+        }
+    }
+class ProductivityScoreRequest(BaseModel):
+    """
+    Incoming request body for POST /ml/score/employee.
+    """
+    employee_id: str = Field(..., description="UUID of the employee")
+    period_days: int = Field(default=30, ge=7, le=365)
+    
+    # Aggregated metrics for the period
+    tasks_assigned: int = Field(..., ge=0)
+    tasks_completed: int = Field(..., ge=0)
+    tasks_overdue: int = Field(..., ge=0)
+    on_time_rate: float = Field(..., ge=0.0, le=1.0)
+    avg_completion_hours: float = Field(..., ge=0.0)
+    comment_activity: int = Field(..., ge=0)
+    prev_score: Optional[float] = Field(default=None, description="Score from previous period for trend calculation")
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "employee_id": "550e8400-e29b-41d4-a716-446655440000",
+                "period_days": 30,
+                "tasks_assigned": 12,
+                "tasks_completed": 10,
+                "tasks_overdue": 1,
+                "on_time_rate": 0.80,
+                "avg_completion_hours": 4.8,
+                "comment_activity": 24
             }
         }
     }

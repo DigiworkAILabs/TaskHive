@@ -1,7 +1,8 @@
 "use client";
 
 import { useEmployeePerformance } from "../hooks/useAdminDashboard";
-import { Loader2, Users } from "lucide-react";
+import { Loader2, Users, BrainCircuit } from "lucide-react";
+import { useProductivityScore } from "../../ml/hooks/useProductivityScore";
 
 export default function EmployeePerformanceTable() {
     const { data, isLoading } = useEmployeePerformance();
@@ -67,7 +68,7 @@ export default function EmployeePerformanceTable() {
                                 borderBottom: "1px solid #2a2a2a",
                             }}
                         >
-                            {["Employee", "Assigned", "Completed", "On-Time Rate", "Avg Hours"].map((h) => (
+                            {["Employee", "Assigned", "Completed", "On-Time Rate", "Avg Hours", "ML Productivity"].map((h) => (
                                 <th
                                     key={h}
                                     style={{
@@ -157,11 +158,49 @@ export default function EmployeePerformanceTable() {
                                 <td style={{ textAlign: "center", color: "#a1a1aa", fontSize: "13px", padding: "14px 16px" }}>
                                     {Number(emp.avgCompletionHours).toFixed(1)}h
                                 </td>
+                                <td style={{ textAlign: "center", padding: "14px 16px" }}>
+                                    <ProductivityScoreCell employeeId={emp.employeeId} />
+                                </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
             </div>
+        </div>
+    );
+}
+function ProductivityScoreCell({ employeeId }: { employeeId: string }) {
+    const { scoreData, isLoading } = useProductivityScore(employeeId);
+
+    if (isLoading) return <div className="h-4 w-12 bg-slate-800 animate-pulse rounded mx-auto" />;
+    if (!scoreData) return <span className="text-slate-600">--</span>;
+
+    const { grade } = scoreData;
+    const colors = {
+        'A': '#22c55e',
+        'B': '#3b82f6',
+        'C': '#eab308',
+        'D': '#f97316',
+        'F': '#ef4444'
+    };
+
+    return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+            <span
+                style={{
+                    display: "inline-block",
+                    padding: "2px 8px",
+                    borderRadius: "6px",
+                    fontSize: "11px",
+                    fontWeight: 800,
+                    backgroundColor: `${colors[grade]}20`,
+                    color: colors[grade],
+                    border: `1px solid ${colors[grade]}30`
+                }}
+            >
+                GRADE {grade}
+            </span>
+            {grade === 'A' && <BrainCircuit size={12} color="#22c55e" />}
         </div>
     );
 }
