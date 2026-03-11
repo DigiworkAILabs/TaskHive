@@ -130,25 +130,25 @@ class _AdminTaskListScreenState extends ConsumerState<AdminTaskListScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(
         children: [
-          _StatCard(
+          _statCard(
               label: 'Total',
               value: total,
               color: Colors.black87,
               icon: Icons.assignment_outlined),
           const SizedBox(width: 8),
-          _StatCard(
+          _statCard(
               label: 'In Progress',
               value: inProgress,
               color: Colors.blue,
               icon: Icons.schedule),
           const SizedBox(width: 8),
-          _StatCard(
+          _statCard(
               label: 'Done',
               value: done,
               color: Colors.green,
               icon: Icons.check_circle_outline),
           const SizedBox(width: 8),
-          _StatCard(
+          _statCard(
               label: 'Overdue',
               value: overdue,
               color: Colors.red,
@@ -158,7 +158,7 @@ class _AdminTaskListScreenState extends ConsumerState<AdminTaskListScreen> {
     );
   }
 
-  Widget _StatCard(
+  Widget _statCard(
       {required String label,
       required int value,
       required Color color,

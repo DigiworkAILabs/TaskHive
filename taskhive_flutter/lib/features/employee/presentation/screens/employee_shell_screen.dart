@@ -17,12 +17,12 @@ class EmployeeShellScreen extends StatelessWidget {
           i,
           initialLocation: i == navigationShell.currentIndex,
         ),
-        destinations: [
-          const NavigationDestination(
+        destinations: const [
+          NavigationDestination(
               icon: Icon(Icons.dashboard_outlined),
               selectedIcon: Icon(Icons.dashboard),
               label: 'Dashboard'),
-          const NavigationDestination(
+          NavigationDestination(
               icon: Icon(Icons.task_alt_outlined),
               selectedIcon: Icon(Icons.task_alt),
               label: 'My Tasks'),
