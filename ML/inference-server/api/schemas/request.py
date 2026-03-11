@@ -100,3 +100,109 @@ class TaskPriorityRequest(BaseModel):
             }
         }
     }
+
+
+# ── Phase 7.3: Workload Balance Recommendation ────────────────────────────────
+
+class CandidateEmployee(BaseModel):
+    """Individual candidate employee with performance stats."""
+
+    employee_id: str = Field(
+        ...,
+        description="UUID of the candidate employee",
+        examples=["550e8400-e29b-41d4-a716-446655440000"],
+    )
+
+    active_tasks: int = Field(
+        ...,
+        ge=0,
+        le=100,
+        description="Number of currently assigned active tasks",
+        examples=[3],
+    )
+
+    completion_rate: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+        description="Historical task completion rate (0.0–1.0)",
+        examples=[0.91],
+    )
+
+    on_time_rate: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+        description="Historical on-time delivery rate (0.0–1.0)",
+        examples=[0.85],
+    )
+
+    avg_hours_per_task: float = Field(
+        default=4.0,
+        ge=0.0,
+        le=24.0,
+        description="Average hours per task for this employee",
+        examples=[4.5],
+    )
+
+    dept_match: bool = Field(
+        ...,
+        description="True if employee's department matches the task",
+        examples=[True],
+    )
+
+
+class WorkloadBalanceRequest(BaseModel):
+    """
+    Incoming request body for POST /ml/recommend/workload-balance.
+
+    Sent by Spring Boot after enriching the frontend payload
+    with employee performance metrics from TaskRepository + EmployeeRepository.
+    """
+
+    task_priority: str = Field(
+        ...,
+        description="Task priority: LOW / MEDIUM / HIGH / CRITICAL",
+        examples=["HIGH"],
+    )
+
+    task_estimated_hours: float = Field(
+        default=4.0,
+        ge=0.0,
+        le=500.0,
+        description="Estimated hours for this task",
+        examples=[8.0],
+    )
+
+    candidates: List[CandidateEmployee] = Field(
+        ...,
+        min_length=1,
+        description="List of candidate employees with their performance stats",
+    )
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "task_priority": "HIGH",
+                "task_estimated_hours": 8.0,
+                "candidates": [
+                    {
+                        "employee_id": "uuid1",
+                        "active_tasks": 2,
+                        "completion_rate": 0.91,
+                        "on_time_rate": 0.85,
+                        "avg_hours_per_task": 4.5,
+                        "dept_match": True,
+                    },
+                    {
+                        "employee_id": "uuid2",
+                        "active_tasks": 6,
+                        "completion_rate": 0.72,
+                        "on_time_rate": 0.65,
+                        "avg_hours_per_task": 6.1,
+                        "dept_match": True,
+                    },
+                ],
+            }
+        }
+    }

@@ -13,6 +13,9 @@ import type {
     TaskPriorityRequestDto,
     TaskPriorityPrediction,
     TaskPriorityApiResponse,
+    WorkloadRecommendationRequestDto,
+    WorkloadRecommendation,
+    WorkloadRecommendationApiResponse,
 } from '../types/ml.types';
 
 const ML_BASE = '/ml';
@@ -34,6 +37,28 @@ export const mlService = {
     ): Promise<TaskPriorityPrediction> => {
         const response = await apiClient.post<TaskPriorityApiResponse>(
             `${ML_BASE}/predict/task-priority`,
+            data
+        );
+        return response.data.data;
+    },
+
+    /**
+     * Feature 3 — Workload Balance Recommendation
+     *
+     * Sends task info + list of candidate employee IDs to Spring Boot.
+     * Spring Boot enriches each candidate with performance stats and
+     * forwards to FastAPI for ranking.
+     *
+     * Always resolves — returns null recommendation if ML is down.
+     *
+     * @param data   Request payload with task info and candidate IDs
+     * @returns      Recommended employee ID and score breakdown
+     */
+    recommendWorkload: async (
+        data: WorkloadRecommendationRequestDto
+    ): Promise<WorkloadRecommendation> => {
+        const response = await apiClient.post<WorkloadRecommendationApiResponse>(
+            `${ML_BASE}/recommend/workload-balance`,
             data
         );
         return response.data.data;

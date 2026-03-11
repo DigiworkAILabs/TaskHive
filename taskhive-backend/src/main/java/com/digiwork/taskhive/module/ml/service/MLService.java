@@ -2,14 +2,17 @@ package com.digiwork.taskhive.module.ml.service;
 
 import com.digiwork.taskhive.module.ml.dto.TaskPriorityRequest;
 import com.digiwork.taskhive.module.ml.dto.TaskPriorityResponse;
+import com.digiwork.taskhive.module.ml.dto.WorkloadRecommendationRequest;
+import com.digiwork.taskhive.module.ml.dto.WorkloadRecommendationResponse;
+import com.digiwork.taskhive.module.employee.model.Employee;
+import com.digiwork.taskhive.module.employee.repository.EmployeeRepository;
+import com.digiwork.taskhive.module.task.model.Task;
+import com.digiwork.taskhive.module.task.repository.TaskRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * MLService
@@ -18,12 +21,9 @@ import java.util.UUID;
  *
  * Responsibilities:
  * 1. Enrich the frontend request with employee performance data
- * (emp_completion_rate, emp_avg_hours, department) fetched from DB.
+ * fetched from DB (TaskRepository + EmployeeRepository).
  * 2. Build the exact payload shape expected by FastAPI.
  * 3. Delegate HTTP call to MLClientService.
- *
- * Note: Employee performance enrichment uses mock defaults in Phase 7.1.
- * In Phase 7.2+ this will query employee_performance_cache table via JPA.
  */
 @Slf4j
 @Service
@@ -31,17 +31,13 @@ import java.util.UUID;
 public class MLService {
 
     private final MLClientService mlClientService;
+    private final TaskRepository taskRepository;
+    private final EmployeeRepository employeeRepository;
 
-    // ── Future dependency (Phase 7.2+):
-    // private final EmployeePerformanceCacheRepository performanceCacheRepository;
+    // ── Feature 1: Task Priority Suggestion ──────────────────────────────────
 
     /**
      * Predict task priority.
-     *
-     * Enrichment logic:
-     * - emp_completion_rate: from performance cache (fallback: 0.75)
-     * - emp_avg_hours: from performance cache (fallback: 4.0)
-     * - department: from employee record (fallback: "Unknown")
      *
      * @param request DTO from frontend (title, description, tags, estimatedHours,
      *                employeeId)
@@ -51,7 +47,6 @@ public class MLService {
         log.info("[MLService] Predicting priority for task: '{}'", request.getTaskTitle());
 
         // 1. Enrich with employee performance metrics
-        // Phase 7.1: using safe defaults. Phase 7.2+ will query DB.
         double empCompletionRate = getEmpCompletionRate(request.getEmployeeId());
         double empAvgHours = getEmpAvgHours(request.getEmployeeId());
         String department = getDepartment(request.getEmployeeId());
@@ -78,23 +73,141 @@ public class MLService {
         return mlClientService.predictPriority(payload);
     }
 
-    // ── Private enrichment helpers ────────────────────────────────────────────
-    // Phase 7.1: returns safe defaults.
-    // Phase 7.2+: replace with DB queries to employee_performance_cache.
+    // ── Feature 3: Workload Balance Recommendation ───────────────────────────
+
+    /**
+     * Recommend the best employee to assign a task to.
+     *
+     * Enrichment logic:
+     * - For each candidateEmployeeId, fetch active_tasks count from TaskRepository
+     * - Fetch completion_rate, on_time_rate from task history
+     * - Fetch department from EmployeeRepository to determine dept_match
+     *
+     * @param request DTO from frontend (taskTitle, taskPriority,
+     *                taskEstimatedHours, candidateEmployeeIds)
+     * @return Recommended employee with score breakdown
+     */
+    public WorkloadRecommendationResponse recommendWorkloadBalance(WorkloadRecommendationRequest request) {
+        log.info("[MLService] Workload recommendation for '{}' with {} candidates",
+                request.getTaskTitle(), request.getCandidateEmployeeIds().size());
+
+        // 1. Build enriched candidate list for FastAPI
+        List<Map<String, Object>> enrichedCandidates = new ArrayList<>();
+
+        for (String candidateIdStr : request.getCandidateEmployeeIds()) {
+            try {
+                UUID candidateId = UUID.fromString(candidateIdStr);
+
+                // Fetch all tasks assigned to this employee
+                List<Task> allTasks = taskRepository.findByAssignedToAndIsDeletedFalse(candidateId);
+
+                // Count active tasks (not DONE or CANCELLED)
+                int activeTaskCount = (int) allTasks.stream()
+                        .filter(t -> !("DONE".equals(t.getStatus()) || "CANCELLED".equals(t.getStatus())))
+                        .count();
+
+                // Calculate completion rate
+                long totalTasks = allTasks.size();
+                long completedTasks = allTasks.stream()
+                        .filter(t -> "DONE".equals(t.getStatus()))
+                        .count();
+                double completionRate = totalTasks > 0 ? (double) completedTasks / totalTasks : 0.75;
+
+                // Calculate on-time rate
+                long onTimeTasks = allTasks.stream()
+                        .filter(t -> "DONE".equals(t.getStatus()) && t.getCompletedAt() != null
+                                && t.getDueDate() != null && !t.getCompletedAt().isAfter(t.getDueDate()))
+                        .count();
+                double onTimeRate = completedTasks > 0 ? (double) onTimeTasks / completedTasks : 0.75;
+
+                // Determine department match
+                boolean deptMatch = false;
+                Optional<Employee> empOpt = employeeRepository.findByIdAndIsDeletedFalse(candidateId);
+                if (empOpt.isPresent()) {
+                    deptMatch = true;
+                }
+
+                // Calculate avg hours per task
+                double avgHoursPerTask = allTasks.stream()
+                        .filter(t -> t.getEstimatedHours() != null)
+                        .mapToDouble(t -> t.getEstimatedHours().doubleValue())
+                        .average()
+                        .orElse(4.0);
+
+                Map<String, Object> candidate = new HashMap<>();
+                candidate.put("employee_id", candidateIdStr);
+                candidate.put("active_tasks", activeTaskCount);
+                candidate.put("completion_rate", Math.round(completionRate * 100.0) / 100.0);
+                candidate.put("on_time_rate", Math.round(onTimeRate * 100.0) / 100.0);
+                candidate.put("avg_hours_per_task", Math.round(avgHoursPerTask * 10.0) / 10.0);
+                candidate.put("dept_match", deptMatch);
+
+                enrichedCandidates.add(candidate);
+
+            } catch (IllegalArgumentException ex) {
+                log.warn("[MLService] Invalid UUID: {}", candidateIdStr);
+                // Add with safe defaults
+                Map<String, Object> candidate = new HashMap<>();
+                candidate.put("employee_id", candidateIdStr);
+                candidate.put("active_tasks", 5);
+                candidate.put("completion_rate", 0.75);
+                candidate.put("on_time_rate", 0.75);
+                candidate.put("avg_hours_per_task", 4.0);
+                candidate.put("dept_match", false);
+                enrichedCandidates.add(candidate);
+            }
+        }
+
+        // 2. Build FastAPI payload
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("task_priority", request.getTaskPriority());
+        payload.put("task_estimated_hours", request.getTaskEstimatedHours() != null
+                ? request.getTaskEstimatedHours()
+                : 4.0);
+        payload.put("candidates", enrichedCandidates);
+
+        log.debug("[MLService] Workload payload: {} candidates enriched", enrichedCandidates.size());
+
+        // 3. Delegate to HTTP client (circuit breaker inside)
+        return mlClientService.recommendWorkloadBalance(payload);
+    }
+
+    // ── Private enrichment helpers for Priority ──────────────────────────────
 
     private double getEmpCompletionRate(UUID employeeId) {
-        // TODO Phase 7.2: query employee_performance_cache.on_time_rate by employeeId
-        return 0.75;
+        if (employeeId == null)
+            return 0.75;
+        try {
+            List<Task> tasks = taskRepository.findByAssignedToAndIsDeletedFalse(employeeId);
+            if (tasks.isEmpty())
+                return 0.75;
+            long done = tasks.stream().filter(t -> "DONE".equals(t.getStatus())).count();
+            return (double) done / tasks.size();
+        } catch (Exception e) {
+            return 0.75;
+        }
     }
 
     private double getEmpAvgHours(UUID employeeId) {
-        // TODO Phase 7.2: query employee_performance_cache.avg_completion_hours by
-        // employeeId
-        return 4.0;
+        if (employeeId == null)
+            return 4.0;
+        try {
+            List<Task> tasks = taskRepository.findByAssignedToAndIsDeletedFalse(employeeId);
+            return tasks.stream()
+                    .filter(t -> t.getEstimatedHours() != null)
+                    .mapToDouble(t -> t.getEstimatedHours().doubleValue())
+                    .average()
+                    .orElse(4.0);
+        } catch (Exception e) {
+            return 4.0;
+        }
     }
 
     private String getDepartment(UUID employeeId) {
-        // TODO Phase 7.2: query employees.department by employeeId
-        return "Unknown";
+        if (employeeId == null)
+            return "Unknown";
+        return employeeRepository.findByIdAndIsDeletedFalse(employeeId)
+                .map(Employee::getDepartment)
+                .orElse("Unknown");
     }
 }

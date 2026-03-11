@@ -1,6 +1,7 @@
 package com.digiwork.taskhive.module.ml.service;
 
 import com.digiwork.taskhive.module.ml.dto.TaskPriorityResponse;
+import com.digiwork.taskhive.module.ml.dto.WorkloadRecommendationResponse;
 import com.digiwork.taskhive.module.ml.exception.MLServiceUnavailableException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
@@ -11,8 +12,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * MLClientService
@@ -21,10 +25,7 @@ import java.util.Map;
  *
  * Circuit Breaker (Resilience4j):
  * - Name: "mlService"
- * - On failure → fallbackMethod returns TaskPriorityResponse.fallback()
- * - Admin NEVER sees an error — always receives a graceful MEDIUM default.
- *
- * ml.enabled=false short-circuits all calls without touching the ML server.
+ * - On failure → fallback methods return graceful default/fallback DTOs.
  */
 @Slf4j
 @Service
@@ -41,23 +42,13 @@ public class MLClientService {
 
     // ── Feature 1: Task Priority Suggestion ──────────────────────────────────
 
-    /**
-     * Forward an enriched priority request to FastAPI and return the prediction.
-     * Wrapped in a Resilience4j circuit breaker — falls back on any exception.
-     *
-     * @param mlPayload Map already enriched with employee metrics by MLService
-     * @return Predicted priority, confidence, and reasoning
-     */
     @CircuitBreaker(name = "mlService", fallbackMethod = "predictPriorityFallback")
     public TaskPriorityResponse predictPriority(Map<String, Object> mlPayload) {
         if (!mlEnabled) {
-            log.info("[MLClient] ml.enabled=false — returning fallback MEDIUM");
             return TaskPriorityResponse.fallback();
         }
 
         String url = mlBaseUrl + "/ml/predict/task-priority";
-        log.debug("[MLClient] POST {} payload={}", url, mlPayload);
-
         try {
             ResponseEntity<MLPriorityApiResponse> response = mlRestTemplate.postForEntity(
                     url,
@@ -65,12 +56,8 @@ public class MLClientService {
                     MLPriorityApiResponse.class);
 
             MLPriorityApiResponse body = response.getBody();
-            if (body == null) {
-                throw new MLServiceUnavailableException("FastAPI returned empty response body");
-            }
-
-            log.info("[MLClient] Priority prediction: {} (confidence={})",
-                    body.getPredictedPriority(), body.getConfidence());
+            if (body == null)
+                throw new MLServiceUnavailableException("Empty response");
 
             return TaskPriorityResponse.of(
                     body.getPredictedPriority(),
@@ -78,36 +65,67 @@ public class MLClientService {
                     body.getReasoning());
 
         } catch (RestClientException ex) {
-            log.warn("[MLClient] ML server unreachable: {}", ex.getMessage());
-            throw new MLServiceUnavailableException("ML server unreachable", ex);
+            log.warn("[MLClient] Priority ML unreachable: {}", ex.getMessage());
+            throw new MLServiceUnavailableException("ML unreachable", ex);
         }
     }
 
-    /**
-     * Fallback method — Resilience4j calls this automatically when the circuit is
-     * open
-     * or when predictPriority() throws any exception.
-     */
-    @SuppressWarnings("unused")
     private TaskPriorityResponse predictPriorityFallback(Map<String, Object> payload, Throwable t) {
-        log.warn("[MLClient] Circuit breaker triggered for priority prediction: {}", t.getMessage());
+        log.warn("[MLClient] Priority fallback triggered: {}", t.getMessage());
         return TaskPriorityResponse.fallback();
     }
 
-    // ── Inner class: raw FastAPI response shape ───────────────────────────────
+    // ── Feature 3: Workload Balance Recommendation ───────────────────────────
 
-    /**
-     * Maps the raw JSON from FastAPI:
-     * { "predicted_priority": "HIGH", "confidence": 0.84, "reasoning": "..." }
-     */
+    @CircuitBreaker(name = "mlService", fallbackMethod = "recommendWorkloadFallback")
+    public WorkloadRecommendationResponse recommendWorkloadBalance(Map<String, Object> mlPayload) {
+        if (!mlEnabled) {
+            return WorkloadRecommendationResponse.fallback("ML is disabled in configuration.");
+        }
+
+        String url = mlBaseUrl + "/ml/recommend/workload-balance";
+        try {
+            ResponseEntity<MLWorkloadApiResponse> response = mlRestTemplate.postForEntity(
+                    url,
+                    mlPayload,
+                    MLWorkloadApiResponse.class);
+
+            MLWorkloadApiResponse body = response.getBody();
+            if (body == null)
+                throw new MLServiceUnavailableException("Empty response");
+
+            List<WorkloadRecommendationResponse.EmployeeScoreBreakdown> scores = body.getScoreBreakdown().stream()
+                    .map(entry -> new WorkloadRecommendationResponse.EmployeeScoreBreakdown(
+                            entry.getEmployeeId(),
+                            entry.getScore()))
+                    .collect(Collectors.toList());
+
+            return new WorkloadRecommendationResponse(
+                    body.getRecommendedEmployeeId(),
+                    scores,
+                    body.getReasoning(),
+                    body.getFallbackUsed() != null ? body.getFallbackUsed() : false);
+
+        } catch (RestClientException ex) {
+            log.warn("[MLClient] Workload ML unreachable: {}", ex.getMessage());
+            throw new MLServiceUnavailableException("ML unreachable", ex);
+        }
+    }
+
+    private WorkloadRecommendationResponse recommendWorkloadFallback(Map<String, Object> payload, Throwable t) {
+        log.warn("[MLClient] Workload fallback triggered: {}", t.getMessage());
+        return WorkloadRecommendationResponse
+                .fallback("AI Recommendation service is currently unavailable. Please select an assignee manually.");
+    }
+
+    // ── Internal DTOs for FastAPI Response Mapping ───────────────────────────
+
     @lombok.Data
-    @lombok.NoArgsConstructor
-    @lombok.AllArgsConstructor
     static class MLPriorityApiResponse {
+        @JsonProperty("predicted_priority")
         private String predicted_priority;
         private Double confidence;
         private String reasoning;
-        private Boolean fallback_used;
 
         public String getPredictedPriority() {
             return predicted_priority;
@@ -120,5 +138,26 @@ public class MLClientService {
         public String getReasoning() {
             return reasoning != null ? reasoning : "";
         }
+    }
+
+    @lombok.Data
+    static class MLWorkloadApiResponse {
+        @JsonProperty("recommended_employee_id")
+        private String recommendedEmployeeId;
+
+        @JsonProperty("score_breakdown")
+        private List<MLWorkloadScoreEntry> scoreBreakdown;
+
+        private String reasoning;
+
+        @JsonProperty("fallback_used")
+        private Boolean fallbackUsed;
+    }
+
+    @lombok.Data
+    static class MLWorkloadScoreEntry {
+        @JsonProperty("employee_id")
+        private String employeeId;
+        private Double score;
     }
 }
