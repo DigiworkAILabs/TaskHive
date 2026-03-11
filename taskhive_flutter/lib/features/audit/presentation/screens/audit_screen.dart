@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+
+import '../../../auth/domain/providers/auth_provider.dart';
+
 import '../../data/models/audit_log_model.dart';
 import '../../data/repositories/audit_repository.dart';
 import '../../domain/providers/audit_log_list_provider.dart';
@@ -51,9 +54,14 @@ class _AuditScreenState extends ConsumerState<AuditScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Audit logs'),
-        actions: const [
-          ComplianceReportButton(),
-          SizedBox(width: 8),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Logout',
+            onPressed: () => ref.read(authStateNotifierProvider.notifier).logout(),
+          ),
+          const ComplianceReportButton(),
+          const SizedBox(width: 8),
         ],
         bottom: TabBar(
           controller: _tabController,

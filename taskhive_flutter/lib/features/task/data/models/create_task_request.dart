@@ -85,3 +85,40 @@ class TaskCompletionTimePrediction with _$TaskCompletionTimePrediction {
   factory TaskCompletionTimePrediction.fromJson(Map<String, dynamic> json) =>
       _$TaskCompletionTimePredictionFromJson(json);
 }
+
+@freezed
+class WorkloadRecommendationRequest with _$WorkloadRecommendationRequest {
+  const factory WorkloadRecommendationRequest({
+    required String taskTitle,
+    required String taskPriority,
+    double? taskEstimatedHours,
+    required List<String> candidateEmployeeIds,
+  }) = _WorkloadRecommendationRequest;
+
+  factory WorkloadRecommendationRequest.fromJson(Map<String, dynamic> json) =>
+      _$WorkloadRecommendationRequestFromJson(json);
+}
+
+@freezed
+class WorkloadRecommendationResponse with _$WorkloadRecommendationResponse {
+  const factory WorkloadRecommendationResponse({
+    String? recommendedEmployeeId,
+    @Default([]) List<EmployeeScoreBreakdown> scoreBreakdown,
+    required String reasoning,
+    required bool fallbackUsed,
+  }) = _WorkloadRecommendationResponse;
+
+  factory WorkloadRecommendationResponse.fromJson(Map<String, dynamic> json) =>
+      _$WorkloadRecommendationResponseFromJson(json);
+}
+
+@freezed
+class EmployeeScoreBreakdown with _$EmployeeScoreBreakdown {
+  const factory EmployeeScoreBreakdown({
+    required String employeeId,
+    required double score,
+  }) = _EmployeeScoreBreakdown;
+
+  factory EmployeeScoreBreakdown.fromJson(Map<String, dynamic> json) =>
+      _$EmployeeScoreBreakdownFromJson(json);
+}

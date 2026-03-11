@@ -14,6 +14,8 @@ import '../../../data/models/employee_model.dart';
 import '../../widgets/employee_status_badge.dart';
 import '../../widgets/profile_photo_widget.dart';
 import '../../widgets/status_history_timeline.dart';
+import '../../../../ml/domain/providers/productivity_score_provider.dart';
+import '../../../../ml/presentation/widgets/productivity_score_card.dart';
 
 class EmployeeDetailScreen extends ConsumerWidget {
   final String employeeId;
@@ -24,6 +26,7 @@ class EmployeeDetailScreen extends ConsumerWidget {
     final detailAsync = ref.watch(employeeDetailProvider(employeeId));
     final actionsState = ref.watch(employeeActionsProvider);
     final photoState = ref.watch(profilePhotoNotifierProvider);
+    final scoreAsync = ref.watch(productivityScoreProvider(employeeId));
 
     ref.listen<AsyncValue<void>>(employeeActionsProvider, (_, next) {
       if (next is AsyncError) {
@@ -84,7 +87,56 @@ class EmployeeDetailScreen extends ConsumerWidget {
               _InfoRow(
                   label: 'Designation', value: employee.designation ?? '—'),
               _InfoRow(label: 'Join Date', value: employee.joinDate ?? '—'),
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
+
+              // AI Productivity Section
+              Row(
+                children: [
+                  const Icon(Icons.psychology, size: 20, color: Colors.indigo),
+                  const SizedBox(width: 8),
+                  Text(
+                    'AI PERFORMANCE INSIGHTS',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.1,
+                          color: Colors.grey.shade600,
+                        ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              scoreAsync.when(
+                data: (score) => ProductivityScoreCard(scoreData: score),
+                loading: () => const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(32),
+                    child: CircularProgressIndicator(),
+                  ),
+                ),
+                error: (e, _) => Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.red.withOpacity(0.1)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.error_outline,
+                          color: Colors.red, size: 20),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Unable to load productivity score: ${e.toString()}',
+                          style:
+                              const TextStyle(color: Colors.red, fontSize: 13),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
               // Action buttons
               if (!employee.isDeleted) ...[
                 Row(

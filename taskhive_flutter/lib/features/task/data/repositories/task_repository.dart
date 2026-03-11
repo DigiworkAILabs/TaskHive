@@ -253,4 +253,20 @@ class TaskRepository {
       throw ApiException.fromDioError(e);
     }
   }
+
+  /// Recommend the best employee for a task based on current workload.
+  Future<WorkloadRecommendationResponse> recommendWorkloadBalance(
+      WorkloadRecommendationRequest request) async {
+    try {
+      final response = await _dio.post(
+        ApiEndpoints.mlRecommendWorkload,
+        data: request.toJson(),
+      );
+      return WorkloadRecommendationResponse.fromJson(
+        response.data['data'] as Map<String, dynamic>,
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
 }
