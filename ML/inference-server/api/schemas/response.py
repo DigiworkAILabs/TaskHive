@@ -5,6 +5,7 @@ Pydantic response schemas for the ML Inference Server.
 Phase 7.1: TaskPriorityResponse
 Phase 7.2: CompletionTimeResponse
 Phase 7.3: WorkloadBalanceResponse
+Phase 7.4: ProductivityScoreResponse
 """
 
 from pydantic import BaseModel, Field
@@ -201,4 +202,58 @@ class FallbackWorkloadResponse(WorkloadBalanceResponse):
     recommended_employee_id: Optional[str] = None
     score_breakdown: List[EmployeeScore] = []
     reasoning: str = "Please select manually"
+    fallback_used: bool = True
+# ── Phase 7.4: Employee Productivity Scoring ─────────────────────────────────
+
+class ScoreBreakdown(BaseModel):
+    completion_rate_score: float
+    on_time_score: float
+    overdue_penalty: float
+    engagement_score: float
+
+
+class ProductivityScoreResponse(BaseModel):
+    """
+    Response body for POST /ml/score/employee.
+    """
+    score: float = Field(..., ge=0.0, le=100.0)
+    grade: str = Field(..., pattern="^[A-DF]$")
+    breakdown: ScoreBreakdown
+    trend: str = Field(..., pattern="^(improving|stable|declining)$")
+    reasoning: str
+    fallback_used: bool = Field(default=False)
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "score": 82.5,
+                "grade": "B",
+                "breakdown": {
+                    "completion_rate_score": 29.2,
+                    "on_time_score": 24.0,
+                    "overdue_penalty": -1.7,
+                    "engagement_score": 11.0
+                },
+                "trend": "improving",
+                "reasoning": "Strong completion rate, minor overdue impact",
+                "fallback_used": False
+            }
+        }
+    }
+
+
+class FallbackProductivityResponse(ProductivityScoreResponse):
+    """
+    Used when the productivity model is unavailable.
+    """
+    score: float = 0.0
+    grade: str = "F"
+    breakdown: ScoreBreakdown = ScoreBreakdown(
+        completion_rate_score=0.0,
+        on_time_score=0.0,
+        overdue_penalty=0.0,
+        engagement_score=0.0
+    )
+    trend: str = "stable"
+    reasoning: str = "Score unavailable"
     fallback_used: bool = True

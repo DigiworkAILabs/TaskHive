@@ -8,10 +8,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.UUID;
 
 /**
  * MLController
@@ -62,5 +67,18 @@ public class MLController {
                                 request.getCandidateEmployeeIds().size());
                 return ResponseEntity.ok(ApiResponse.success("Workload recommendation successful",
                                 mlService.recommendWorkloadBalance(request)));
+        }
+
+        /**
+         * GET /api/v1/ml/score/employee/{id}?periodDays=30
+         */
+        @GetMapping("/score/employee/{id}")
+        @PreAuthorize("hasAnyRole('ADMIN', 'EMPLOYEE')")
+        public ResponseEntity<ApiResponse<ProductivityScoreResponse>> getProductivityScore(
+                        @PathVariable("id") UUID employeeId,
+                        @RequestParam(defaultValue = "30") int periodDays) {
+                log.info("[MLController] Productivity score for: {}, period: {} days", employeeId, periodDays);
+                return ResponseEntity.ok(ApiResponse.success("Productivity score calculated",
+                                mlService.predictProductivityScore(employeeId, periodDays)));
         }
 }
