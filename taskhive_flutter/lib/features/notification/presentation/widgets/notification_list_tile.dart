@@ -7,10 +7,10 @@ class NotificationListTile extends StatelessWidget {
   final VoidCallback onTap;
 
   const NotificationListTile({
-    Key? key,
+    super.key,
     required this.notification,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +19,8 @@ class NotificationListTile extends StatelessWidget {
 
     return ListTile(
       onTap: onTap,
-      tileColor: isUnread ? theme.colorScheme.primary.withOpacity(0.05) : null,
+      tileColor:
+          isUnread ? theme.colorScheme.primary.withValues(alpha: 0.05) : null,
       leading: CircleAvatar(
         backgroundColor: theme.colorScheme.primaryContainer,
         child: Icon(

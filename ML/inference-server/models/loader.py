@@ -7,7 +7,21 @@ Models are stored in ML/models/ directory.
 
 import joblib
 import logging
+import sys
 from pathlib import Path
+
+# Add parent directory to sys.path to ensure 'preprocessing' package is found correctly by joblib
+MODEL_PATH = Path(__file__).parent.parent
+if str(MODEL_PATH) not in sys.path:
+    sys.path.insert(0, str(MODEL_PATH))
+
+# Explicitly import custom transformers so joblib can unpickle them
+try:
+    import preprocessing.transformers
+    logger_init = logging.getLogger(__name__)
+    logger_init.info("[Loader] Preprocessing transformers registered for unpickling.")
+except ImportError as e:
+    logging.getLogger(__name__).warning(f"[Loader] Could not pre-import transformers: {e}")
 
 logger = logging.getLogger(__name__)
 
@@ -29,10 +43,11 @@ def load_all_models() -> None:
         path = MODEL_DIR / filename
         if path.exists():
             try:
+                # joblib.load may require custom classes to be in sys.modules
                 _models[key] = joblib.load(path)
-                logger.info("[Loader] Loaded model: %s", key)
+                logger.info("[Loader] Loaded model: %s (from %s)", key, filename)
             except Exception as exc:
-                logger.error("[Loader] Failed to load %s: %s", filename, exc)
+                logger.error("[Loader] Failed to load %s: %s", filename, exc, exc_info=True)
         else:
             logger.warning("[Loader] Not found: %s — fallback will be used", filename)
 

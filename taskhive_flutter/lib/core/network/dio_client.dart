@@ -22,7 +22,7 @@ final cookieJarProvider = Provider<CookieJar>((ref) {
 /// The central Dio instance. All feature repositories use this.
 final Provider<Dio> dioClientProvider = Provider<Dio>((ref) {
   final cookieJar = ref.watch(cookieJarProvider);
-  final baseUrl = dotenv.env['API_BASE_URL'] ?? 'http://10.0.2.2:8080/api/v1';
+  final baseUrl = dotenv.env['API_BASE_URL'] ?? 'http://10.0.2.2:8080/api/v1/';
 
   final dio = Dio(
     BaseOptions(

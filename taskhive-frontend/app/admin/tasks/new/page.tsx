@@ -13,7 +13,7 @@
  *   - All ML interactions are non-blocking (form works normally without them)
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 
@@ -22,16 +22,20 @@ import { TaskForm } from '@/features/task/components/TaskForm';
 import { CreateTaskData } from '@/features/task/types/task.types';
 import { usePriorityPrediction } from '@/features/ml/hooks/usePriorityPrediction';
 import { PrioritySuggestionBadge } from '@/features/ml/components/PrioritySuggestionBadge';
+import { useCompletionTimePrediction } from '@/features/ml/hooks/useCompletionTimePrediction';
+import { CompletionTimeEstimate } from '@/features/ml/components/CompletionTimeEstimate';
 import type { TaskPriority } from '@/features/ml/types/ml.types';
 
 export default function NewTaskPage() {
     const { createTask, isLoading, error, success } = useCreateTask();
     const { predict, prediction, isLoading: mlLoading, reset: resetML } = usePriorityPrediction();
+    const { checkCompletionTime, prediction: compPrediction, isLoading: compLoading, error: compError, clearPrediction: clearComp } = useCompletionTimePrediction();
 
     // Track form field values to pass to ML — lifted from TaskForm via callback
     const [mlFormData, setMLFormData] = useState({
         taskTitle: '',
         taskDescription: '',
+        priority: 'MEDIUM' as TaskPriority,
         employeeId: '',
         tags: [] as string[],
         estimatedHours: undefined as number | undefined,
@@ -40,35 +44,63 @@ export default function NewTaskPage() {
     // Accepted priority — passed down to TaskForm to override its internal state
     const [acceptedPriority, setAcceptedPriority] = useState<TaskPriority | null>(null);
 
-    const handleSubmit = async (data: CreateTaskData | Record<string, unknown>) => {
+    const handleSubmit = useCallback(async (data: any) => {
         await createTask(data as CreateTaskData);
         resetML();
         setAcceptedPriority(null);
-    };
+    }, [createTask, resetML]);
 
     /** Called by TaskForm whenever its fields change (lifted state for ML) */
-    const handleFormChange = (fields: {
+    const handleFormChange = useCallback((fields: {
         title?: string;
         description?: string;
+        priority?: string;
         assignedTo?: string;
         tags?: string;
         estimatedHours?: string;
     }) => {
-        setMLFormData({
-            taskTitle: fields.title ?? mlFormData.taskTitle,
-            taskDescription: fields.description ?? mlFormData.taskDescription,
-            employeeId: fields.assignedTo ?? mlFormData.employeeId,
-            tags: fields.tags
+        console.log('[NewTaskPage] Field change:', fields);
+        setMLFormData(prev => ({
+            ...prev,
+            taskTitle: fields.title ?? prev.taskTitle,
+            taskDescription: fields.description ?? prev.taskDescription,
+            priority: (fields.priority as TaskPriority) ?? prev.priority,
+            employeeId: fields.assignedTo ?? prev.employeeId,
+            tags: fields.tags !== undefined
                 ? fields.tags.split(',').map(t => t.trim()).filter(Boolean)
-                : mlFormData.tags,
-            estimatedHours: fields.estimatedHours
-                ? parseFloat(fields.estimatedHours)
-                : mlFormData.estimatedHours,
+                : prev.tags,
+            estimatedHours: fields.estimatedHours !== undefined
+                ? (fields.estimatedHours ? parseFloat(fields.estimatedHours) : undefined)
+                : prev.estimatedHours,
+        }));
+    }, []);
+
+    /** Auto-trigger Completion Time Prediction */
+    useEffect(() => {
+        console.log('[NewTaskPage] ML State check:', {
+            priority: mlFormData.priority,
+            employeeId: mlFormData.employeeId,
+            titleLength: mlFormData.taskTitle.trim().length
         });
-    };
+        if (mlFormData.priority && mlFormData.employeeId && mlFormData.taskTitle.trim().length >= 2) {
+            console.log('[NewTaskPage] Triggering completion time prediction');
+            const timer = setTimeout(() => {
+                checkCompletionTime({
+                    taskTitle: mlFormData.taskTitle,
+                    taskDescription: mlFormData.taskDescription,
+                    priority: mlFormData.priority,
+                    employeeId: mlFormData.employeeId,
+                    estimatedHours: mlFormData.estimatedHours,
+                });
+            }, 600); // 600ms debounce
+            return () => clearTimeout(timer);
+        } else {
+            clearComp();
+        }
+    }, [mlFormData.priority, mlFormData.employeeId, mlFormData.taskTitle, mlFormData.taskDescription, mlFormData.estimatedHours, checkCompletionTime, clearComp]);
 
     /** Fired when admin clicks "Suggest Priority" */
-    const handleSuggestPriority = async () => {
+    const handleSuggestPriority = useCallback(async () => {
         await predict({
             taskTitle: mlFormData.taskTitle,
             taskDescription: mlFormData.taskDescription,
@@ -76,12 +108,12 @@ export default function NewTaskPage() {
             tags: mlFormData.tags,
             estimatedHours: mlFormData.estimatedHours,
         });
-    };
+    }, [predict, mlFormData]);
 
     /** Fired when admin clicks "Accept" on the badge */
-    const handleAcceptPriority = (priority: TaskPriority) => {
+    const handleAcceptPriority = useCallback((priority: TaskPriority) => {
         setAcceptedPriority(priority);
-    };
+    }, []);
 
     const canSuggest = mlFormData.taskTitle.trim().length >= 2;
 
@@ -154,6 +186,13 @@ export default function NewTaskPage() {
                 initialPriority={acceptedPriority ?? undefined}
                 // Form change callback for ML context
                 onFieldChange={handleFormChange}
+                completionEstimateNode={
+                    <CompletionTimeEstimate
+                        prediction={compPrediction}
+                        isLoading={compLoading}
+                        error={compError}
+                    />
+                }
             />
         </div>
     );

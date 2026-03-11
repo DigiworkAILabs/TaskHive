@@ -47,3 +47,41 @@ class TaskPriorityPrediction with _$TaskPriorityPrediction {
   factory TaskPriorityPrediction.fromJson(Map<String, dynamic> json) =>
       _$TaskPriorityPredictionFromJson(json);
 }
+
+@freezed
+class TaskCompletionTimeRequestDto with _$TaskCompletionTimeRequestDto {
+  const factory TaskCompletionTimeRequestDto({
+    required String taskTitle,
+    String? taskDescription,
+    required String priority,
+    required String employeeId,
+    double? estimatedHours,
+  }) = _TaskCompletionTimeRequestDto;
+
+  factory TaskCompletionTimeRequestDto.fromJson(Map<String, dynamic> json) =>
+      _$TaskCompletionTimeRequestDtoFromJson(json);
+}
+
+@freezed
+class ConfidenceRange with _$ConfidenceRange {
+  const factory ConfidenceRange({
+    required double low,
+    required double high,
+  }) = _ConfidenceRange;
+
+  factory ConfidenceRange.fromJson(Map<String, dynamic> json) =>
+      _$ConfidenceRangeFromJson(json);
+}
+
+@freezed
+class TaskCompletionTimePrediction with _$TaskCompletionTimePrediction {
+  const factory TaskCompletionTimePrediction({
+    required double estimatedHours,
+    required ConfidenceRange confidenceRange,
+    required String reasoning,
+    required bool fallbackUsed,
+  }) = _TaskCompletionTimePrediction;
+
+  factory TaskCompletionTimePrediction.fromJson(Map<String, dynamic> json) =>
+      _$TaskCompletionTimePredictionFromJson(json);
+}

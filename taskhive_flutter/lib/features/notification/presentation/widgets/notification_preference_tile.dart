@@ -7,12 +7,12 @@ class NotificationPreferenceTile extends StatelessWidget {
   final ValueChanged<bool> onChanged;
 
   const NotificationPreferenceTile({
-    Key? key,
+    super.key,
     required this.title,
     this.subtitle,
     required this.value,
     required this.onChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

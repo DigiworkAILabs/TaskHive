@@ -2,7 +2,9 @@
  * ml.types.ts
  * ────────────
  * TypeScript types for all ML feature API contracts.
- * Phase 7.1: Task Priority Suggestion types only.
+ * Phase 7.1: Task Priority Suggestion
+ * Phase 7.2: Task Completion Time Estimation
+ * Phase 7.3: Workload Balance Recommendation
  */
 
 // ── Shared ────────────────────────────────────────────────────────────────────
@@ -40,5 +42,85 @@ export interface TaskPriorityApiResponse {
     success: boolean;
     message: string;
     data: TaskPriorityPrediction;
+    timestamp: string;
+}
+
+// ── Feature 2: Task Completion Time Estimation ───────────────────────────────
+
+/**
+ * Request body sent from Next.js to Spring Boot.
+ * POST /api/v1/ml/predict/completion-time
+ */
+export interface CompletionTimeRequestDto {
+    taskTitle: string;
+    taskDescription?: string;
+    priority: TaskPriority;
+    employeeId: string;
+    estimatedHours?: number; // admin manual input
+}
+
+export interface ConfidenceRange {
+    low: number;
+    high: number;
+}
+
+/**
+ * Inner data object returned by Spring Boot's ApiResponse<CompletionTimeResponse>.
+ */
+export interface CompletionTimePrediction {
+    estimatedHours: number;
+    confidenceRange: ConfidenceRange;
+    reasoning: string;
+    fallbackUsed: boolean;
+}
+
+/**
+ * Full Spring Boot ApiResponse<CompletionTimeResponse> shape.
+ */
+export interface CompletionTimeApiResponse {
+    success: boolean;
+    message: string;
+    data: CompletionTimePrediction;
+    timestamp: string;
+}
+
+// ── Feature 3: Workload Balance Recommendation ──────────────────────────
+
+/**
+ * Request body sent from Next.js to Spring Boot.
+ * POST /api/v1/ml/recommend/workload-balance
+ */
+export interface WorkloadRecommendationRequestDto {
+    taskTitle: string;
+    taskPriority: TaskPriority;
+    taskEstimatedHours?: number;
+    candidateEmployeeIds: string[];
+}
+
+/**
+ * Individual score breakdown for a candidate.
+ */
+export interface EmployeeScoreBreakdown {
+    employeeId: string;
+    score: number;
+}
+
+/**
+ * Inner data object returned by Spring Boot's ApiResponse<WorkloadRecommendationResponse>.
+ */
+export interface WorkloadRecommendation {
+    recommendedEmployeeId: string | null;
+    scoreBreakdown: EmployeeScoreBreakdown[];
+    reasoning: string;
+    fallbackUsed: boolean;
+}
+
+/**
+ * Full Spring Boot ApiResponse<WorkloadRecommendationResponse> shape.
+ */
+export interface WorkloadRecommendationApiResponse {
+    success: boolean;
+    message: string;
+    data: WorkloadRecommendation;
     timestamp: string;
 }

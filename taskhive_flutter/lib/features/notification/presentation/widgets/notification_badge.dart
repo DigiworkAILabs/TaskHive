@@ -6,9 +6,9 @@ class NotificationBadge extends ConsumerWidget {
   final Widget child;
 
   const NotificationBadge({
-    Key? key,
+    super.key,
     required this.child,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
