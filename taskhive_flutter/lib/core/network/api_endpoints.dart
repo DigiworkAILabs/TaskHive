@@ -38,6 +38,7 @@ class ApiEndpoints {
   // ML (Phase 7.1)
   static const String mlPredictTaskPriority = '/ml/predict/task-priority';
   static const String mlPredictCompletionTime = '/ml/predict/completion-time';
+  static const String mlRecommendWorkload = '/ml/recommend/workload-balance';
 
   // Notification (Phase 4)
   static const String notifications = '/notifications';

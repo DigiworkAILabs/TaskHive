@@ -1449,3 +1449,665 @@ abstract class _TaskCompletionTimePrediction
           _$TaskCompletionTimePredictionImpl>
       get copyWith => throw _privateConstructorUsedError;
 }
+
+WorkloadRecommendationRequest _$WorkloadRecommendationRequestFromJson(
+    Map<String, dynamic> json) {
+  return _WorkloadRecommendationRequest.fromJson(json);
+}
+
+/// @nodoc
+mixin _$WorkloadRecommendationRequest {
+  String get taskTitle => throw _privateConstructorUsedError;
+  String get taskPriority => throw _privateConstructorUsedError;
+  double? get taskEstimatedHours => throw _privateConstructorUsedError;
+  List<String> get candidateEmployeeIds => throw _privateConstructorUsedError;
+
+  /// Serializes this WorkloadRecommendationRequest to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of WorkloadRecommendationRequest
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $WorkloadRecommendationRequestCopyWith<WorkloadRecommendationRequest>
+      get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $WorkloadRecommendationRequestCopyWith<$Res> {
+  factory $WorkloadRecommendationRequestCopyWith(
+          WorkloadRecommendationRequest value,
+          $Res Function(WorkloadRecommendationRequest) then) =
+      _$WorkloadRecommendationRequestCopyWithImpl<$Res,
+          WorkloadRecommendationRequest>;
+  @useResult
+  $Res call(
+      {String taskTitle,
+      String taskPriority,
+      double? taskEstimatedHours,
+      List<String> candidateEmployeeIds});
+}
+
+/// @nodoc
+class _$WorkloadRecommendationRequestCopyWithImpl<$Res,
+        $Val extends WorkloadRecommendationRequest>
+    implements $WorkloadRecommendationRequestCopyWith<$Res> {
+  _$WorkloadRecommendationRequestCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of WorkloadRecommendationRequest
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? taskTitle = null,
+    Object? taskPriority = null,
+    Object? taskEstimatedHours = freezed,
+    Object? candidateEmployeeIds = null,
+  }) {
+    return _then(_value.copyWith(
+      taskTitle: null == taskTitle
+          ? _value.taskTitle
+          : taskTitle // ignore: cast_nullable_to_non_nullable
+              as String,
+      taskPriority: null == taskPriority
+          ? _value.taskPriority
+          : taskPriority // ignore: cast_nullable_to_non_nullable
+              as String,
+      taskEstimatedHours: freezed == taskEstimatedHours
+          ? _value.taskEstimatedHours
+          : taskEstimatedHours // ignore: cast_nullable_to_non_nullable
+              as double?,
+      candidateEmployeeIds: null == candidateEmployeeIds
+          ? _value.candidateEmployeeIds
+          : candidateEmployeeIds // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$WorkloadRecommendationRequestImplCopyWith<$Res>
+    implements $WorkloadRecommendationRequestCopyWith<$Res> {
+  factory _$$WorkloadRecommendationRequestImplCopyWith(
+          _$WorkloadRecommendationRequestImpl value,
+          $Res Function(_$WorkloadRecommendationRequestImpl) then) =
+      __$$WorkloadRecommendationRequestImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {String taskTitle,
+      String taskPriority,
+      double? taskEstimatedHours,
+      List<String> candidateEmployeeIds});
+}
+
+/// @nodoc
+class __$$WorkloadRecommendationRequestImplCopyWithImpl<$Res>
+    extends _$WorkloadRecommendationRequestCopyWithImpl<$Res,
+        _$WorkloadRecommendationRequestImpl>
+    implements _$$WorkloadRecommendationRequestImplCopyWith<$Res> {
+  __$$WorkloadRecommendationRequestImplCopyWithImpl(
+      _$WorkloadRecommendationRequestImpl _value,
+      $Res Function(_$WorkloadRecommendationRequestImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of WorkloadRecommendationRequest
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? taskTitle = null,
+    Object? taskPriority = null,
+    Object? taskEstimatedHours = freezed,
+    Object? candidateEmployeeIds = null,
+  }) {
+    return _then(_$WorkloadRecommendationRequestImpl(
+      taskTitle: null == taskTitle
+          ? _value.taskTitle
+          : taskTitle // ignore: cast_nullable_to_non_nullable
+              as String,
+      taskPriority: null == taskPriority
+          ? _value.taskPriority
+          : taskPriority // ignore: cast_nullable_to_non_nullable
+              as String,
+      taskEstimatedHours: freezed == taskEstimatedHours
+          ? _value.taskEstimatedHours
+          : taskEstimatedHours // ignore: cast_nullable_to_non_nullable
+              as double?,
+      candidateEmployeeIds: null == candidateEmployeeIds
+          ? _value._candidateEmployeeIds
+          : candidateEmployeeIds // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$WorkloadRecommendationRequestImpl
+    implements _WorkloadRecommendationRequest {
+  const _$WorkloadRecommendationRequestImpl(
+      {required this.taskTitle,
+      required this.taskPriority,
+      this.taskEstimatedHours,
+      required final List<String> candidateEmployeeIds})
+      : _candidateEmployeeIds = candidateEmployeeIds;
+
+  factory _$WorkloadRecommendationRequestImpl.fromJson(
+          Map<String, dynamic> json) =>
+      _$$WorkloadRecommendationRequestImplFromJson(json);
+
+  @override
+  final String taskTitle;
+  @override
+  final String taskPriority;
+  @override
+  final double? taskEstimatedHours;
+  final List<String> _candidateEmployeeIds;
+  @override
+  List<String> get candidateEmployeeIds {
+    if (_candidateEmployeeIds is EqualUnmodifiableListView)
+      return _candidateEmployeeIds;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_candidateEmployeeIds);
+  }
+
+  @override
+  String toString() {
+    return 'WorkloadRecommendationRequest(taskTitle: $taskTitle, taskPriority: $taskPriority, taskEstimatedHours: $taskEstimatedHours, candidateEmployeeIds: $candidateEmployeeIds)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$WorkloadRecommendationRequestImpl &&
+            (identical(other.taskTitle, taskTitle) ||
+                other.taskTitle == taskTitle) &&
+            (identical(other.taskPriority, taskPriority) ||
+                other.taskPriority == taskPriority) &&
+            (identical(other.taskEstimatedHours, taskEstimatedHours) ||
+                other.taskEstimatedHours == taskEstimatedHours) &&
+            const DeepCollectionEquality()
+                .equals(other._candidateEmployeeIds, _candidateEmployeeIds));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(
+      runtimeType,
+      taskTitle,
+      taskPriority,
+      taskEstimatedHours,
+      const DeepCollectionEquality().hash(_candidateEmployeeIds));
+
+  /// Create a copy of WorkloadRecommendationRequest
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$WorkloadRecommendationRequestImplCopyWith<
+          _$WorkloadRecommendationRequestImpl>
+      get copyWith => __$$WorkloadRecommendationRequestImplCopyWithImpl<
+          _$WorkloadRecommendationRequestImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$WorkloadRecommendationRequestImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _WorkloadRecommendationRequest
+    implements WorkloadRecommendationRequest {
+  const factory _WorkloadRecommendationRequest(
+          {required final String taskTitle,
+          required final String taskPriority,
+          final double? taskEstimatedHours,
+          required final List<String> candidateEmployeeIds}) =
+      _$WorkloadRecommendationRequestImpl;
+
+  factory _WorkloadRecommendationRequest.fromJson(Map<String, dynamic> json) =
+      _$WorkloadRecommendationRequestImpl.fromJson;
+
+  @override
+  String get taskTitle;
+  @override
+  String get taskPriority;
+  @override
+  double? get taskEstimatedHours;
+  @override
+  List<String> get candidateEmployeeIds;
+
+  /// Create a copy of WorkloadRecommendationRequest
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$WorkloadRecommendationRequestImplCopyWith<
+          _$WorkloadRecommendationRequestImpl>
+      get copyWith => throw _privateConstructorUsedError;
+}
+
+WorkloadRecommendationResponse _$WorkloadRecommendationResponseFromJson(
+    Map<String, dynamic> json) {
+  return _WorkloadRecommendationResponse.fromJson(json);
+}
+
+/// @nodoc
+mixin _$WorkloadRecommendationResponse {
+  String? get recommendedEmployeeId => throw _privateConstructorUsedError;
+  List<EmployeeScoreBreakdown> get scoreBreakdown =>
+      throw _privateConstructorUsedError;
+  String get reasoning => throw _privateConstructorUsedError;
+  bool get fallbackUsed => throw _privateConstructorUsedError;
+
+  /// Serializes this WorkloadRecommendationResponse to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of WorkloadRecommendationResponse
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $WorkloadRecommendationResponseCopyWith<WorkloadRecommendationResponse>
+      get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $WorkloadRecommendationResponseCopyWith<$Res> {
+  factory $WorkloadRecommendationResponseCopyWith(
+          WorkloadRecommendationResponse value,
+          $Res Function(WorkloadRecommendationResponse) then) =
+      _$WorkloadRecommendationResponseCopyWithImpl<$Res,
+          WorkloadRecommendationResponse>;
+  @useResult
+  $Res call(
+      {String? recommendedEmployeeId,
+      List<EmployeeScoreBreakdown> scoreBreakdown,
+      String reasoning,
+      bool fallbackUsed});
+}
+
+/// @nodoc
+class _$WorkloadRecommendationResponseCopyWithImpl<$Res,
+        $Val extends WorkloadRecommendationResponse>
+    implements $WorkloadRecommendationResponseCopyWith<$Res> {
+  _$WorkloadRecommendationResponseCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of WorkloadRecommendationResponse
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? recommendedEmployeeId = freezed,
+    Object? scoreBreakdown = null,
+    Object? reasoning = null,
+    Object? fallbackUsed = null,
+  }) {
+    return _then(_value.copyWith(
+      recommendedEmployeeId: freezed == recommendedEmployeeId
+          ? _value.recommendedEmployeeId
+          : recommendedEmployeeId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      scoreBreakdown: null == scoreBreakdown
+          ? _value.scoreBreakdown
+          : scoreBreakdown // ignore: cast_nullable_to_non_nullable
+              as List<EmployeeScoreBreakdown>,
+      reasoning: null == reasoning
+          ? _value.reasoning
+          : reasoning // ignore: cast_nullable_to_non_nullable
+              as String,
+      fallbackUsed: null == fallbackUsed
+          ? _value.fallbackUsed
+          : fallbackUsed // ignore: cast_nullable_to_non_nullable
+              as bool,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$WorkloadRecommendationResponseImplCopyWith<$Res>
+    implements $WorkloadRecommendationResponseCopyWith<$Res> {
+  factory _$$WorkloadRecommendationResponseImplCopyWith(
+          _$WorkloadRecommendationResponseImpl value,
+          $Res Function(_$WorkloadRecommendationResponseImpl) then) =
+      __$$WorkloadRecommendationResponseImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {String? recommendedEmployeeId,
+      List<EmployeeScoreBreakdown> scoreBreakdown,
+      String reasoning,
+      bool fallbackUsed});
+}
+
+/// @nodoc
+class __$$WorkloadRecommendationResponseImplCopyWithImpl<$Res>
+    extends _$WorkloadRecommendationResponseCopyWithImpl<$Res,
+        _$WorkloadRecommendationResponseImpl>
+    implements _$$WorkloadRecommendationResponseImplCopyWith<$Res> {
+  __$$WorkloadRecommendationResponseImplCopyWithImpl(
+      _$WorkloadRecommendationResponseImpl _value,
+      $Res Function(_$WorkloadRecommendationResponseImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of WorkloadRecommendationResponse
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? recommendedEmployeeId = freezed,
+    Object? scoreBreakdown = null,
+    Object? reasoning = null,
+    Object? fallbackUsed = null,
+  }) {
+    return _then(_$WorkloadRecommendationResponseImpl(
+      recommendedEmployeeId: freezed == recommendedEmployeeId
+          ? _value.recommendedEmployeeId
+          : recommendedEmployeeId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      scoreBreakdown: null == scoreBreakdown
+          ? _value._scoreBreakdown
+          : scoreBreakdown // ignore: cast_nullable_to_non_nullable
+              as List<EmployeeScoreBreakdown>,
+      reasoning: null == reasoning
+          ? _value.reasoning
+          : reasoning // ignore: cast_nullable_to_non_nullable
+              as String,
+      fallbackUsed: null == fallbackUsed
+          ? _value.fallbackUsed
+          : fallbackUsed // ignore: cast_nullable_to_non_nullable
+              as bool,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$WorkloadRecommendationResponseImpl
+    implements _WorkloadRecommendationResponse {
+  const _$WorkloadRecommendationResponseImpl(
+      {this.recommendedEmployeeId,
+      final List<EmployeeScoreBreakdown> scoreBreakdown = const [],
+      required this.reasoning,
+      required this.fallbackUsed})
+      : _scoreBreakdown = scoreBreakdown;
+
+  factory _$WorkloadRecommendationResponseImpl.fromJson(
+          Map<String, dynamic> json) =>
+      _$$WorkloadRecommendationResponseImplFromJson(json);
+
+  @override
+  final String? recommendedEmployeeId;
+  final List<EmployeeScoreBreakdown> _scoreBreakdown;
+  @override
+  @JsonKey()
+  List<EmployeeScoreBreakdown> get scoreBreakdown {
+    if (_scoreBreakdown is EqualUnmodifiableListView) return _scoreBreakdown;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_scoreBreakdown);
+  }
+
+  @override
+  final String reasoning;
+  @override
+  final bool fallbackUsed;
+
+  @override
+  String toString() {
+    return 'WorkloadRecommendationResponse(recommendedEmployeeId: $recommendedEmployeeId, scoreBreakdown: $scoreBreakdown, reasoning: $reasoning, fallbackUsed: $fallbackUsed)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$WorkloadRecommendationResponseImpl &&
+            (identical(other.recommendedEmployeeId, recommendedEmployeeId) ||
+                other.recommendedEmployeeId == recommendedEmployeeId) &&
+            const DeepCollectionEquality()
+                .equals(other._scoreBreakdown, _scoreBreakdown) &&
+            (identical(other.reasoning, reasoning) ||
+                other.reasoning == reasoning) &&
+            (identical(other.fallbackUsed, fallbackUsed) ||
+                other.fallbackUsed == fallbackUsed));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(
+      runtimeType,
+      recommendedEmployeeId,
+      const DeepCollectionEquality().hash(_scoreBreakdown),
+      reasoning,
+      fallbackUsed);
+
+  /// Create a copy of WorkloadRecommendationResponse
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$WorkloadRecommendationResponseImplCopyWith<
+          _$WorkloadRecommendationResponseImpl>
+      get copyWith => __$$WorkloadRecommendationResponseImplCopyWithImpl<
+          _$WorkloadRecommendationResponseImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$WorkloadRecommendationResponseImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _WorkloadRecommendationResponse
+    implements WorkloadRecommendationResponse {
+  const factory _WorkloadRecommendationResponse(
+      {final String? recommendedEmployeeId,
+      final List<EmployeeScoreBreakdown> scoreBreakdown,
+      required final String reasoning,
+      required final bool fallbackUsed}) = _$WorkloadRecommendationResponseImpl;
+
+  factory _WorkloadRecommendationResponse.fromJson(Map<String, dynamic> json) =
+      _$WorkloadRecommendationResponseImpl.fromJson;
+
+  @override
+  String? get recommendedEmployeeId;
+  @override
+  List<EmployeeScoreBreakdown> get scoreBreakdown;
+  @override
+  String get reasoning;
+  @override
+  bool get fallbackUsed;
+
+  /// Create a copy of WorkloadRecommendationResponse
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$WorkloadRecommendationResponseImplCopyWith<
+          _$WorkloadRecommendationResponseImpl>
+      get copyWith => throw _privateConstructorUsedError;
+}
+
+EmployeeScoreBreakdown _$EmployeeScoreBreakdownFromJson(
+    Map<String, dynamic> json) {
+  return _EmployeeScoreBreakdown.fromJson(json);
+}
+
+/// @nodoc
+mixin _$EmployeeScoreBreakdown {
+  String get employeeId => throw _privateConstructorUsedError;
+  double get score => throw _privateConstructorUsedError;
+
+  /// Serializes this EmployeeScoreBreakdown to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of EmployeeScoreBreakdown
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $EmployeeScoreBreakdownCopyWith<EmployeeScoreBreakdown> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $EmployeeScoreBreakdownCopyWith<$Res> {
+  factory $EmployeeScoreBreakdownCopyWith(EmployeeScoreBreakdown value,
+          $Res Function(EmployeeScoreBreakdown) then) =
+      _$EmployeeScoreBreakdownCopyWithImpl<$Res, EmployeeScoreBreakdown>;
+  @useResult
+  $Res call({String employeeId, double score});
+}
+
+/// @nodoc
+class _$EmployeeScoreBreakdownCopyWithImpl<$Res,
+        $Val extends EmployeeScoreBreakdown>
+    implements $EmployeeScoreBreakdownCopyWith<$Res> {
+  _$EmployeeScoreBreakdownCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of EmployeeScoreBreakdown
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? employeeId = null,
+    Object? score = null,
+  }) {
+    return _then(_value.copyWith(
+      employeeId: null == employeeId
+          ? _value.employeeId
+          : employeeId // ignore: cast_nullable_to_non_nullable
+              as String,
+      score: null == score
+          ? _value.score
+          : score // ignore: cast_nullable_to_non_nullable
+              as double,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$EmployeeScoreBreakdownImplCopyWith<$Res>
+    implements $EmployeeScoreBreakdownCopyWith<$Res> {
+  factory _$$EmployeeScoreBreakdownImplCopyWith(
+          _$EmployeeScoreBreakdownImpl value,
+          $Res Function(_$EmployeeScoreBreakdownImpl) then) =
+      __$$EmployeeScoreBreakdownImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({String employeeId, double score});
+}
+
+/// @nodoc
+class __$$EmployeeScoreBreakdownImplCopyWithImpl<$Res>
+    extends _$EmployeeScoreBreakdownCopyWithImpl<$Res,
+        _$EmployeeScoreBreakdownImpl>
+    implements _$$EmployeeScoreBreakdownImplCopyWith<$Res> {
+  __$$EmployeeScoreBreakdownImplCopyWithImpl(
+      _$EmployeeScoreBreakdownImpl _value,
+      $Res Function(_$EmployeeScoreBreakdownImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of EmployeeScoreBreakdown
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? employeeId = null,
+    Object? score = null,
+  }) {
+    return _then(_$EmployeeScoreBreakdownImpl(
+      employeeId: null == employeeId
+          ? _value.employeeId
+          : employeeId // ignore: cast_nullable_to_non_nullable
+              as String,
+      score: null == score
+          ? _value.score
+          : score // ignore: cast_nullable_to_non_nullable
+              as double,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$EmployeeScoreBreakdownImpl implements _EmployeeScoreBreakdown {
+  const _$EmployeeScoreBreakdownImpl(
+      {required this.employeeId, required this.score});
+
+  factory _$EmployeeScoreBreakdownImpl.fromJson(Map<String, dynamic> json) =>
+      _$$EmployeeScoreBreakdownImplFromJson(json);
+
+  @override
+  final String employeeId;
+  @override
+  final double score;
+
+  @override
+  String toString() {
+    return 'EmployeeScoreBreakdown(employeeId: $employeeId, score: $score)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$EmployeeScoreBreakdownImpl &&
+            (identical(other.employeeId, employeeId) ||
+                other.employeeId == employeeId) &&
+            (identical(other.score, score) || other.score == score));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, employeeId, score);
+
+  /// Create a copy of EmployeeScoreBreakdown
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$EmployeeScoreBreakdownImplCopyWith<_$EmployeeScoreBreakdownImpl>
+      get copyWith => __$$EmployeeScoreBreakdownImplCopyWithImpl<
+          _$EmployeeScoreBreakdownImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$EmployeeScoreBreakdownImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _EmployeeScoreBreakdown implements EmployeeScoreBreakdown {
+  const factory _EmployeeScoreBreakdown(
+      {required final String employeeId,
+      required final double score}) = _$EmployeeScoreBreakdownImpl;
+
+  factory _EmployeeScoreBreakdown.fromJson(Map<String, dynamic> json) =
+      _$EmployeeScoreBreakdownImpl.fromJson;
+
+  @override
+  String get employeeId;
+  @override
+  double get score;
+
+  /// Create a copy of EmployeeScoreBreakdown
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$EmployeeScoreBreakdownImplCopyWith<_$EmployeeScoreBreakdownImpl>
+      get copyWith => throw _privateConstructorUsedError;
+}

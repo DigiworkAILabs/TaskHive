@@ -6,13 +6,14 @@ class AppButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool isLoading;
   final bool isOutlined;
-
+  final bool fullWidth;
   const AppButton({
     super.key,
     required this.label,
     this.onPressed,
     this.isLoading = false,
     this.isOutlined = false,
+    this.fullWidth = true,
   });
 
   @override
@@ -27,7 +28,7 @@ class AppButton extends StatelessWidget {
 
     if (isOutlined) {
       return SizedBox(
-        width: double.infinity,
+        width: fullWidth ? double.infinity : null,
         height: 48,
         child: OutlinedButton(
           onPressed: isLoading ? null : onPressed,
@@ -48,7 +49,7 @@ class AppButton extends StatelessWidget {
     }
 
     return SizedBox(
-      width: double.infinity,
+      width: fullWidth ? double.infinity : null,
       height: 48,
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,

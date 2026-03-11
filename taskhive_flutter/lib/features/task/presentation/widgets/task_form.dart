@@ -9,12 +9,16 @@ import '../../data/models/update_task_request.dart';
 import '../../domain/enums/task_priority.dart';
 import '../../domain/providers/completion_time_prediction_provider.dart';
 import '../../domain/providers/priority_prediction_provider.dart';
+import '../../domain/providers/workload_recommendation_provider.dart';
+import '../../../employee/data/models/employee_model.dart';
+import '../../../employee/domain/providers/employee_search_provider.dart';
 import 'assignee_picker.dart';
 import 'completion_time_estimate.dart';
 import 'due_date_picker.dart';
 import 'priority_selector.dart';
 import 'priority_suggestion_badge.dart';
 import 'tags_input_field.dart';
+import 'workload_recommendation_card.dart';
 
 /// Reusable form for both create and edit task flows.
 ///
@@ -137,6 +141,47 @@ class _TaskFormState extends ConsumerState<TaskForm> {
     // Debounce to avoid spamming when choosing priority/assignee quickly
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 300), _onInputChanged);
+  }
+
+  void _onRecommendBestFit() {
+    final title = _titleController.text.trim();
+    if (title.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a task title first')),
+      );
+      return;
+    }
+    if (_priority == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a priority first')),
+      );
+      return;
+    }
+
+    // Get all active employee IDs from search provider
+    final employeesAsync = ref.read(employeeSearchProvider(''));
+    employeesAsync.whenData((list) {
+      final activeIds = list
+          .where((e) => e.isActive)
+          .map((e) => e.id)
+          .toList();
+
+      if (activeIds.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No active employees found to evaluate')),
+        );
+        return;
+      }
+
+      ref.read(workloadRecommendationNotifierProvider.notifier).recommend(
+            WorkloadRecommendationRequest(
+              taskTitle: title,
+              taskPriority: _priority!.backendValue,
+              taskEstimatedHours: double.tryParse(_hoursController.text),
+              candidateEmployeeIds: activeIds,
+            ),
+          );
+    });
   }
 
   @override
@@ -264,15 +309,57 @@ class _TaskFormState extends ConsumerState<TaskForm> {
 
           // Assignee
           if (_isCreate)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: AssigneePicker(
-                initialAssigneeId: _assigneeId,
-                onChanged: (id) {
-                  setState(() => _assigneeId = id);
-                  _onTargetFieldsChanged();
-                },
-              ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Assigned To *',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    TextButton.icon(
+                      onPressed: _onRecommendBestFit,
+                      icon: const Icon(Icons.psychology_outlined, size: 16),
+                      label: const Text(
+                        'Recommend Best Fit',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                      style: TextButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                AssigneePicker(
+                  initialAssigneeId: _assigneeId,
+                  onChanged: (id) {
+                    setState(() => _assigneeId = id);
+                    _onTargetFieldsChanged();
+                  },
+                ),
+                const SizedBox(height: 16),
+                Consumer(
+                  builder: (context, ref, _) {
+                    final prediction =
+                        ref.watch(workloadRecommendationNotifierProvider);
+                    return WorkloadRecommendationCard(
+                      prediction: prediction.value,
+                      isLoading: prediction.isLoading,
+                      error: prediction.hasError
+                          ? prediction.error.toString()
+                          : null,
+                      onAssign: (id) {
+                        setState(() => _assigneeId = id);
+                        _onTargetFieldsChanged();
+                      },
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+              ],
             ),
 
           // Due Date

@@ -11,6 +11,10 @@ import '../../features/auth/presentation/screens/change_password_screen.dart';
 import '../../features/admin/presentation/screens/admin_shell_screen.dart';
 import '../../features/employee/presentation/screens/employee_shell_screen.dart';
 
+import '../../features/analytics/presentation/screens/admin_dashboard_screen.dart';
+import '../../features/analytics/presentation/screens/admin_analytics_screen.dart';
+import '../../features/analytics/presentation/screens/employee_dashboard_screen.dart';
+
 import '../../features/employee/presentation/screens/admin/employee_list_screen.dart';
 import '../../features/employee/presentation/screens/admin/employee_detail_screen.dart';
 import '../../features/employee/presentation/screens/admin/create_employee_screen.dart';
@@ -26,43 +30,12 @@ import '../../features/task/presentation/screens/employee/employee_task_detail_s
 
 import '../../features/notification/presentation/screens/notification_list_screen.dart';
 import '../../features/notification/presentation/screens/notification_preferences_screen.dart';
-import '../../features/notification/presentation/widgets/notification_badge.dart';
+
 import '../../features/audit/presentation/screens/audit_screen.dart';
 import '../../features/audit/presentation/screens/entity_timeline_screen.dart';
 
 import 'app_routes.dart';
 
-// ── Placeholder screens (replaced phase by phase) ──────────────────────────
-
-class _PlaceholderScreen extends StatelessWidget {
-  final String title;
-  final bool showNotificationBell;
-  const _PlaceholderScreen({
-    required this.title,
-    this.showNotificationBell = false,
-  });
-
-  @override
-  Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(
-          title: Text(title),
-          actions: [
-            if (showNotificationBell)
-              NotificationBadge(
-                child: IconButton(
-                  icon: const Icon(Icons.notifications_outlined),
-                  tooltip: 'Notifications',
-                  onPressed: () => context.push('/admin/notifications'),
-                ),
-              ),
-          ],
-        ),
-        body: Center(
-          child: Text('$title\n(Coming in a future phase)',
-              textAlign: TextAlign.center),
-        ),
-      );
-}
 
 class _SplashScreen extends StatelessWidget {
   const _SplashScreen();
@@ -170,8 +143,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(routes: [
             GoRoute(
               path: AppRoutes.adminDashboard,
-              builder: (_, __) => const _PlaceholderScreen(
-                  title: 'Admin Dashboard', showNotificationBell: true),
+              builder: (_, __) => const AdminDashboardScreen(),
             ),
           ]),
           StatefulShellBranch(routes: [
@@ -225,8 +197,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(routes: [
             GoRoute(
               path: AppRoutes.adminAnalytics,
-              builder: (_, __) => const _PlaceholderScreen(
-                  title: 'Analytics', showNotificationBell: true),
+              builder: (_, __) => const AdminAnalyticsScreen(),
             ),
           ]),
           StatefulShellBranch(routes: [
@@ -254,8 +225,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(routes: [
             GoRoute(
               path: AppRoutes.employeeDashboard,
-              builder: (_, __) =>
-                  const _PlaceholderScreen(title: 'My Dashboard'),
+              builder: (_, __) => const EmployeeDashboardScreen(),
             ),
           ]),
           StatefulShellBranch(routes: [

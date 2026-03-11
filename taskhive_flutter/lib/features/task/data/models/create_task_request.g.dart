@@ -129,3 +129,61 @@ Map<String, dynamic> _$$TaskCompletionTimePredictionImplToJson(
       'reasoning': instance.reasoning,
       'fallbackUsed': instance.fallbackUsed,
     };
+
+_$WorkloadRecommendationRequestImpl
+    _$$WorkloadRecommendationRequestImplFromJson(Map<String, dynamic> json) =>
+        _$WorkloadRecommendationRequestImpl(
+          taskTitle: json['taskTitle'] as String,
+          taskPriority: json['taskPriority'] as String,
+          taskEstimatedHours: (json['taskEstimatedHours'] as num?)?.toDouble(),
+          candidateEmployeeIds: (json['candidateEmployeeIds'] as List<dynamic>)
+              .map((e) => e as String)
+              .toList(),
+        );
+
+Map<String, dynamic> _$$WorkloadRecommendationRequestImplToJson(
+        _$WorkloadRecommendationRequestImpl instance) =>
+    <String, dynamic>{
+      'taskTitle': instance.taskTitle,
+      'taskPriority': instance.taskPriority,
+      if (instance.taskEstimatedHours case final value?)
+        'taskEstimatedHours': value,
+      'candidateEmployeeIds': instance.candidateEmployeeIds,
+    };
+
+_$WorkloadRecommendationResponseImpl
+    _$$WorkloadRecommendationResponseImplFromJson(Map<String, dynamic> json) =>
+        _$WorkloadRecommendationResponseImpl(
+          recommendedEmployeeId: json['recommendedEmployeeId'] as String?,
+          scoreBreakdown: (json['scoreBreakdown'] as List<dynamic>?)
+                  ?.map((e) => EmployeeScoreBreakdown.fromJson(
+                      e as Map<String, dynamic>))
+                  .toList() ??
+              const [],
+          reasoning: json['reasoning'] as String,
+          fallbackUsed: json['fallbackUsed'] as bool,
+        );
+
+Map<String, dynamic> _$$WorkloadRecommendationResponseImplToJson(
+        _$WorkloadRecommendationResponseImpl instance) =>
+    <String, dynamic>{
+      if (instance.recommendedEmployeeId case final value?)
+        'recommendedEmployeeId': value,
+      'scoreBreakdown': instance.scoreBreakdown.map((e) => e.toJson()).toList(),
+      'reasoning': instance.reasoning,
+      'fallbackUsed': instance.fallbackUsed,
+    };
+
+_$EmployeeScoreBreakdownImpl _$$EmployeeScoreBreakdownImplFromJson(
+        Map<String, dynamic> json) =>
+    _$EmployeeScoreBreakdownImpl(
+      employeeId: json['employeeId'] as String,
+      score: (json['score'] as num).toDouble(),
+    );
+
+Map<String, dynamic> _$$EmployeeScoreBreakdownImplToJson(
+        _$EmployeeScoreBreakdownImpl instance) =>
+    <String, dynamic>{
+      'employeeId': instance.employeeId,
+      'score': instance.score,
+    };
