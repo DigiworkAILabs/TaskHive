@@ -3,15 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../auth/domain/providers/auth_provider.dart';
 
-
 import '../../../../core/widgets/app_empty_state.dart';
 import '../../../../core/widgets/app_error_widget.dart';
 import '../../../../core/widgets/app_loading.dart';
-import '../../../../core/widgets/stat_card.dart';
+import '../../../../core/widgets/responsive_layout.dart';
 import '../../domain/providers/admin_dashboard_provider.dart';
 import '../../domain/providers/employee_performance_provider.dart';
 import '../../domain/providers/task_completion_trend_provider.dart';
 import '../../domain/providers/task_distribution_provider.dart';
+import '../../data/models/admin_dashboard_response.dart';
+import '../../data/models/employee_performance_response.dart';
+import '../../data/models/task_completion_trend_response.dart';
+import '../widgets/admin_kpi_row.dart';
 import '../widgets/completion_trend_line_chart.dart';
 import '../widgets/employee_performance_bar_chart.dart';
 import '../widgets/employee_performance_table.dart';
@@ -50,7 +53,8 @@ class AdminAnalyticsScreen extends ConsumerStatefulWidget {
   const AdminAnalyticsScreen({super.key});
 
   @override
-  ConsumerState<AdminAnalyticsScreen> createState() => _AdminAnalyticsScreenState();
+  ConsumerState<AdminAnalyticsScreen> createState() =>
+      _AdminAnalyticsScreenState();
 }
 
 class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
@@ -95,7 +99,8 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
                 IconButton(
                   icon: const Icon(Icons.logout),
                   tooltip: 'Logout',
-                  onPressed: () => ref.read(authStateNotifierProvider.notifier).logout(),
+                  onPressed: () =>
+                      ref.read(authStateNotifierProvider.notifier).logout(),
                 ),
                 IconButton(
                   icon: const Icon(Icons.file_download_outlined),
@@ -111,140 +116,160 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
             ),
             SliverPadding(
               padding: const EdgeInsets.all(16.0),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  // Section 1: Full KPI Row
-                  dashboardState.when(
-                    loading: () => const AppLoading(),
-                    error: (e, _) => AppErrorWidget(message: e.toString()),
-                    data: (data) {
-                      if (data == null) return const AppEmptyState(message: 'No data');
-                      return SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: [
-                            StatCard(
-                              title: 'Total Tasks',
-                              value: (data.totalTasks ?? 0).toString(),
-                              icon: Icons.list_alt,
-                              color: const Color(0xFF6366F1),
-                            ),
-                            const SizedBox(width: 12),
-                            StatCard(
-                              title: 'Active',
-                              value: (data.activeTasks ?? 0).toString(),
-                              icon: Icons.play_arrow,
-                              color: const Color(0xFF3B82F6),
-                            ),
-                            const SizedBox(width: 12),
-                            StatCard(
-                              title: 'Overdue',
-                              value: (data.overdueTasks ?? 0).toString(),
-                              icon: Icons.warning_amber_rounded,
-                              color: const Color(0xFFEF4444),
-                            ),
-                            const SizedBox(width: 12),
-                            StatCard(
-                              title: 'Completed',
-                              value: (data.completedTasks ?? 0).toString(),
-                              icon: Icons.check_circle_outline,
-                              color: const Color(0xFF22C55E),
-                            ),
-                            const SizedBox(width: 12),
-                            StatCard(
-                              title: 'Completion Rate',
-                              value: '${(data.completionRate ?? 0).toStringAsFixed(1)}%',
-                              icon: Icons.trending_up,
-                              color: const Color(0xFFF97316),
-                            ),
-                            const SizedBox(width: 12),
-                            StatCard(
-                              title: 'Total Employees',
-                              value: (data.totalEmployees ?? 0).toString(),
-                              icon: Icons.people_outline,
-                              color: const Color(0xFF06B6D4),
-                            ),
-                            const SizedBox(width: 12),
-                            StatCard(
-                              title: 'Avg Completion',
-                              value: '${(data.avgCompletionHours ?? 0).toStringAsFixed(1)} h',
-                              icon: Icons.access_time,
-                              color: const Color(0xFFA855F7), // Purple
-                            ),
-                          ],
-                        ),
-                      );
-                    },
+              sliver: SliverToBoxAdapter(
+                child: ResponsiveLayout(
+                  mobile: Column(
+                    children: _buildMobileLayout(
+                      dashboardState,
+                      distributionState,
+                      trendState,
+                      performanceState,
+                    ),
                   ),
-
-                  const SizedBox(height: 24),
-
-                  // Section 2: Task Distribution
-                  const _SectionHeader(title: 'Task Distribution'),
-                  const SizedBox(height: 16),
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      if (constraints.maxWidth > 500) {
-                        return Row(
-                          children: [
-                            Expanded(
-                              child: TaskStatusPieChart(
-                                dataState: distributionState.whenData((v) => v.byStatus),
-                                height: 300,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: TaskPriorityDonutChart(
-                                dataState: distributionState.whenData((v) => v.byPriority),
-                                height: 300,
-                              ),
-                            ),
-                          ],
-                        );
-                      }
-                      return Column(
-                        children: [
-                          TaskStatusPieChart(
-                            dataState: distributionState.whenData((v) => v.byStatus),
-                            height: 250, // Slightly larger for full analytics screen
-                          ),
-                          const SizedBox(height: 16),
-                          TaskPriorityDonutChart(
-                            dataState: distributionState.whenData((v) => v.byPriority),
-                            height: 250,
-                          ),
-                        ],
-                      );
-                    },
+                  tablet: Column(
+                    children: _buildMobileLayout(
+                      dashboardState,
+                      distributionState,
+                      trendState,
+                      performanceState,
+                    ),
                   ),
-
-                  const SizedBox(height: 24),
-
-                  // Section 3: 30-Day Completion Trend
-                  const _SectionHeader(
-                      title: 'Completion Trend', subtitle: 'Tasks completed over 30 days'),
-                  const SizedBox(height: 16),
-                  CompletionTrendLineChart(dataState: trendState, height: 250),
-
-                  const SizedBox(height: 24),
-
-                  // Section 4: Employee Performance
-                  const _SectionHeader(
-                      title: 'Employee Performance',
-                      subtitle: 'Individual completions and metrics'),
-                  const SizedBox(height: 16),
-                  EmployeePerformanceBarChart(dataState: performanceState, height: 220),
-                  const SizedBox(height: 16),
-                  EmployeePerformanceTable(dataState: performanceState),
-
-                  const SizedBox(height: 32),
-                ]),
+                  desktop: _buildDesktopLayout(
+                    dashboardState,
+                    distributionState,
+                    trendState,
+                    performanceState,
+                  ),
+                ),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  List<Widget> _buildMobileLayout(
+    AsyncValue<AdminDashboardResponse?> dashboardState,
+    AsyncValue<TaskDistributionState> distributionState,
+    AsyncValue<List<TaskCompletionTrendResponse>> trendState,
+    AsyncValue<List<EmployeePerformanceResponse>> performanceState,
+  ) {
+    return [
+      // Section 1: KPI Summary Row
+      dashboardState.when(
+        loading: () => const AppLoading(),
+        error: (e, _) => AppErrorWidget(message: e.toString()),
+        data: (data) => data == null
+            ? const AppEmptyState(message: 'No data')
+            : AdminKpiRow(data: data),
+      ),
+
+      const SizedBox(height: 24),
+
+      // Section 2: Task Distribution
+      const _SectionHeader(title: 'Task Distribution'),
+      const SizedBox(height: 16),
+      TaskStatusPieChart(
+        dataState: distributionState.whenData((v) => v.byStatus),
+        height: 250,
+      ),
+      const SizedBox(height: 16),
+      TaskPriorityDonutChart(
+        dataState: distributionState.whenData((v) => v.byPriority),
+        height: 250,
+      ),
+
+      const SizedBox(height: 24),
+
+      // Section 3: 30-Day Completion Trend
+      const _SectionHeader(
+          title: 'Completion Trend', subtitle: 'Tasks completed over 30 days'),
+      const SizedBox(height: 16),
+      CompletionTrendLineChart(dataState: trendState, height: 250),
+
+      const SizedBox(height: 24),
+
+      // Section 4: Employee Performance
+      const _SectionHeader(
+          title: 'Employee Performance',
+          subtitle: 'Individual completions and metrics'),
+      const SizedBox(height: 16),
+      EmployeePerformanceBarChart(dataState: performanceState, height: 220),
+      const SizedBox(height: 16),
+      EmployeePerformanceTable(dataState: performanceState),
+      const SizedBox(height: 32),
+    ];
+  }
+
+  Widget _buildDesktopLayout(
+    AsyncValue<AdminDashboardResponse?> dashboardState,
+    AsyncValue<TaskDistributionState> distributionState,
+    AsyncValue<List<TaskCompletionTrendResponse>> trendState,
+    AsyncValue<List<EmployeePerformanceResponse>> performanceState,
+  ) {
+    return Column(
+      children: [
+        // Full width KPI Row across top
+        dashboardState.when(
+          loading: () => const AppLoading(),
+          error: (e, _) => AppErrorWidget(message: e.toString()),
+          data: (data) => data == null
+              ? const AppEmptyState(message: 'No data')
+              : AdminKpiRow(data: data),
+        ),
+        const SizedBox(height: 32),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // LEFT COLUMN (50%)
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const _SectionHeader(title: 'Status Distribution'),
+                  const SizedBox(height: 16),
+                  TaskStatusPieChart(
+                    dataState: distributionState.whenData((v) => v.byStatus),
+                    height: 300,
+                  ),
+                  const SizedBox(height: 32),
+                  const _SectionHeader(
+                      title: 'Completion Trend',
+                      subtitle: 'Tasks completed over 30 days'),
+                  const SizedBox(height: 16),
+                  CompletionTrendLineChart(dataState: trendState, height: 300),
+                ],
+              ),
+            ),
+            const SizedBox(width: 32),
+            // RIGHT COLUMN (50%)
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const _SectionHeader(title: 'Priority Distribution'),
+                  const SizedBox(height: 16),
+                  TaskPriorityDonutChart(
+                    dataState: distributionState.whenData((v) => v.byPriority),
+                    height: 300,
+                  ),
+                  const SizedBox(height: 32),
+                  const _SectionHeader(
+                      title: 'Employee Performance',
+                      subtitle: 'Individual completions'),
+                  const SizedBox(height: 16),
+                  EmployeePerformanceBarChart(
+                      dataState: performanceState, height: 220),
+                  const SizedBox(height: 16),
+                  EmployeePerformanceTable(dataState: performanceState),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 32),
+      ],
     );
   }
 }
