@@ -85,7 +85,7 @@ TaskHive provides comprehensive task management capabilities including:
 - Production-ready: AWS S3 (switchable via config — `STORAGE_TYPE=local|s3`)
 
 **ML/AI Infrastructure (Placeholder — Future)**
-- Training: Python 3.11+, PyTorch/TensorFlow, Scikit-learn
+- Training: Python 3.14+, PyTorch/TensorFlow, Scikit-learn
 - Serving: FastAPI inference server
 - Communication: REST API with Resilience4j Circuit Breaker
 

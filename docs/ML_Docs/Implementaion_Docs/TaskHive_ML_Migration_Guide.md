@@ -10,7 +10,7 @@
 |-------|--------|
 | **Purpose** | Complete guide to migrate TaskHive from Version 1 (no ML) to Version 2 (AI powered) |
 | **Scope** | What changes, what stays same, how to train, how to connect, how to deploy |
-| **ML Stack** | Python 3.11+ · FastAPI · Scikit-learn · PyTorch · HuggingFace |
+| **ML Stack** | Python 3.14+ · FastAPI · Scikit-learn · PyTorch · HuggingFace |
 | **Java Stack** | Spring Boot 3.5.10 · Java 21 · Resilience4j |
 | **Frontend Stack** | Next.js 14+ · TypeScript |
 
@@ -84,7 +84,7 @@ All 4 features are **advisory / suggestion only**. Admin always has final contro
                                ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │                  FASTAPI ML SERVER  (port 8000)                     │
-│                        Python 3.11+                                  │
+│                        Python 3.14+                                  │
 │   predict_priority.py  →  loads priority_model.pkl                  │
 │   predict_completion.py  →  loads completion_model.pkl              │
 │   recommend_workload.py  →  loads workload_model.pkl                │
