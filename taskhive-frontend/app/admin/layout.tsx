@@ -10,6 +10,7 @@ import {
     Settings, LogOut, UserPlus, Activity, Menu, X,
 } from 'lucide-react';
 import { NotificationBell } from '@/features/notification/components/NotificationBell';
+import { MlFeatureToggle } from '@/features/ml/components/MlFeatureToggle';
 
 // ── Sidebar nav items ───────────────────────────────────────────────────────
 
@@ -283,6 +284,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                             SYSTEM ONLINE
                         </div>
 
+                        <MlFeatureToggle />
                         <NotificationBell />
 
                         {/* Add New Employee button (only on employees list page) */}

@@ -16,6 +16,7 @@ import '../../domain/providers/task_distribution_provider.dart';
 import '../widgets/admin_kpi_row.dart';
 import '../widgets/task_priority_donut_chart.dart';
 import '../widgets/task_status_pie_chart.dart';
+import '../../../ml/presentation/widgets/ml_feature_toggle.dart';
 
 class _SectionHeader extends StatelessWidget {
   final String title;
@@ -103,6 +104,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 ],
               ),
               actions: [
+                const MlFeatureToggleWidget(),
                 IconButton(
                   icon: const Icon(Icons.logout),
                   tooltip: 'Logout',

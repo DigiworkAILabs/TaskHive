@@ -14,6 +14,7 @@ import '../widgets/employee_kpi_row.dart';
 import '../widgets/task_status_pie_chart.dart';
 import '../../../ml/domain/providers/productivity_score_provider.dart';
 import '../../../ml/presentation/widgets/productivity_score_card.dart';
+import '../../../ml/domain/providers/ml_feature_provider.dart';
 
 class _SectionHeader extends StatelessWidget {
   final String title;
@@ -235,35 +236,72 @@ class _EmployeeDashboardScreenState extends ConsumerState<EmployeeDashboardScree
 
   Widget _buildProductivityScore(dynamic user) {
     return Consumer(builder: (context, ref, child) {
-      return ref.watch(productivityScoreProvider(user.id)).when(
-            data: (score) => ProductivityScoreCard(scoreData: score),
-            loading: () => const Center(
-              child: Padding(
-                padding: EdgeInsets.all(32),
-                child: CircularProgressIndicator(),
-              ),
-            ),
-            error: (e, _) => Container(
-              padding: const EdgeInsets.all(16),
+      final isMlEnabledAsync = ref.watch(mlFeatureToggleProvider);
+      
+      return isMlEnabledAsync.when(
+        data: (isMlEnabled) {
+          if (!isMlEnabled) {
+            return Container(
+              padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: Colors.red.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.red.withValues(alpha: 0.1)),
+                color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
               ),
-              child: Row(
-                children: [
-                  const Icon(Icons.error_outline, color: Colors.red, size: 20),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Unable to load productivity score: ${e.toString()}',
-                      style: const TextStyle(color: Colors.red, fontSize: 13),
+              child: Center(
+                child: Column(
+                  children: [
+                    Icon(Icons.auto_awesome, size: 32, color: Colors.grey.shade400),
+                    const SizedBox(height: 12),
+                    Text(
+                      'AI Insights Disabled',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 4),
+                    Text(
+                      'Turn on ML Insights in the AppBar to see productivity predictions.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
               ),
-            ),
-          );
+            );
+          }
+
+          return ref.watch(productivityScoreProvider(user.id)).when(
+                data: (score) => ProductivityScoreCard(scoreData: score!),
+                loading: () => const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(32),
+                    child: CircularProgressIndicator(),
+                  ),
+                ),
+                error: (e, _) => Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.red.withOpacity(0.1)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.error_outline, color: Colors.red, size: 20),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Unable to load productivity score: ${e.toString()}',
+                          style: const TextStyle(color: Colors.red, fontSize: 13),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+        },
+        loading: () => const AppLoading(),
+        error: (_, __) => const SizedBox.shrink(),
+      );
     });
   }
 }

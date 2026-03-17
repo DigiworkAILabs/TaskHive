@@ -9,6 +9,7 @@ import { EmployeeListItem } from '@/features/employee/types/employee.types';
 import { DatePicker } from '@/features/employee/components/DatePicker';
 import { useRecommendWorkload } from '@/features/ml/hooks/useRecommendWorkload';
 import WorkloadRecommendationComponent from '@/features/ml/components/WorkloadRecommendation';
+import { useMlStore } from '@/features/ml/store/mlStore';
 import { Brain, Sparkles } from 'lucide-react';
 
 interface TaskFormProps {
@@ -88,6 +89,8 @@ export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoad
         reset: resetRecommendation
     } = useRecommendWorkload();
 
+    const { isMlEnabled } = useMlStore();
+
     useEffect(() => {
         if (mode === 'edit' && task) {
             let editTime = '17:00';
@@ -134,14 +137,14 @@ export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoad
 
     // Sync ML-accepted priority into form state
     useEffect(() => {
-        if (initialPriority && initialPriority !== formData.priority) {
+        if (initialPriority) {
             setFormData(prev => ({ ...prev, priority: initialPriority }));
             // Notify parent to sync ML context (essential for Completion Time prediction)
             if (onFieldChange) {
                 onFieldChange({ priority: initialPriority });
             }
         }
-    }, [initialPriority, formData.priority, onFieldChange]);
+    }, [initialPriority, onFieldChange]);
 
     const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const value = e.target.value;
@@ -295,31 +298,33 @@ export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoad
                         <FormField label="Assigned To" required={mode === 'create'}>
                             <div style={{ position: 'relative' }}>
                                 {/* AI Recommend Toggle */}
-                                <button
-                                    type="button"
-                                    onClick={handleRecommendAssignee}
-                                    disabled={isRecommending || !formData.title.trim() || employees.length === 0}
-                                    style={{
-                                        position: 'absolute',
-                                        right: '0',
-                                        top: '-26px',
-                                        backgroundColor: 'transparent',
-                                        border: 'none',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '4px',
-                                        color: isRecommending ? '#f97316' : '#a1a1aa',
-                                        fontSize: '11px',
-                                        fontWeight: 600,
-                                        cursor: (isRecommending || !formData.title.trim()) ? 'not-allowed' : 'pointer',
-                                        transition: 'color 0.2s',
-                                    }}
-                                    onMouseEnter={(e) => !isRecommending && (e.currentTarget.style.color = '#f97316')}
-                                    onMouseLeave={(e) => !isRecommending && (e.currentTarget.style.color = '#a1a1aa')}
-                                >
-                                    {isRecommending ? <Loader2 size={11} className="animate-spin" /> : <Brain size={11} />}
-                                    {isRecommending ? 'Analyzing...' : 'Recommend Best Fit'}
-                                </button>
+                                {isMlEnabled && (
+                                    <button
+                                        type="button"
+                                        onClick={handleRecommendAssignee}
+                                        disabled={isRecommending || !formData.title.trim() || employees.length === 0}
+                                        style={{
+                                            position: 'absolute',
+                                            right: '0',
+                                            top: '-26px',
+                                            backgroundColor: 'transparent',
+                                            border: 'none',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '4px',
+                                            color: isRecommending ? '#f97316' : '#a1a1aa',
+                                            fontSize: '11px',
+                                            fontWeight: 600,
+                                            cursor: (isRecommending || !formData.title.trim()) ? 'not-allowed' : 'pointer',
+                                            transition: 'color 0.2s',
+                                        }}
+                                        onMouseEnter={(e) => !isRecommending && (e.currentTarget.style.color = '#f97316')}
+                                        onMouseLeave={(e) => !isRecommending && (e.currentTarget.style.color = '#a1a1aa')}
+                                    >
+                                        {isRecommending ? <Loader2 size={11} className="animate-spin" /> : <Brain size={11} />}
+                                        {isRecommending ? 'Analyzing...' : 'Recommend Best Fit'}
+                                    </button>
+                                )}
 
                                 <User size={14} color="#52525b" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', zIndex: 1, pointerEvents: 'none' }} />
                                 <select
@@ -341,7 +346,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoad
                             </div>
 
                             {/* AI Recommendation Result UI */}
-                            {recommendation && (
+                            {isMlEnabled && recommendation && (
                                 <WorkloadRecommendationComponent
                                     recommendation={recommendation}
                                     onAccept={handleApplyRecommendation}

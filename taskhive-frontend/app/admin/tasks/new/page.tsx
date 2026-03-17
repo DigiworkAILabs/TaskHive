@@ -24,12 +24,14 @@ import { usePriorityPrediction } from '@/features/ml/hooks/usePriorityPrediction
 import { PrioritySuggestionBadge } from '@/features/ml/components/PrioritySuggestionBadge';
 import { useCompletionTimePrediction } from '@/features/ml/hooks/useCompletionTimePrediction';
 import { CompletionTimeEstimate } from '@/features/ml/components/CompletionTimeEstimate';
+import { useMlStore } from '@/features/ml/store/mlStore';
 import type { TaskPriority } from '@/features/ml/types/ml.types';
 
 export default function NewTaskPage() {
     const { createTask, isLoading, error, success } = useCreateTask();
     const { predict, prediction, isLoading: mlLoading, reset: resetML } = usePriorityPrediction();
     const { checkCompletionTime, prediction: compPrediction, isLoading: compLoading, error: compError, clearPrediction: clearComp } = useCompletionTimePrediction();
+    const { isMlEnabled } = useMlStore();
 
     // Track form field values to pass to ML — lifted from TaskForm via callback
     const [mlFormData, setMLFormData] = useState({
@@ -60,6 +62,12 @@ export default function NewTaskPage() {
         estimatedHours?: string;
     }) => {
         console.log('[NewTaskPage] Field change:', fields);
+        
+        // If the user manually changes priority, clear the 'accepted' state
+        if (fields.priority) {
+            setAcceptedPriority(null);
+        }
+
         setMLFormData(prev => ({
             ...prev,
             taskTitle: fields.title ?? prev.taskTitle,
@@ -136,40 +144,44 @@ export default function NewTaskPage() {
                 </h1>
 
                 {/* ML Suggest Priority button — shown in header for visibility */}
-                <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <button
-                        type="button"
-                        id="ml-suggest-priority-btn"
-                        onClick={handleSuggestPriority}
-                        disabled={!canSuggest || mlLoading}
-                        title={canSuggest ? 'Click to get AI priority suggestion' : 'Enter a task title first'}
-                        style={{
-                            display: 'flex', alignItems: 'center', gap: '6px',
-                            padding: '8px 16px', borderRadius: '8px',
-                            border: '1px solid rgba(249,115,22,0.35)',
-                            background: canSuggest && !mlLoading
-                                ? 'rgba(249,115,22,0.08)'
-                                : 'transparent',
-                            color: canSuggest ? '#f97316' : '#3f3f46',
-                            fontSize: '13px', fontWeight: 500, cursor: canSuggest ? 'pointer' : 'not-allowed',
-                            transition: 'all 0.15s',
-                            opacity: canSuggest ? 1 : 0.5,
-                        }}
-                        onMouseEnter={(e) => canSuggest && !mlLoading && (e.currentTarget.style.background = 'rgba(249,115,22,0.15)')}
-                        onMouseLeave={(e) => (e.currentTarget.style.background = canSuggest && !mlLoading ? 'rgba(249,115,22,0.08)' : 'transparent')}
-                    >
-                        <Sparkles size={14} />
-                        {mlLoading ? 'Analysing…' : 'Suggest Priority'}
-                    </button>
-                </div>
+                {isMlEnabled && (
+                    <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <button
+                            type="button"
+                            id="ml-suggest-priority-btn"
+                            onClick={handleSuggestPriority}
+                            disabled={!canSuggest || mlLoading}
+                            title={canSuggest ? 'Click to get AI priority suggestion' : 'Enter a task title first'}
+                            style={{
+                                display: 'flex', alignItems: 'center', gap: '6px',
+                                padding: '8px 16px', borderRadius: '8px',
+                                border: '1px solid rgba(249,115,22,0.35)',
+                                background: canSuggest && !mlLoading
+                                    ? 'rgba(249,115,22,0.08)'
+                                    : 'transparent',
+                                color: canSuggest ? '#f97316' : '#3f3f46',
+                                fontSize: '13px', fontWeight: 500, cursor: canSuggest ? 'pointer' : 'not-allowed',
+                                transition: 'all 0.15s',
+                                opacity: canSuggest ? 1 : 0.5,
+                            }}
+                            onMouseEnter={(e) => canSuggest && !mlLoading && (e.currentTarget.style.background = 'rgba(249,115,22,0.15)')}
+                            onMouseLeave={(e) => (e.currentTarget.style.background = canSuggest && !mlLoading ? 'rgba(249,115,22,0.08)' : 'transparent')}
+                        >
+                            <Sparkles size={14} />
+                            {mlLoading ? 'Analysing…' : 'Suggest Priority'}
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* ML Suggestion Badge — rendered above the form */}
-            <PrioritySuggestionBadge
-                prediction={prediction}
-                isLoading={mlLoading}
-                onAccept={handleAcceptPriority}
-            />
+            {isMlEnabled && (
+                <PrioritySuggestionBadge
+                    prediction={prediction}
+                    isLoading={mlLoading}
+                    onAccept={handleAcceptPriority}
+                />
+            )}
 
             {/* Spacer between badge and form */}
             {(prediction || mlLoading) && <div style={{ height: '12px' }} />}
@@ -187,11 +199,13 @@ export default function NewTaskPage() {
                 // Form change callback for ML context
                 onFieldChange={handleFormChange}
                 completionEstimateNode={
-                    <CompletionTimeEstimate
-                        prediction={compPrediction}
-                        isLoading={compLoading}
-                        error={compError}
-                    />
+                    isMlEnabled ? (
+                        <CompletionTimeEstimate
+                            prediction={compPrediction}
+                            isLoading={compLoading}
+                            error={compError}
+                        />
+                    ) : null
                 }
             />
         </div>
