@@ -7,9 +7,11 @@ import {
     CheckCircle2,
     Clock,
     MessageSquare,
-    ChevronRight
+    ChevronRight,
+    Sparkles
 } from 'lucide-react';
 import { ProductivityScore } from '../types/ml.types';
+import { useMlStore } from '../store/mlStore';
 
 interface ProductivityScoreCardProps {
     scoreData: ProductivityScore | null;
@@ -42,6 +44,26 @@ export const ProductivityScoreCard: React.FC<ProductivityScoreCardProps> = ({
             <div className="bg-red-50 dark:bg-red-900/10 rounded-xl p-4 border border-red-100 dark:border-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3">
                 <AlertCircle size={20} />
                 <p className="text-sm font-medium">{error}</p>
+            </div>
+        );
+    }
+
+    const { isMlEnabled } = useMlStore();
+
+    if (!isMlEnabled) {
+        return (
+            <div className="bg-white dark:bg-slate-900 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 flex items-center justify-center min-h-[300px]">
+                <div className="text-center space-y-3">
+                    <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Sparkles className="text-slate-400" size={24} />
+                    </div>
+                    <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                        AI Insights Disabled
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 max-w-[200px]">
+                        Turn on ML Insights in the navigation bar to see productivity breakdowns.
+                    </p>
+                </div>
             </div>
         );
     }
@@ -96,28 +118,28 @@ export const ProductivityScoreCard: React.FC<ProductivityScoreCardProps> = ({
             <div className="grid grid-cols-2 gap-4 mb-6">
                 <BreakdownItem 
                     label="Task Completion" 
-                    value={breakdown.completion_rate_score} 
+                    value={breakdown?.completion_rate_score ?? 0} 
                     max={35} 
                     icon={<CheckCircle2 size={14} />}
                     color="emerald"
                 />
                 <BreakdownItem 
                     label="On-Time Rate" 
-                    value={breakdown.on_time_score} 
+                    value={breakdown?.on_time_score ?? 0} 
                     max={30} 
                     icon={<Clock size={14} />}
                     color="blue"
                 />
                 <BreakdownItem 
                     label="Overdue Impact" 
-                    value={breakdown.overdue_penalty} 
+                    value={breakdown?.overdue_penalty ?? 0} 
                     max={0} 
                     icon={<AlertCircle size={14} />}
                     color="red"
                 />
                 <BreakdownItem 
                     label="Engagement" 
-                    value={breakdown.engagement_score} 
+                    value={breakdown?.engagement_score ?? 0} 
                     max={15} 
                     icon={<MessageSquare size={14} />}
                     color="indigo"

@@ -247,20 +247,32 @@ class EmployeeRepository {
 
   /// Fetch status change history for an employee (FR-EMP-14).
   ///
-  /// Endpoint: GET /employees/{id}/history
-  /// Note: this endpoint is not covered by the Postman collection — the path
-  /// and response shape should be verified against the backend when the
-  /// status history timeline widget is integrated in Sub-Phase 2C.
+  /// Note: The specific /employees/{id}/history endpoint is missing from the backend.
+  /// We fallback to the Audit logs entity timeline which tracks "STATUS_CHANGE" actions.
   Future<List<EmployeeStatusHistoryModel>> getStatusHistory(
       String employeeId) async {
     try {
-      final response = await _dio
-          .get('${ApiEndpoints.employeeById(employeeId)}/history');
-      final list = response.data['data'] as List<dynamic>;
-      return list
-          .map((e) =>
-              EmployeeStatusHistoryModel.fromJson(e as Map<String, dynamic>))
+      final response = await _dio.get(
+        ApiEndpoints.auditLogsByEntity('EMPLOYEE', employeeId),
+      );
+
+      // Backend returns PageResponse<AuditLogResponse> in response.data['data']
+      final list = (response.data['data']['content'] as List<dynamic>)
+          .where((e) => e['action'] == 'STATUS_CHANGE' || e['action'] == 'CREATE')
           .toList();
+
+      return list.map((e) {
+        final Map<String, dynamic> audit = e as Map<String, dynamic>;
+        return EmployeeStatusHistoryModel(
+          id: audit['id'] as String,
+          employeeId: employeeId,
+          oldStatus: audit['beforeState'],
+          newStatus: audit['afterState'] ?? 'UNKNOWN',
+          changedBy: audit['actorEmail'] as String,
+          changedAt: audit['createdAt'] as String,
+          reason: 'Status changed via system audit',
+        );
+      }).toList();
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }

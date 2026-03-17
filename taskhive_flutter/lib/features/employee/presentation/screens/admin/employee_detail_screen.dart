@@ -16,6 +16,7 @@ import '../../widgets/profile_photo_widget.dart';
 import '../../widgets/status_history_timeline.dart';
 import '../../../../ml/domain/providers/productivity_score_provider.dart';
 import '../../../../ml/presentation/widgets/productivity_score_card.dart';
+import '../../../../ml/domain/providers/ml_feature_provider.dart';
 
 class EmployeeDetailScreen extends ConsumerWidget {
   final String employeeId;
@@ -27,6 +28,7 @@ class EmployeeDetailScreen extends ConsumerWidget {
     final actionsState = ref.watch(employeeActionsProvider);
     final photoState = ref.watch(profilePhotoNotifierProvider);
     final scoreAsync = ref.watch(productivityScoreProvider(employeeId));
+    final isMlEnabledAsync = ref.watch(mlFeatureToggleProvider);
 
     ref.listen<AsyncValue<void>>(employeeActionsProvider, (_, next) {
       if (next is AsyncError) {
@@ -90,51 +92,12 @@ class EmployeeDetailScreen extends ConsumerWidget {
               const SizedBox(height: 32),
 
               // AI Productivity Section
-              Row(
-                children: [
-                  const Icon(Icons.psychology, size: 20, color: Colors.indigo),
-                  const SizedBox(width: 8),
-                  Text(
-                    'AI PERFORMANCE INSIGHTS',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.1,
-                          color: Colors.grey.shade600,
-                        ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              scoreAsync.when(
-                data: (score) => ProductivityScoreCard(scoreData: score),
-                loading: () => const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(32),
-                    child: CircularProgressIndicator(),
-                  ),
-                ),
-                error: (e, _) => Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.red.withOpacity(0.1)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.error_outline,
-                          color: Colors.red, size: 20),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'Unable to load productivity score: ${e.toString()}',
-                          style:
-                              const TextStyle(color: Colors.red, fontSize: 13),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              isMlEnabledAsync.when(
+                data: (enabled) => enabled
+                    ? _buildAiPerformanceSection(context, scoreAsync)
+                    : const SizedBox.shrink(),
+                loading: () => const SizedBox.shrink(),
+                error: (_, __) => const SizedBox.shrink(),
               ),
               const SizedBox(height: 32),
               // Action buttons
@@ -237,6 +200,60 @@ class EmployeeDetailScreen extends ConsumerWidget {
       ),
     );
   }
+                                                                                                                   
+  Widget _buildAiPerformanceSection(                                                                               
+      BuildContext context, AsyncValue scoreAsync) {                                                               
+    return Column(                                                                                                 
+      crossAxisAlignment: CrossAxisAlignment.start,                                                                
+      children: [                                                                                                  
+        Row(                                                                                                       
+          children: [                                                                                              
+            const Icon(Icons.psychology, size: 20, color: Colors.indigo),                                          
+            const SizedBox(width: 8),                                                                              
+            Text(                                                                                                  
+              'AI PERFORMANCE INSIGHTS',                                                                           
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(                                             
+                    fontWeight: FontWeight.bold,                                                                   
+                    letterSpacing: 1.1,                                                                            
+                    color: Colors.grey.shade600,                                                                   
+                  ),                                                                                               
+            ),                                                                                                     
+          ],                                                                                                       
+        ),                                                                                                         
+        const SizedBox(height: 16),                                                                                
+        scoreAsync.when(                                                                                           
+          data: (score) => ProductivityScoreCard(scoreData: score!),                                               
+          loading: () => const Center(                                                                             
+            child: Padding(                                                                                        
+              padding: EdgeInsets.all(32),                                                                          
+              child: CircularProgressIndicator(),                                                                  
+            ),                                                                                                     
+          ),                                                                                                       
+          error: (e, _) => Container(                                                                              
+            padding: const EdgeInsets.all(16),                                                                      
+            decoration: BoxDecoration(                                                                             
+              color: Colors.red.withOpacity(0.05),                                                                 
+              borderRadius: BorderRadius.circular(12),                                                             
+              border: Border.all(color: Colors.red.withOpacity(0.1)),                                              
+            ),                                                                                                     
+            child: Row(                                                                                            
+              children: [                                                                                          
+                const Icon(Icons.error_outline, color: Colors.red, size: 20),                                      
+                const SizedBox(width: 12),                                                                         
+                Expanded(                                                                                          
+                  child: Text(                                                                                     
+                    'Unable to load productivity score: ${e.toString()}',                                          
+                    style: const TextStyle(color: Colors.red, fontSize: 13),                                       
+                  ),                                                                                               
+                ),                                                                                                 
+              ],                                                                                                   
+            ),                                                                                                     
+          ),                                                                                                       
+        ),                                                                                                         
+        const SizedBox(height: 32),                                                                                
+      ],                                                                                                           
+    );                                                                                                             
+  }                                                                                                                
 }
 
 class _InfoRow extends StatelessWidget {

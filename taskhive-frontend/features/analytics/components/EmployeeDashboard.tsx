@@ -8,6 +8,7 @@ import {
 import { useCurrentUser } from "../../auth/hooks/useCurrentUser";
 import { useProductivityScore } from "../../ml/hooks/useProductivityScore";
 import { ProductivityScoreCard } from "../../ml/components/ProductivityScoreCard";
+import { useMlStore } from "../../ml/store/mlStore";
 
 const cards = [
     { key: "totalTasks", label: "Total Tasks", icon: ClipboardList, color: "#6366f1", bg: "rgba(99,102,241,0.12)" },
@@ -25,6 +26,7 @@ export default function EmployeeDashboard() {
         isLoading: isLoadingScore, 
         error: scoreError 
     } = useProductivityScore(user?.id);
+    const { isMlEnabled } = useMlStore();
 
     if (isLoading) {
         return (
@@ -131,19 +133,21 @@ export default function EmployeeDashboard() {
             </div>
 
             {/* AI Productivity Section */}
-            <div style={{ marginTop: '16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                    <BrainCircuit size={18} color="#6366f1" />
-                    <h3 style={{ color: "#ffffff", fontSize: "15px", fontWeight: 600, margin: 0 }}>
-                        AI Performance Insights
-                    </h3>
+            {isMlEnabled && (
+                <div style={{ marginTop: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                        <BrainCircuit size={18} color="#6366f1" />
+                        <h3 style={{ color: "#ffffff", fontSize: "15px", fontWeight: 600, margin: 0 }}>
+                            AI Performance Insights
+                        </h3>
+                    </div>
+                    <ProductivityScoreCard 
+                        scoreData={scoreData}
+                        isLoading={isLoadingScore}
+                        error={scoreError}
+                    />
                 </div>
-                <ProductivityScoreCard 
-                    scoreData={scoreData}
-                    isLoading={isLoadingScore}
-                    error={scoreError}
-                />
-            </div>
+            )}
         </div>
     );
 }

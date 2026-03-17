@@ -531,6 +531,55 @@ final cached = notificationsBox.toMap();
 
 ---
 
+
+---
+
+# Phase 5 — ML Service & AI Integration
+
+---
+
+## 5.1 ML Data & UI Visibility
+
+### Issue 5.1.1 — Missing Backend Endpoint for Employee History
+
+**Symptom:** "Cannot load history" error on Employee Detail screen. Browser console / terminal logs show `500 Internal Server Error` for `GET /api/v1/employees/{id}/history`.
+
+**Root Cause:** The expected backend endpoint was not yet implemented in the Java service.
+
+**Resolution:** Implemented a frontend fallback in `employee_repository.dart`. Modified `getStatusHistory()` to fetch data from the generic Audit Logs endpoint (`GET /api/v1/audit/logs/entity/EMPLOYEE/{id}`) and map the audit entries (especially `STATUS_CHANGE` and `CREATE`) to the `EmployeeStatusHistoryModel` format.
+
+---
+
+### Issue 5.1.2 — Null-Safety Crash on Score Data
+
+**Symptom:** Red screen "Null check operator used on a null value" when loading Employee Detail or Profile screens.
+
+**Root Cause:** The `ProductivityScoreCard` required a non-nullable `ProductivityScoreResponse`, but was being initialized with `score!` inside a provider's data block before the score was guaranteed to be present.
+
+**Resolution:** Updated the card calls to handle nullability more defensively and ensured the `score` is passed through the `AsyncValue` lifecycle properly.
+
+---
+
+### Issue 5.1.3 — Syntax Error: Nested Method in Build
+
+**Symptom:** Multiple build errors in `MyProfileScreen.dart`: "Expected to find '}'" and "The method isn't defined".
+
+**Root Cause:** The helper method `_buildAiPerformanceSection` was accidentally defined *inside* the `build` method's return statement block rather than at the class level.
+
+**Resolution:** Properly closed the `build` method with `); }` before starting the definition of the helper widget method.
+
+---
+
+### Issue 5.1.4 — ML Toggle Visible to Employees
+
+**Symptom:** Employees were able to see the ML toggle in their App Bar and disable/enable the feature globally for their session.
+
+**Root Cause:** The `MlFeatureToggleWidget` was included in the `SliverAppBar` of the `EmployeeDashboardScreen`.
+
+**Resolution:** Removed the toggle widget from the employee-facing dashboard. The ML toggle is intended exclusively for System Administrators.
+
+---
+
 # Quick Reference: Most Common Issues
 
 | Symptom | Root Cause | Resolution |

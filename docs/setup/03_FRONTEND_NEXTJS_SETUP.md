@@ -78,7 +78,7 @@ If both commands show version numbers, the installation was successful! ✅
 
 The frontend needs to know where the backend API is running. This is configured in a file called `.env.local`.
 
-### 📂 File to Edit
+### 📂 File to Create
 
 | Property | Value |
 |---|---|

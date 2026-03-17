@@ -3,3 +3,11 @@ results/
 taskhive-flutter/
 node_modules/
 .idea/
+
+# Python virtual environment
+venv/
+.venv/
+env/
+__pycache__/
+*.py[cod]
+.env
