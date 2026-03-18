@@ -11,34 +11,43 @@ export const MlFeatureToggle = () => {
     }, []);
 
     if (!mounted) {
-        return <div className="w-16 h-8" />;
+        return <div className="w-6 h-6" />;
     }
 
     return (
-        <div className="flex items-center gap-2" title="Enable Machine Learning Insights">
+        <div className="flex items-center gap-2" title="Machine Learning Status">
             <Sparkles
-                size={20}
-                className={`transition-colors duration-300 ${isMlEnabled ? 'text-[#ff4b4b]' : 'text-zinc-400'}`}
+                size={14}
+                className={`transition-colors duration-300 ${isMlEnabled ? 'text-[#ff4b4b] animate-pulse' : 'text-zinc-600'}`}
             />
             <button
                 type="button"
-                role="switch"
+                role="radio"
                 aria-checked={isMlEnabled}
                 onClick={toggleMlEnabled}
                 className={`
-                    relative inline-flex h-8 w-16 flex-shrink-0 cursor-pointer 
-                    rounded-full transition-colors duration-300 ease-in-out 
-                    focus:outline-none shadow-[inset_0_2px_4px_rgba(0,0,0,0.12)] items-center
-                    ${isMlEnabled ? 'bg-[#ff4b4b]' : 'bg-zinc-200'}
+                    group relative flex h-6 w-6 items-center justify-center rounded-full 
+                    transition-all duration-300 ease-in-out focus:outline-none
+                    ${isMlEnabled 
+                        ? 'bg-[#ff4b4b]/10 ring-1 ring-[#ff4b4b]/30 shadow-[0_0_12px_rgba(255,75,75,0.2)]' 
+                        : 'bg-zinc-800/50 ring-1 ring-white/5 shadow-inner'
+                    }
                 `}
             >
-                <span className="sr-only">Use ML Insights</span>
-                <span
-                    aria-hidden="true"
+                {/* Outer Ring / Track */}
+                <div className={`
+                    absolute inset-0 rounded-full border transition-all duration-300
+                    ${isMlEnabled ? 'border-[#ff4b4b]/40 scale-100' : 'border-white/5 scale-90'}
+                `} />
+
+                {/* Inner Indicator (The Radio Dot) */}
+                <div
                     className={`
-                        pointer-events-none inline-block h-6 w-6 transform rounded-full 
-                        bg-white shadow-[0_3px_8px_rgba(0,0,0,0.2)] ring-0 transition duration-300 ease-in-out
-                        ${isMlEnabled ? 'translate-x-9' : 'translate-x-1'}
+                        h-2.5 w-2.5 rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+                        ${isMlEnabled 
+                            ? 'bg-[#ff4b4b] shadow-[0_0_8px_#ff4b4b] scale-100 opacity-100' 
+                            : 'bg-zinc-700 scale-50 opacity-40'
+                        }
                     `}
                 />
             </button>

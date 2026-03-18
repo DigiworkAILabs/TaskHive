@@ -19,7 +19,7 @@ class WebSocketService {
             // eslint-disable-next-line @typescript-eslint/no-require-imports
             webSocketFactory: () => {
                 const SockJS = require('sockjs-client');
-                return new SockJS(`${process.env.NEXT_PUBLIC_WS_URL}/ws`);
+                return new SockJS(process.env.NEXT_PUBLIC_WS_URL);
             },
 
             onConnect: () => {

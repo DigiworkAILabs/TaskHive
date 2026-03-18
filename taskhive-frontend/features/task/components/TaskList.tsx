@@ -176,7 +176,7 @@ export const TaskList: React.FC = () => {
         <div>
             {/* Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
-                <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#ffffff', margin: 0 }}>Task Management</h1>
+                <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#ffffff', margin: 0 }}>All Tasks</h1>
                 <Link
                     href="/admin/tasks/new"
                     style={{
