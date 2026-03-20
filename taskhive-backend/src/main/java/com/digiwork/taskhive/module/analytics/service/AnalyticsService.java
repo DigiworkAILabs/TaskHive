@@ -307,4 +307,91 @@ public class AnalyticsService {
                         return "Unknown";
                 }
         }
+
+        // ─── P1.5: Today's Overview ───────────────────────────────────────────────
+
+        @SuppressWarnings("unchecked")
+        public TodayOverviewResponse getTodayOverview(int activeAnomalyCount) {
+                LocalDate today = LocalDate.now();
+                LocalDateTime startOfDay = today.atStartOfDay();
+                LocalDateTime endOfDay = today.atTime(23, 59, 59);
+
+                String sql = "SELECT " +
+                                "COUNT(*) FILTER (WHERE t.created_at >= :startOfDay AND t.created_at <= :endOfDay) AS assigned_today, " +
+                                "COUNT(*) FILTER (WHERE t.status = 'DONE' AND t.completed_at >= :startOfDay AND t.completed_at <= :endOfDay) AS completed_today, " +
+                                "COUNT(*) FILTER (WHERE t.status = 'IN_PROGRESS') AS in_progress, " +
+                                "COUNT(*) FILTER (WHERE t.status = 'PENDING_APPROVAL') AS pending_approval, " +
+                                "COUNT(*) FILTER (WHERE t.status NOT IN ('DONE','CANCELLED') AND t.due_date < :now) AS overdue_today, " +
+                                "COUNT(*) FILTER (WHERE t.is_late = true AND t.submitted_at >= :startOfDay AND t.submitted_at <= :endOfDay) AS late_submissions_today " +
+                                "FROM tasks t WHERE t.is_deleted = false";
+
+                Object[] row = (Object[]) entityManager.createNativeQuery(sql)
+                                .setParameter("startOfDay", startOfDay)
+                                .setParameter("endOfDay", endOfDay)
+                                .setParameter("now", LocalDateTime.now())
+                                .getSingleResult();
+
+                return TodayOverviewResponse.builder()
+                                .totalAssignedToday(((Number) row[0]).intValue())
+                                .completedToday(((Number) row[1]).intValue())
+                                .inProgress(((Number) row[2]).intValue())
+                                .pendingApproval(((Number) row[3]).intValue())
+                                .overdueToday(((Number) row[4]).intValue())
+                                .lateSubmissionsToday(((Number) row[5]).intValue())
+                                .activeAnomalies(activeAnomalyCount)
+                                .build();
+        }
+
+        // ─── P1.5: Missed Tasks ───────────────────────────────────────────────────
+
+        @SuppressWarnings("unchecked")
+        public List<com.digiwork.taskhive.module.task.dto.TaskListResponse> getMissedTasks(
+                        org.springframework.data.domain.Pageable pageable) {
+                // Delegate to TaskRepository via native query approach
+                String sql = "SELECT t.id, t.title, t.status, t.priority, t.due_date, t.created_at " +
+                                "FROM tasks t " +
+                                "WHERE t.is_deleted = false AND t.status = 'CANCELLED' " +
+                                "ORDER BY t.updated_at DESC";
+
+                List<Object[]> rows = entityManager.createNativeQuery(sql)
+                                .setFirstResult((int) pageable.getOffset())
+                                .setMaxResults(pageable.getPageSize())
+                                .getResultList();
+
+                return rows.stream().map(r -> com.digiwork.taskhive.module.task.dto.TaskListResponse.builder()
+                                .id(r[0].toString())
+                                .title(r[1].toString())
+                                .status(r[2].toString())
+                                .priority(r[3].toString())
+                                .dueDate(r[4] != null ? ((java.sql.Timestamp) r[4]).toLocalDateTime() : null)
+                                .createdAt(r[5] != null ? ((java.sql.Timestamp) r[5]).toLocalDateTime() : null)
+                                .build()).toList();
+        }
+
+        // ─── P1.5: Late Submission Patterns ──────────────────────────────────────
+
+        @SuppressWarnings("unchecked")
+        public List<com.digiwork.taskhive.module.task.dto.TaskListResponse> getLatePatterns(
+                        org.springframework.data.domain.Pageable pageable) {
+                String sql = "SELECT t.id, t.title, t.status, t.priority, t.due_date, t.created_at " +
+                                "FROM tasks t " +
+                                "WHERE t.is_deleted = false AND t.is_late = true " +
+                                "ORDER BY t.late_by_minutes DESC";
+
+                List<Object[]> rows = entityManager.createNativeQuery(sql)
+                                .setFirstResult((int) pageable.getOffset())
+                                .setMaxResults(pageable.getPageSize())
+                                .getResultList();
+
+                return rows.stream().map(r -> com.digiwork.taskhive.module.task.dto.TaskListResponse.builder()
+                                .id(r[0].toString())
+                                .title(r[1].toString())
+                                .status(r[2].toString())
+                                .priority(r[3].toString())
+                                .dueDate(r[4] != null ? ((java.sql.Timestamp) r[4]).toLocalDateTime() : null)
+                                .createdAt(r[5] != null ? ((java.sql.Timestamp) r[5]).toLocalDateTime() : null)
+                                .isLate(true)
+                                .build()).toList();
+        }
 }
+

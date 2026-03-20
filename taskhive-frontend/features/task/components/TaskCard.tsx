@@ -37,11 +37,29 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onView, onEdit, onDele
 
             {/* Title + Tags */}
             <td style={{ padding: '14px 16px', maxWidth: '300px' }}>
-                <div
-                    style={{ fontWeight: 600, color: '#ffffff', fontSize: '14px', cursor: 'pointer', marginBottom: '4px' }}
-                    onClick={() => onView(task.id)}
-                >
-                    {task.title}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                    <span
+                        style={{ fontWeight: 600, color: '#ffffff', fontSize: '14px', cursor: 'pointer' }}
+                        onClick={() => onView(task.id)}
+                    >
+                        {task.title}
+                    </span>
+                    {task.isLate && (
+                        <span
+                            style={{
+                                fontSize: '10px',
+                                fontWeight: 700,
+                                color: '#ffffff',
+                                backgroundColor: '#ef4444',
+                                borderRadius: '4px',
+                                padding: '1px 6px',
+                                letterSpacing: '0.5px',
+                                flexShrink: 0,
+                            }}
+                        >
+                            LATE
+                        </span>
+                    )}
                 </div>
                 {task.tags && task.tags.length > 0 && (
                     <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>

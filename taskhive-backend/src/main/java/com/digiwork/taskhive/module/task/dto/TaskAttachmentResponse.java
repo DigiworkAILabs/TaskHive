@@ -21,5 +21,6 @@ public class TaskAttachmentResponse {
     private String fileUrl;
     private Long fileSize;
     private String mimeType;
+    private String attachmentPurpose;   // P1.1 — "PROOF" or "GENERAL"
     private LocalDateTime createdAt;
 }

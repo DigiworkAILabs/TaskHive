@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Approved</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f9fafb; margin: 0; padding: 0; }
+        .container { max-width: 580px; margin: 32px auto; background: #ffffff; border-radius: 8px;
+                     box-shadow: 0 1px 4px rgba(0,0,0,.08); overflow: hidden; }
+        .header { background-color: #16a34a; padding: 28px 32px; }
+        .header h1 { margin: 0; color: #ffffff; font-size: 20px; letter-spacing: .3px; }
+        .body { padding: 28px 32px; }
+        .body p { color: #374151; line-height: 1.6; margin: 0 0 14px; }
+        .task-name { font-weight: 700; color: #111827; }
+        .badge { display: inline-block; background: #dcfce7; color: #15803d; border-radius: 4px;
+                 padding: 4px 10px; font-size: 13px; font-weight: 600; margin-bottom: 18px; }
+        .footer { background: #f3f4f6; padding: 16px 32px; font-size: 12px; color: #9ca3af;
+                  text-align: center; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>✅ Task Approved</h1>
+    </div>
+    <div class="body">
+        <p>Hi <strong th:text="${recipientName}">there</strong>,</p>
+        <p>Great news! Your task has been <span class="badge">APPROVED</span></p>
+        <p>Task: <span class="task-name" th:text="${taskTitle}">Task Title</span></p>
+        <p>The task is now marked as <strong>DONE</strong>.</p>
+        <p>Well done on completing your work!</p>
+        <p>— TaskHive</p>
+    </div>
+    <div class="footer">
+        This is an automated message from TaskHive. Do not reply to this email.
+    </div>
+</div>
+</body>
+</html>

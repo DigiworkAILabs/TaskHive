@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { employeeService } from '@/features/employee/services/employeeService';
 import { useEmployees } from '@/features/employee/hooks/useEmployees';
 import { useRouter } from 'next/navigation';
+import { TodayOverviewPanel } from '@/features/analytics/components/TodayOverviewPanel';  // P1.5
 import {
     Users, UserCheck, Clock, Loader2,
     ArrowRight, Building2, UserCircle2
@@ -51,7 +52,7 @@ export default function DashboardPage() {
     }
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
             {/* Welcome Section */}
             <div>
                 <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#ffffff', margin: '0 0 8px 0', letterSpacing: '-0.5px' }}>
@@ -61,6 +62,9 @@ export default function DashboardPage() {
                     Manage your team and track system performance in real-time.
                 </p>
             </div>
+
+            {/* P1.5 — Today's Overview + Anomaly Alerts */}
+            <TodayOverviewPanel />
 
             {/* Stat Cards Grid */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>

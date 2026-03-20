@@ -7,6 +7,7 @@ import { Paperclip, Upload, Loader2, AlertCircle, FileText, Image, Archive } fro
 
 interface TaskAttachmentsProps {
     taskId: string;
+    onAttachmentsLoaded?: (attachments: TaskAttachment[]) => void;
 }
 
 function fileSizeLabel(bytes: number): string {
@@ -21,7 +22,7 @@ function FileIcon({ mime }: { mime: string }) {
     return <Archive size={16} color="#a1a1aa" />;
 }
 
-export const TaskAttachments: React.FC<TaskAttachmentsProps> = ({ taskId }) => {
+export const TaskAttachments: React.FC<TaskAttachmentsProps> = ({ taskId, onAttachmentsLoaded }) => {
     const [attachments, setAttachments] = useState<TaskAttachment[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
@@ -34,6 +35,7 @@ export const TaskAttachments: React.FC<TaskAttachmentsProps> = ({ taskId }) => {
         try {
             const data = await taskService.getAttachments(taskId);
             setAttachments(data);
+            onAttachmentsLoaded?.(data);
         } catch (err: any) {
             setError(err.response?.data?.message || 'Failed to load attachments');
         } finally {

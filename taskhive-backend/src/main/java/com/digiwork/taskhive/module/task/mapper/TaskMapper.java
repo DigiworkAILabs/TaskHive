@@ -39,6 +39,12 @@ public class TaskMapper {
                 .updatedAt(task.getUpdatedAt())
                 .createdBy(task.getCreatedBy() != null ? task.getCreatedBy().toString() : null)
                 .updatedBy(task.getUpdatedBy() != null ? task.getUpdatedBy().toString() : null)
+                // Phase 1 v2.5
+                .isLate(task.getIsLate())
+                .lateByMinutes(task.getLateByMinutes())
+                .submittedAt(task.getSubmittedAt())
+                .proofRequired(task.getProofRequired())
+                .approvalRequired(task.getApprovalRequired())
                 .build();
     }
 
@@ -52,6 +58,7 @@ public class TaskMapper {
                 .dueDate(task.getDueDate())
                 .tags(task.getTags() != null ? Arrays.asList(task.getTags()) : null)
                 .createdAt(task.getCreatedAt())
+                .isLate(task.getIsLate())   // Phase 1 v2.5
                 .build();
     }
 
@@ -76,6 +83,10 @@ public class TaskMapper {
                 .fileUrl(storageService.getUrl(attachment.getFileUrl()))
                 .fileSize(attachment.getFileSize())
                 .mimeType(attachment.getMimeType())
+                .attachmentPurpose(                                    // P1.1 fix
+                        attachment.getAttachmentPurpose() != null
+                                ? attachment.getAttachmentPurpose().name()
+                                : "GENERAL")
                 .createdAt(attachment.getCreatedAt())
                 .build();
     }

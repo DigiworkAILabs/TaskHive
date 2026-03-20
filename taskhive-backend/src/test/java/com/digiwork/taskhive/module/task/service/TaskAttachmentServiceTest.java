@@ -112,7 +112,7 @@ class TaskAttachmentServiceTest {
                         when(attachmentRepository.save(any(TaskAttachment.class))).thenReturn(saved);
                         when(taskMapper.toTaskAttachmentResponse(saved)).thenReturn(expectedResponse);
 
-                        TaskAttachmentResponse result = taskAttachmentService.uploadAttachment(taskId, file);
+                        TaskAttachmentResponse result = taskAttachmentService.uploadAttachment(taskId, file, "GENERAL");
 
                         assertThat(result).isEqualTo(expectedResponse);
                 }
@@ -133,7 +133,7 @@ class TaskAttachmentServiceTest {
                         when(employeeRepository.findByUserIdAndIsDeletedFalse(currentUserId))
                                         .thenReturn(Optional.of(otherEmployee));
 
-                        assertThatThrownBy(() -> taskAttachmentService.uploadAttachment(taskId, file))
+                        assertThatThrownBy(() -> taskAttachmentService.uploadAttachment(taskId, file, "GENERAL"))
                                         .isInstanceOf(TaskAccessDeniedException.class);
                 }
 
@@ -147,7 +147,7 @@ class TaskAttachmentServiceTest {
 
                         when(taskRepository.findByIdAndIsDeletedFalse(taskId)).thenReturn(Optional.empty());
 
-                        assertThatThrownBy(() -> taskAttachmentService.uploadAttachment(taskId, file))
+                        assertThatThrownBy(() -> taskAttachmentService.uploadAttachment(taskId, file, "GENERAL"))
                                         .isInstanceOf(TaskNotFoundException.class);
                 }
         }
@@ -195,7 +195,7 @@ class TaskAttachmentServiceTest {
 
                         when(taskRepository.findByIdAndIsDeletedFalse(taskId)).thenReturn(Optional.of(testTask));
 
-                        assertThatThrownBy(() -> taskAttachmentService.uploadAttachment(taskId, file))
+                        assertThatThrownBy(() -> taskAttachmentService.uploadAttachment(taskId, file, "GENERAL"))
                                         .isInstanceOf(BusinessException.class)
                                         .hasMessageContaining("File is required");
                 }
@@ -209,7 +209,7 @@ class TaskAttachmentServiceTest {
 
                         when(taskRepository.findByIdAndIsDeletedFalse(taskId)).thenReturn(Optional.of(testTask));
 
-                        assertThatThrownBy(() -> taskAttachmentService.uploadAttachment(taskId, file))
+                        assertThatThrownBy(() -> taskAttachmentService.uploadAttachment(taskId, file, "GENERAL"))
                                         .isInstanceOf(BusinessException.class)
                                         .hasMessageContaining("20MB");
                 }
@@ -224,7 +224,7 @@ class TaskAttachmentServiceTest {
 
                         when(taskRepository.findByIdAndIsDeletedFalse(taskId)).thenReturn(Optional.of(testTask));
 
-                        assertThatThrownBy(() -> taskAttachmentService.uploadAttachment(taskId, file))
+                        assertThatThrownBy(() -> taskAttachmentService.uploadAttachment(taskId, file, "GENERAL"))
                                         .isInstanceOf(BusinessException.class)
                                         .hasMessageContaining("File type not allowed");
                 }

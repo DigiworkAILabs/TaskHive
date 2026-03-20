@@ -30,4 +30,10 @@ public class UpdateTaskRequest {
     private BigDecimal estimatedHours;
 
     private List<String> tags;
+
+    /** P1.1 — null = no change, true/false = explicitly set proof requirement */
+    private Boolean proofRequired;
+
+    /** P1.2 — null = no change, true/false = explicitly set approval requirement */
+    private Boolean approvalRequired;
 }

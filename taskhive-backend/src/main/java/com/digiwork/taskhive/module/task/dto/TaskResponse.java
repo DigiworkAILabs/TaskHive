@@ -30,4 +30,11 @@ public class TaskResponse {
     private LocalDateTime updatedAt;
     private String createdBy;
     private String updatedBy;
+
+    // Phase 1 v2.5 fields
+    private Boolean isLate;
+    private Integer lateByMinutes;
+    private LocalDateTime submittedAt;
+    private Boolean proofRequired;
+    private Boolean approvalRequired;
 }

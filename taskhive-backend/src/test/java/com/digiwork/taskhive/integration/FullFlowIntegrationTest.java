@@ -6,6 +6,7 @@ import com.digiwork.taskhive.module.analytics.repository.DailyMetricsRepository;
 import com.digiwork.taskhive.module.analytics.repository.EmployeePerformanceCacheRepository;
 import com.digiwork.taskhive.module.analytics.scheduler.MetricsCalculationScheduler;
 import com.digiwork.taskhive.module.analytics.service.AnalyticsService;
+import com.digiwork.taskhive.module.analytics.service.AnomalyDetectionService;
 import com.digiwork.taskhive.module.analytics.service.MetricsAggregatorService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
@@ -44,6 +45,9 @@ class FullFlowIntegrationTest {
     @Mock
     private EntityManager entityManager;
 
+    @Mock
+    private AnomalyDetectionService anomalyDetectionService;
+
     private MetricsAggregatorService metricsAggregatorService;
     private AnalyticsService analyticsService;
 
@@ -66,7 +70,7 @@ class FullFlowIntegrationTest {
     @DisplayName("scheduler should safely handle exceptions without crashing")
     void schedulerShouldHandleExceptionsSafely() {
         // given — MetricsCalculationScheduler wraps calls in try/catch
-        MetricsCalculationScheduler scheduler = new MetricsCalculationScheduler(metricsAggregatorService);
+        MetricsCalculationScheduler scheduler = new MetricsCalculationScheduler(metricsAggregatorService, anomalyDetectionService);
 
         // Make aggregator throw an exception via EntityManager
         Query mockQuery = mock(Query.class);

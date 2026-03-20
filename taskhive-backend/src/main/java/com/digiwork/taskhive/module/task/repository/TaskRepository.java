@@ -49,6 +49,16 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
         Page<Task> findByAssignedToAndIsDeletedFalse(UUID assignedTo, Pageable pageable);
 
         @Query("SELECT t FROM Task t WHERE t.isDeleted = false " +
+                        "AND t.assignedTo = :assignedTo " +
+                        "AND (:status IS NULL OR t.status = :status) " +
+                        "AND (:priority IS NULL OR t.priority = :priority)")
+        Page<Task> findMyTasksWithFilters(
+                        @Param("assignedTo") UUID assignedTo,
+                        @Param("status") String status,
+                        @Param("priority") String priority,
+                        Pageable pageable);
+
+        @Query("SELECT t FROM Task t WHERE t.isDeleted = false " +
                         "AND t.dueDate < :now " +
                         "AND t.status NOT IN ('DONE', 'CANCELLED')")
         List<Task> findOverdueTasks(@Param("now") LocalDateTime now);
@@ -71,4 +81,13 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
                                         "OR LOWER(COALESCE(t.description, '')) LIKE LOWER(CONCAT('%', :query, '%')))", nativeQuery = true)
         Page<Task> searchTasksExtended(@Param("query") String query, @Param("assignedTo") UUID assignedTo,
                         Pageable pageable);
+
+        // P1.4 — Late task queries
+        List<Task> findByIsLateTrue();
+
+        @Query("SELECT t FROM Task t WHERE t.isDeleted = false " +
+                        "AND t.isLate = false " +
+                        "AND t.dueDate < :now " +
+                        "AND t.status IN ('IN_PROGRESS', 'IN_REVIEW')")
+        List<Task> findLateInProgressTasks(@Param("now") LocalDateTime now);
 }

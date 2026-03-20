@@ -22,7 +22,7 @@ const prefSchema = z.object({
 
 type PrefFormValues = z.infer<typeof prefSchema>;
 
-/* ─── Toggle switch component ─────────────────────────────────── */
+/* ─── Toggle switch — identical to MlFeatureToggle pill ───────── */
 function Toggle({
     checked,
     onChange,
@@ -33,26 +33,36 @@ function Toggle({
     label: string;
 }) {
     return (
-        <button
-            type="button"
+        <div
             role="switch"
             aria-checked={checked}
             aria-label={label}
             onClick={() => onChange(!checked)}
-            className={[
-                'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full',
-                'transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500',
-                checked ? 'bg-orange-500' : 'bg-zinc-700',
-            ].join(' ')}
+            style={{
+                width: '42px',
+                height: '24px',
+                borderRadius: '12px',
+                flexShrink: 0,
+                backgroundColor: checked ? '#f97316' : '#3f3f46',
+                position: 'relative',
+                cursor: 'pointer',
+                transition: 'background-color 0.2s',
+            }}
         >
-            <span
-                className={[
-                    'inline-block h-4 w-4 transform rounded-full bg-white shadow-sm',
-                    'transition-transform duration-200',
-                    checked ? 'translate-x-6' : 'translate-x-1',
-                ].join(' ')}
+            <div
+                style={{
+                    width: '18px',
+                    height: '18px',
+                    borderRadius: '50%',
+                    backgroundColor: '#ffffff',
+                    position: 'absolute',
+                    top: '3px',
+                    transition: 'left 0.2s',
+                    left: checked ? '21px' : '3px',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+                }}
             />
-        </button>
+        </div>
     );
 }
 

@@ -4,6 +4,7 @@ import com.digiwork.taskhive.common.dto.ApiResponse;
 import com.digiwork.taskhive.module.analytics.dto.*;
 import com.digiwork.taskhive.module.analytics.model.FileMetadata;
 import com.digiwork.taskhive.module.analytics.service.AnalyticsService;
+import com.digiwork.taskhive.module.analytics.service.AnomalyDetectionService;
 import com.digiwork.taskhive.module.analytics.service.ReportService;
 import com.digiwork.taskhive.module.auth.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ public class AnalyticsController {
 
     private final AnalyticsService analyticsService;
     private final ReportService reportService;
+    private final AnomalyDetectionService anomalyDetectionService;
 
     // ─── GET /api/v1/analytics/dashboard/admin ───────────────────────────────
 
@@ -113,5 +115,50 @@ public class AnalyticsController {
                         "attachment; filename=\"" + metadata.getFileName() + "\"")
                 .contentType(MediaType.parseMediaType("text/csv"))
                 .body(resource);
+    }
+
+    // ─── P1.5: GET /api/v1/analytics/dashboard/today ─────────────────────────
+
+    @GetMapping("/dashboard/today")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<TodayOverviewResponse>> getTodayOverview() {
+        int activeAnomalyCount = anomalyDetectionService.getActiveAlerts().size();
+        TodayOverviewResponse overview = analyticsService.getTodayOverview(activeAnomalyCount);
+        return ResponseEntity.ok(ApiResponse.success("Today's overview retrieved successfully", overview));
+    }
+
+    // ─── P1.5: GET /api/v1/analytics/anomalies ───────────────────────────────
+
+    @GetMapping("/anomalies")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<List<AnomalyAlertResponse>>> getAnomalies() {
+        return ResponseEntity.ok(ApiResponse.success("Active anomaly alerts retrieved",
+                anomalyDetectionService.getActiveAlerts()));
+    }
+
+    // ─── P1.5: GET /api/v1/analytics/tasks/missed ────────────────────────────
+
+    @GetMapping("/tasks/missed")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<List<com.digiwork.taskhive.module.task.dto.TaskListResponse>>> getMissedTasks(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        org.springframework.data.domain.Pageable pageable =
+                org.springframework.data.domain.PageRequest.of(page, size);
+        return ResponseEntity.ok(ApiResponse.success("Missed tasks retrieved",
+                analyticsService.getMissedTasks(pageable)));
+    }
+
+    // ─── P1.5: GET /api/v1/analytics/tasks/late ──────────────────────────────
+
+    @GetMapping("/tasks/late")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<List<com.digiwork.taskhive.module.task.dto.TaskListResponse>>> getLatePatterns(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        org.springframework.data.domain.Pageable pageable =
+                org.springframework.data.domain.PageRequest.of(page, size);
+        return ResponseEntity.ok(ApiResponse.success("Late submission patterns retrieved",
+                analyticsService.getLatePatterns(pageable)));
     }
 }

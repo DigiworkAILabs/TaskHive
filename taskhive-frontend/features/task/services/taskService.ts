@@ -87,6 +87,17 @@ export const taskService = {
         return response.data.data;
     },
 
+    // POST /tasks/{id}/attachments?purpose=PROOF — Upload attachment with purpose (P1.1)
+    uploadAttachmentWithPurpose: async (id: string, file: File, purpose: import('../types/task.types').AttachmentPurpose): Promise<TaskAttachment> => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await apiClient.post(ENDPOINTS.TASKS.ATTACHMENTS(id), formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+            params: { purpose },
+        });
+        return response.data.data;
+    },
+
     // GET /tasks/{id}/attachments — List attachments
     getAttachments: async (id: string): Promise<TaskAttachment[]> => {
         const response = await apiClient.get(ENDPOINTS.TASKS.ATTACHMENTS(id));
@@ -107,6 +118,8 @@ export const taskService = {
         };
         if (filters?.status) params.status = filters.status;
         if (filters?.priority) params.priority = filters.priority;
+        if (filters?.sortBy) params.sortBy = filters.sortBy;
+        if (filters?.sortDir) params.sortDir = filters.sortDir;
         const response = await apiClient.get(ENDPOINTS.TASKS.MY_TASKS, { params });
         return response.data.data;
     },
@@ -124,4 +137,23 @@ export const taskService = {
         });
         return response.data.data;
     },
+
+    // PATCH /tasks/{id}/approve — Approve task (ADMIN only)
+    approveTask: async (id: string): Promise<Task> => {
+        const response = await apiClient.patch(ENDPOINTS.TASKS.APPROVE(id));
+        return response.data.data;
+    },
+
+    // PATCH /tasks/{id}/reject — Reject task with reason (ADMIN only)
+    rejectTask: async (id: string, reason: string): Promise<Task> => {
+        const response = await apiClient.patch(ENDPOINTS.TASKS.REJECT(id), { reason });
+        return response.data.data;
+    },
+
+    // GET /tasks/late — Late tasks (ADMIN only)
+    getLateTasks: async (): Promise<TaskListItem[]> => {
+        const response = await apiClient.get(ENDPOINTS.TASKS.LATE);
+        return response.data.data;
+    },
 };
+

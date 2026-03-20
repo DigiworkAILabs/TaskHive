@@ -14,4 +14,6 @@ public class UpdateTaskStatusRequest {
     private String status;
 
     private String comment;
+
+    private String reason;
 }

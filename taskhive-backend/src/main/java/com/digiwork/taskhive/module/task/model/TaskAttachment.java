@@ -1,5 +1,6 @@
 package com.digiwork.taskhive.module.task.model;
 
+import com.digiwork.taskhive.module.task.enums.AttachmentPurpose;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -36,6 +37,11 @@ public class TaskAttachment {
 
     @Column(name = "mime_type", nullable = false, length = 100)
     private String mimeType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "attachment_purpose", length = 50)
+    @Builder.Default
+    private AttachmentPurpose attachmentPurpose = AttachmentPurpose.GENERAL;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
