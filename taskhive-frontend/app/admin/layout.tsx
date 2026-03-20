@@ -266,7 +266,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                             : pathname.includes('/audit')
                                                 ? 'Audit & Compliance'
                                                 : pathname.includes('/tasks')
-                                                    ? 'Task Management'
+                                                    ? 'Manage Task'
                                                     : 'Dashboard'}
                         </h2>
                     </div>
