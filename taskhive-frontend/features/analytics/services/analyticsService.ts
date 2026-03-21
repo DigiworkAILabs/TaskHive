@@ -83,3 +83,18 @@ export async function downloadReport(reportId: string): Promise<void> {
     link.remove();
     window.URL.revokeObjectURL(url);
 }
+
+// ─── P1.5: Today's Overview ──────────────────────────────────────────────────
+
+export async function fetchTodayOverview(): Promise<import('../../task/types/task.types').TodayOverview> {
+    const response = await apiClient.get(ENDPOINTS.ANALYTICS.DASHBOARD_TODAY);
+    return response.data.data;
+}
+
+// ─── P1.5: Anomaly Alerts ────────────────────────────────────────────────────
+
+export async function fetchAnomalies(): Promise<import('../../task/types/task.types').AnomalyAlert[]> {
+    const response = await apiClient.get(ENDPOINTS.ANALYTICS.ANOMALIES);
+    return response.data.data;
+}
+

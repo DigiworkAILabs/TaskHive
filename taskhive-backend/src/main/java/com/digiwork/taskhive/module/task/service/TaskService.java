@@ -6,14 +6,17 @@ import com.digiwork.taskhive.module.auth.security.SecurityUtils;
 import com.digiwork.taskhive.module.employee.model.Employee;
 import com.digiwork.taskhive.module.employee.repository.EmployeeRepository;
 import com.digiwork.taskhive.module.task.dto.*;
+import com.digiwork.taskhive.module.task.enums.AttachmentPurpose;
 import com.digiwork.taskhive.module.task.enums.TaskPriority;
 import com.digiwork.taskhive.module.task.enums.TaskStatus;
 import com.digiwork.taskhive.module.task.event.*;
+import com.digiwork.taskhive.module.task.exception.ProofEnforcementException;
 import com.digiwork.taskhive.module.task.exception.TaskAccessDeniedException;
 import com.digiwork.taskhive.module.task.exception.TaskNotFoundException;
 import com.digiwork.taskhive.module.task.mapper.TaskMapper;
 import com.digiwork.taskhive.module.task.model.Task;
 import com.digiwork.taskhive.module.task.model.TaskStatusHistory;
+import com.digiwork.taskhive.module.task.repository.TaskAttachmentRepository;
 import com.digiwork.taskhive.module.task.repository.TaskRepository;
 import com.digiwork.taskhive.module.task.repository.TaskStatusHistoryRepository;
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,6 +31,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -38,6 +43,7 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final TaskStatusHistoryRepository statusHistoryRepository;
     private final EmployeeRepository employeeRepository;
+    private final TaskAttachmentRepository attachmentRepository;
     private final TaskMapper taskMapper;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -78,6 +84,8 @@ public class TaskService {
                 .dueDate(request.getDueDate())
                 .estimatedHours(request.getEstimatedHours())
                 .tags(request.getTags() != null ? request.getTags().toArray(new String[0]) : null)
+                .proofRequired(request.isProofRequired())       // P1.1
+                .approvalRequired(request.isApprovalRequired()) // P1.2
                 .createdBy(currentUserId)
                 .updatedBy(currentUserId)
                 .build();
@@ -169,7 +177,6 @@ public class TaskService {
 
         UUID oldAssignee = task.getAssignedTo();
 
-        // Update fields if provided
         if (request.getTitle() != null)
             task.setTitle(request.getTitle());
         if (request.getDescription() != null)
@@ -188,6 +195,10 @@ public class TaskService {
             task.setEstimatedHours(request.getEstimatedHours());
         if (request.getTags() != null)
             task.setTags(request.getTags().toArray(new String[0]));
+        if (request.getProofRequired() != null)          // P1.1
+            task.setProofRequired(request.getProofRequired());
+        if (request.getApprovalRequired() != null)       // P1.2
+            task.setApprovalRequired(request.getApprovalRequired());
 
         if (request.getAssignedTo() != null) {
             Employee newAssignee = employeeRepository.findByIdAndIsDeletedFalse(request.getAssignedTo())
@@ -201,17 +212,14 @@ public class TaskService {
         task.setUpdatedBy(currentUserId);
         task = taskRepository.save(task);
 
-        // Publish events
         eventPublisher.publishEvent(new TaskUpdatedEvent(this, task.getId(), currentUserId));
 
-        // If assignee changed, publish reassignment event
         if (request.getAssignedTo() != null && !request.getAssignedTo().equals(oldAssignee)) {
             eventPublisher.publishEvent(new TaskAssignedEvent(
                     this, task.getId(), request.getAssignedTo(), task.getTitle(), currentUserId));
         }
 
         log.info("Task updated: {}", taskId);
-
         return taskMapper.toTaskResponse(task);
     }
 
@@ -248,7 +256,7 @@ public class TaskService {
             }
         }
 
-        // Validate status transition
+        // Validate current status
         TaskStatus currentStatus;
         try {
             currentStatus = TaskStatus.valueOf(task.getStatus());
@@ -256,58 +264,152 @@ public class TaskService {
             throw new BusinessException("Current task status is invalid: " + task.getStatus());
         }
 
+        // Validate requested status
         TaskStatus newStatus;
         try {
             newStatus = TaskStatus.valueOf(request.getStatus());
         } catch (IllegalArgumentException e) {
             throw new BusinessException("Invalid status: " + request.getStatus()
-                    + ". Allowed values: TODO, IN_PROGRESS, IN_REVIEW, DONE, CANCELLED");
+                    + ". Allowed values: TODO, IN_PROGRESS, IN_REVIEW, PENDING_APPROVAL, DONE, CANCELLED");
         }
 
         if (!currentStatus.canTransitionTo(newStatus)) {
             throw new BusinessException("Invalid status transition from " + currentStatus + " to " + newStatus);
         }
 
-        String oldStatus = task.getStatus();
-        task.setStatus(newStatus.name());
+        // ── P1.3: Mandatory cancel reason ────────────────────────────────────
+        validateCancelReason(newStatus, request.getReason());
 
-        // Set completedAt when transitioning to DONE
-        if (newStatus == TaskStatus.DONE) {
+        // ── P1.1: Proof enforcement ───────────────────────────────────────────
+        enforceProofIfRequired(task, newStatus);
+
+        // ── P1.4: Late tracking + submittedAt ────────────────────────────────
+        handleSubmission(task, newStatus);
+
+        // ── P1.2: Auto-advance to PENDING_APPROVAL when approval required ─────
+        TaskStatus actualStatus = resolveActualStatus(task, newStatus);
+
+        String oldStatus = task.getStatus();
+        task.setStatus(actualStatus.name());
+
+        if (actualStatus == TaskStatus.DONE) {
             task.setCompletedAt(LocalDateTime.now());
         }
 
         task.setUpdatedBy(currentUserId);
         task = taskRepository.save(task);
 
-        // Record status history
+        // Record status history — use reason as comment for cancellations
+        String historyComment = (newStatus == TaskStatus.CANCELLED && request.getReason() != null)
+                ? request.getReason()
+                : request.getComment();
         String ipAddress = httpRequest != null ? httpRequest.getRemoteAddr() : null;
-        recordStatusChange(task.getId(), oldStatus, newStatus.name(), currentUserId, request.getComment(), ipAddress);
+        recordStatusChange(task.getId(), oldStatus, actualStatus.name(), currentUserId, historyComment, ipAddress);
 
-        // Publish event
         eventPublisher.publishEvent(new TaskStatusChangedEvent(
-                this, task.getId(), oldStatus, newStatus.name(), currentUserId));
+                this, task.getId(), oldStatus, actualStatus.name(), currentUserId));
 
-        log.info("Task {} status changed: {} → {}", taskId, oldStatus, newStatus);
-
+        log.info("Task {} status changed: {} → {}", taskId, oldStatus, actualStatus);
         return taskMapper.toTaskResponse(task);
+    }
+
+    // ─── APPROVE TASK (ADMIN) ─────────────────────────────────────────────────
+
+    @Transactional
+    public TaskResponse approveTask(UUID taskId, UUID adminUserId) {
+        Task task = findTaskOrThrow(taskId);
+
+        if (!TaskStatus.PENDING_APPROVAL.name().equals(task.getStatus())) {
+            throw new BusinessException("TASK_3002", "Task must be in PENDING_APPROVAL status to approve");
+        }
+
+        String oldStatus = task.getStatus();
+        task.setStatus(TaskStatus.DONE.name());
+        task.setCompletedAt(LocalDateTime.now());
+        task.setUpdatedBy(adminUserId);
+        task = taskRepository.save(task);
+
+        recordStatusChange(task.getId(), oldStatus, TaskStatus.DONE.name(), adminUserId,
+                "Task approved by admin", null);
+
+        eventPublisher.publishEvent(new TaskApprovedEvent(
+                this, task.getId(), task.getAssignedTo(), adminUserId, task.getTitle()));
+        eventPublisher.publishEvent(new TaskStatusChangedEvent(
+                this, task.getId(), oldStatus, TaskStatus.DONE.name(), adminUserId));
+
+        log.info("Task {} approved by admin {}", taskId, adminUserId);
+        return taskMapper.toTaskResponse(task);
+    }
+
+    // ─── REJECT TASK (ADMIN) ──────────────────────────────────────────────────
+
+    @Transactional
+    public TaskResponse rejectTask(UUID taskId, UUID adminUserId, String rejectionReason) {
+        if (rejectionReason == null || rejectionReason.isBlank()) {
+            throw new BusinessException("TASK_3005", "Rejection reason is mandatory");
+        }
+
+        Task task = findTaskOrThrow(taskId);
+
+        if (!TaskStatus.PENDING_APPROVAL.name().equals(task.getStatus())) {
+            throw new BusinessException("TASK_3002", "Task must be in PENDING_APPROVAL status to reject");
+        }
+
+        String oldStatus = task.getStatus();
+        task.setStatus(TaskStatus.IN_REVIEW.name());
+        task.setUpdatedBy(adminUserId);
+        task = taskRepository.save(task);
+
+        recordStatusChange(task.getId(), oldStatus, TaskStatus.IN_REVIEW.name(), adminUserId,
+                rejectionReason, null);
+
+        eventPublisher.publishEvent(new TaskRejectedEvent(
+                this, task.getId(), task.getAssignedTo(), adminUserId, task.getTitle(), rejectionReason));
+        eventPublisher.publishEvent(new TaskStatusChangedEvent(
+                this, task.getId(), oldStatus, TaskStatus.IN_REVIEW.name(), adminUserId));
+
+        log.info("Task {} rejected by admin {}: {}", taskId, adminUserId, rejectionReason);
+        return taskMapper.toTaskResponse(task);
+    }
+
+    // ─── LATE TASKS (ADMIN) ───────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public List<TaskListResponse> getLateTasks() {
+        return taskRepository.findByIsLateTrue().stream()
+                .map(taskMapper::toTaskListResponse)
+                .toList();
     }
 
     // ─── MY TASKS (EMPLOYEE) ──────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
-    public PageResponse<TaskListResponse> getMyTasks(int page, int size, String sortBy, String sortDir) {
+    public PageResponse<TaskListResponse> getMyTasks(
+            int page, int size, String sortBy, String sortDir,
+            String status, String priority) {
         UUID currentUserId = SecurityUtils.getCurrentUserId();
 
-        // Find employee record for current user
         Employee employee = employeeRepository.findByUserIdAndIsDeletedFalse(currentUserId)
                 .orElseThrow(() -> new BusinessException("Employee record not found for current user"));
 
+        // Map frontend camelCase field names to entity field names (Spring Data JPA uses entity fields)
+        String entityField = switch (sortBy != null ? sortBy : "dueDate") {
+            case "dueDate" -> "dueDate";
+            case "createdAt" -> "createdAt";
+            case "updatedAt" -> "updatedAt";
+            case "status" -> "status";
+            case "priority" -> "priority";
+            case "title" -> "title";
+            default -> "dueDate";
+        };
+
         Sort sort = Sort.by(
                 "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC,
-                sortBy != null ? sortBy : "dueDate");
+                entityField);
 
         Pageable pageable = PageRequest.of(page, size, sort);
-        Page<Task> taskPage = taskRepository.findByAssignedToAndIsDeletedFalse(employee.getId(), pageable);
+        Page<Task> taskPage = taskRepository.findMyTasksWithFilters(
+                employee.getId(), status, priority, pageable);
 
         return PageResponse.<TaskListResponse>builder()
                 .content(taskPage.getContent().stream()
@@ -340,7 +442,65 @@ public class TaskService {
                 .build();
     }
 
-    // ─── HELPERS ──────────────────────────────────────────────────────────────
+    // ─── P1 PRIVATE HELPERS ───────────────────────────────────────────────────
+
+    /**
+     * P1.3 — Mandatory cancel reason. Error code TASK_3004.
+     */
+    private void validateCancelReason(TaskStatus newStatus, String reason) {
+        if (newStatus == TaskStatus.CANCELLED && (reason == null || reason.isBlank())) {
+            throw new BusinessException("TASK_3004", "Reason is mandatory when cancelling a task");
+        }
+    }
+
+    /**
+     * P1.1 — Block IN_REVIEW (or DONE as safety net) if proof_required = true
+     * and no PROOF attachment exists. Error code TASK_3003.
+     */
+    private void enforceProofIfRequired(Task task, TaskStatus newStatus) {
+        boolean isSubmission = (newStatus == TaskStatus.IN_REVIEW || newStatus == TaskStatus.DONE);
+        if (isSubmission && Boolean.TRUE.equals(task.getProofRequired())) {
+            boolean hasProof = attachmentRepository
+                    .existsByTaskIdAndAttachmentPurpose(task.getId(), AttachmentPurpose.PROOF);
+            if (!hasProof) {
+                throw new ProofEnforcementException();
+            }
+        }
+    }
+
+    /**
+     * P1.4 — Set submittedAt and late flag when moving to IN_REVIEW.
+     * is_late is immutable once set.
+     */
+    private void handleSubmission(Task task, TaskStatus newStatus) {
+        if (newStatus == TaskStatus.IN_REVIEW) {
+            LocalDateTime now = LocalDateTime.now();
+            task.setSubmittedAt(now);
+
+            // Only set once — immutable after first flag
+            if (!Boolean.TRUE.equals(task.getIsLate()) && task.getDueDate() != null) {
+                if (now.isAfter(task.getDueDate())) {
+                    task.setIsLate(true);
+                    long minutes = ChronoUnit.MINUTES.between(task.getDueDate(), now);
+                    task.setLateByMinutes((int) minutes);
+                }
+            }
+        }
+    }
+
+    /**
+     * P1.2 — Auto-advance to PENDING_APPROVAL when approval_required = true.
+     * Intercepts IN_REVIEW (normal path) and DONE (safety net for API bypass).
+     */
+    private TaskStatus resolveActualStatus(Task task, TaskStatus requestedStatus) {
+        if (Boolean.TRUE.equals(task.getApprovalRequired()) &&
+                (requestedStatus == TaskStatus.IN_REVIEW || requestedStatus == TaskStatus.DONE)) {
+            return TaskStatus.PENDING_APPROVAL;
+        }
+        return requestedStatus;
+    }
+
+    // ─── SHARED HELPERS ───────────────────────────────────────────────────────
 
     private Task findTaskOrThrow(UUID taskId) {
         return taskRepository.findByIdAndIsDeletedFalse(taskId)

@@ -67,8 +67,10 @@ public class TaskController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "dueDate") String sortBy,
-            @RequestParam(defaultValue = "asc") String sortDir) {
-        PageResponse<TaskListResponse> tasks = taskService.getMyTasks(page, size, sortBy, sortDir);
+            @RequestParam(defaultValue = "asc") String sortDir,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String priority) {
+        PageResponse<TaskListResponse> tasks = taskService.getMyTasks(page, size, sortBy, sortDir, status, priority);
         return ResponseEntity.ok(ApiResponse.success("My tasks retrieved successfully", tasks));
     }
 
@@ -143,4 +145,36 @@ public class TaskController {
         TaskResponse task = taskService.updateTaskStatus(id, request, httpRequest);
         return ResponseEntity.ok(ApiResponse.success("Task status updated successfully", task));
     }
+
+    // ─── ADMIN: Approve Task ──────────────────────────────────────────────────
+
+    @PatchMapping("/{id}/approve")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<TaskResponse>> approveTask(@PathVariable UUID id) {
+        UUID adminUserId = SecurityUtils.getCurrentUserId();
+        TaskResponse task = taskService.approveTask(id, adminUserId);
+        return ResponseEntity.ok(ApiResponse.success("Task approved successfully", task));
+    }
+
+    // ─── ADMIN: Reject Task ───────────────────────────────────────────────────
+
+    @PatchMapping("/{id}/reject")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<TaskResponse>> rejectTask(
+            @PathVariable UUID id,
+            @RequestBody TaskApprovalRequest request) {
+        UUID adminUserId = SecurityUtils.getCurrentUserId();
+        TaskResponse task = taskService.rejectTask(id, adminUserId, request.getReason());
+        return ResponseEntity.ok(ApiResponse.success("Task rejected and returned for revision", task));
+    }
+
+    // ─── ADMIN: Late Tasks ────────────────────────────────────────────────────
+
+    @GetMapping("/late")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<java.util.List<TaskListResponse>>> getLateTasks() {
+        return ResponseEntity.ok(ApiResponse.success("Late tasks retrieved successfully",
+                taskService.getLateTasks()));
+    }
 }
+

@@ -26,8 +26,9 @@ public class TaskAttachmentController {
     @PostMapping(value = "/attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<TaskAttachmentResponse>> uploadAttachment(
             @PathVariable UUID taskId,
-            @RequestParam("file") MultipartFile file) {
-        TaskAttachmentResponse attachment = attachmentService.uploadAttachment(taskId, file);
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "purpose", required = false, defaultValue = "GENERAL") String purpose) {
+        TaskAttachmentResponse attachment = attachmentService.uploadAttachment(taskId, file, purpose);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Attachment uploaded successfully", attachment));
     }

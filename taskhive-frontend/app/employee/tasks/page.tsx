@@ -5,8 +5,47 @@ import { useMyTasks } from '@/features/task/hooks/useMyTasks';
 import { TaskCard } from '@/features/task/components/TaskCard';
 import { taskService } from '@/features/task/services/taskService';
 import { useRouter } from 'next/navigation';
-import { Loader2, ClipboardList, AlertCircle, Filter, Search, X } from 'lucide-react';
+import { Loader2, ClipboardList, AlertCircle, Filter, Search, X, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import { TaskStatus, TaskPriority, TaskListItem } from '@/features/task/types/task.types';
+
+// ── Sort column header ─────────────────────────────────────────────────────────
+
+interface SortHeaderProps {
+    label: string;
+    field: string;
+    currentSortBy: string;
+    currentSortDir: 'asc' | 'desc';
+    onSort: (field: string) => void;
+}
+
+function SortHeader({ label, field, currentSortBy, currentSortDir, onSort }: SortHeaderProps) {
+    const isActive = currentSortBy === field;
+    return (
+        <th
+            onClick={() => onSort(field)}
+            style={{
+                padding: '14px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 600,
+                color: isActive ? '#f97316' : '#71717a', textTransform: 'uppercase',
+                cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap',
+                transition: 'color 0.15s',
+            }}
+            onMouseEnter={(e) => !isActive && (e.currentTarget.style.color = '#d4d4d8')}
+            onMouseLeave={(e) => !isActive && (e.currentTarget.style.color = '#71717a')}
+        >
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                {label}
+                {isActive
+                    ? currentSortDir === 'asc'
+                        ? <ChevronUp size={12} style={{ color: '#f97316' }} />
+                        : <ChevronDown size={12} style={{ color: '#f97316' }} />
+                    : <ChevronsUpDown size={12} style={{ opacity: 0.4 }} />
+                }
+            </span>
+        </th>
+    );
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function EmployeeTasksPage() {
     const { tasks: myTasks, pagination, filters, isLoading: myTasksLoading, error: myTasksError, updateFilters } = useMyTasks();
@@ -18,12 +57,22 @@ export default function EmployeeTasksPage() {
     const [searchLoading, setSearchLoading] = useState(false);
     const [searchError, setSearchError] = useState<string | null>(null);
     const searchRef = useRef(search);
-    searchRef.current = search;   // always up-to-date ref avoids stale closure
+    searchRef.current = search;
 
     const isSearchActive = searchResults !== null;
     const tasks = isSearchActive ? searchResults : myTasks;
     const isLoading = isSearchActive ? searchLoading : myTasksLoading;
     const error = isSearchActive ? searchError : myTasksError;
+
+    // Active sort state (read from filters for accuracy)
+    const sortBy = (filters.sortBy as string) || 'dueDate';
+    const sortDir = (filters.sortDir as 'asc' | 'desc') || 'asc';
+
+    const handleSort = (field: string) => {
+        if (isSearchActive) return; // sorting not applicable to local search results
+        const newDir: 'asc' | 'desc' = sortBy === field && sortDir === 'asc' ? 'desc' : 'asc';
+        updateFilters({ sortBy: field, sortDir: newDir });
+    };
 
     const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
         const val = e.target.value;
@@ -110,7 +159,7 @@ export default function EmployeeTasksPage() {
                     )}
                 </div>
 
-                {/* Status Filter — hidden when search is active */}
+                {/* Status + Priority Filters — hidden when search is active */}
                 {!isSearchActive && (
                     <>
                         <select
@@ -181,9 +230,15 @@ export default function EmployeeTasksPage() {
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                             <thead>
                                 <tr style={{ borderBottom: '1px solid #1f1f1f' }}>
-                                    {['Title', 'Priority', 'Status', 'Due Date', ''].map(h => (
-                                        <th key={h} style={{ padding: '14px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 600, color: '#f97316', textTransform: 'uppercase' }}>{h}</th>
-                                    ))}
+                                    {/* Non-sortable */}
+                                    <th style={{ padding: '14px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 600, color: '#71717a', textTransform: 'uppercase' }}>
+                                        Title
+                                    </th>
+                                    <SortHeader label="Priority" field="priority" currentSortBy={sortBy} currentSortDir={sortDir} onSort={handleSort} />
+                                    <SortHeader label="Status" field="status" currentSortBy={sortBy} currentSortDir={sortDir} onSort={handleSort} />
+                                    <SortHeader label="Due Date" field="dueDate" currentSortBy={sortBy} currentSortDir={sortDir} onSort={handleSort} />
+                                    {/* Actions — no sort */}
+                                    <th style={{ padding: '14px 16px' }} />
                                 </tr>
                             </thead>
                             <tbody>
@@ -204,6 +259,13 @@ export default function EmployeeTasksPage() {
                     </div>
                 )}
             </div>
+
+            {/* Sort hint when search is active */}
+            {isSearchActive && (
+                <p style={{ marginTop: '10px', fontSize: '12px', color: '#52525b', textAlign: 'right' }}>
+                    Sorting is disabled while search is active.
+                </p>
+            )}
         </div>
     );
 }

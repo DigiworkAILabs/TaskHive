@@ -96,10 +96,16 @@ public class GlobalExceptionHandler {
         }
 
         @ExceptionHandler(BusinessException.class)
-        public ResponseEntity<ErrorResponse> handleBusiness(BusinessException ex, HttpServletRequest request) {
-                return ResponseEntity.badRequest()
-                                .body(ErrorResponse.of(ex.getMessage(), request.getRequestURI()));
+    public ResponseEntity<ErrorResponse> handleBusiness(BusinessException ex, HttpServletRequest request) {
+        if (ex.getErrorCode() != null) {
+            return ResponseEntity.badRequest()
+                    .body(ErrorResponse.of(ex.getMessage(),
+                            java.util.List.of(ex.getErrorCode()),
+                            request.getRequestURI()));
         }
+        return ResponseEntity.badRequest()
+                .body(ErrorResponse.of(ex.getMessage(), request.getRequestURI()));
+    }
 
         @ExceptionHandler(EmployeeNotFoundException.class)
         public ResponseEntity<ErrorResponse> handleEmployeeNotFound(EmployeeNotFoundException ex,

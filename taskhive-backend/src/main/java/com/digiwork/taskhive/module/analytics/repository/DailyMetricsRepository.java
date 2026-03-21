@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -16,6 +17,8 @@ import java.util.UUID;
 public interface DailyMetricsRepository extends JpaRepository<DailyMetrics, UUID> {
 
     Optional<DailyMetrics> findTopByOrderByMetricDateDesc();
+
+    List<DailyMetrics> findTop7ByOrderByMetricDateDesc();
 
     @Modifying
     @Query(value = "INSERT INTO daily_metrics " +

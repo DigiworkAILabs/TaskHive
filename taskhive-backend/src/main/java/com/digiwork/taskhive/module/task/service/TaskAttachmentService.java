@@ -18,9 +18,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.digiwork.taskhive.module.task.enums.AttachmentPurpose;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
+
 
 @Slf4j
 @Service
@@ -51,7 +54,7 @@ public class TaskAttachmentService {
     private static final String ATTACHMENT_DIRECTORY = "tasks/attachments";
 
     @Transactional
-    public TaskAttachmentResponse uploadAttachment(UUID taskId, MultipartFile file) {
+    public TaskAttachmentResponse uploadAttachment(UUID taskId, MultipartFile file, String purposeStr) {
         UUID currentUserId = SecurityUtils.getCurrentUserId();
         String currentRole = SecurityUtils.getCurrentUserRole();
 
@@ -70,12 +73,22 @@ public class TaskAttachmentService {
         // Validate file
         validateFile(file);
 
+        // Resolve purpose — default to GENERAL if not supplied or unrecognised
+        AttachmentPurpose purpose;
+        try {
+            purpose = (purposeStr != null && !purposeStr.isBlank())
+                    ? AttachmentPurpose.valueOf(purposeStr.toUpperCase())
+                    : AttachmentPurpose.GENERAL;
+        } catch (IllegalArgumentException e) {
+            purpose = AttachmentPurpose.GENERAL;
+        }
+
         try {
             // Store file
             String filename = UUID.randomUUID().toString();
             String storedPath = storageService.store(file, ATTACHMENT_DIRECTORY, filename);
 
-            // Create attachment record
+            // Create attachment record — purpose is persisted here (P1.1 fix)
             TaskAttachment attachment = TaskAttachment.builder()
                     .taskId(taskId)
                     .uploadedBy(currentUserId)
@@ -83,11 +96,12 @@ public class TaskAttachmentService {
                     .fileUrl(storedPath)
                     .fileSize(file.getSize())
                     .mimeType(file.getContentType())
+                    .attachmentPurpose(purpose)   // ← was MISSING, causing proof check to always fail
                     .build();
 
             attachment = attachmentRepository.save(attachment);
 
-            log.info("Attachment uploaded to task {}: {}", taskId, attachment.getId());
+            log.info("Attachment uploaded to task {} with purpose {}: {}", taskId, purpose, attachment.getId());
 
             return taskMapper.toTaskAttachmentResponse(attachment);
 

@@ -22,4 +22,7 @@ public class TaskListResponse {
     private LocalDateTime dueDate;
     private List<String> tags;
     private LocalDateTime createdAt;
+
+    // Phase 1 v2.5
+    private Boolean isLate;
 }

@@ -64,6 +64,30 @@ public class Task {
     @Builder.Default
     private Integer version = 0;
 
+    // ── Phase 1 v2.5: Late Submission Tracking ──────────────────────────────
+
+    @Column(name = "is_late")
+    @Builder.Default
+    private Boolean isLate = false;
+
+    @Column(name = "late_by_minutes")
+    private Integer lateByMinutes;
+
+    @Column(name = "submitted_at")
+    private LocalDateTime submittedAt;
+
+    // ── Phase 1 v2.5: Proof / Approval Flags ────────────────────────────────
+
+    @Column(name = "proof_required")
+    @Builder.Default
+    private Boolean proofRequired = false;
+
+    @Column(name = "approval_required")
+    @Builder.Default
+    private Boolean approvalRequired = false;
+
+    // ── Audit Fields ────────────────────────────────────────────────────────
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

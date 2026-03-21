@@ -52,6 +52,11 @@ public class DailyMetrics {
     @Builder.Default
     private Integer totalEmployees = 0;
 
+    // Phase 1 v2.5
+    @Column(name = "late_tasks")
+    @Builder.Default
+    private Integer lateTasks = 0;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

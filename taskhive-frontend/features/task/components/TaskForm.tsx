@@ -73,6 +73,8 @@ export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoad
         dueTime: '17:00',
         estimatedHours: '',
         tags: '',
+        proofRequired: false,
+        approvalRequired: false,
     });
 
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -106,6 +108,8 @@ export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoad
                 dueTime: editTime,
                 estimatedHours: task.estimatedHours?.toString() || '',
                 tags: task.tags?.join(', ') || '',
+                proofRequired: task.proofRequired ?? false,
+                approvalRequired: task.approvalRequired ?? false,
             });
         }
     }, [mode, task]);
@@ -196,6 +200,8 @@ export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoad
             if (formData.description.trim()) payload.description = formData.description.trim();
             if (formData.estimatedHours) payload.estimatedHours = parseFloat(formData.estimatedHours);
             if (tags.length) payload.tags = tags;
+            payload.proofRequired = formData.proofRequired;
+            payload.approvalRequired = formData.approvalRequired;
             await onSubmit(payload);
         } else {
             const payload: UpdateTaskData = {};
@@ -208,6 +214,8 @@ export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoad
             }
             if (formData.estimatedHours) payload.estimatedHours = parseFloat(formData.estimatedHours);
             payload.tags = tags;
+            payload.proofRequired = formData.proofRequired;
+            payload.approvalRequired = formData.approvalRequired;
             await onSubmit(payload);
         }
     };
@@ -434,6 +442,65 @@ export const TaskForm: React.FC<TaskFormProps> = ({ mode, task, onSubmit, isLoad
                             />
                         </div>
                     </FormField>
+
+                    {/* ── Task Requirements (P1.1 / P1.2) ─────────────────── */}
+                    <div style={{
+                        backgroundColor: '#111111',
+                        border: '1px solid #2a2a2a',
+                        borderRadius: '12px',
+                        padding: '18px 20px',
+                    }}>
+                        <p style={{ fontSize: '12px', fontWeight: 600, color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '14px' }}>
+                            Task Requirements
+                        </p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                            {/* Proof Required toggle */}
+                            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+                                <div>
+                                    <p style={{ fontSize: '14px', fontWeight: 500, color: '#e4e4e7', margin: 0 }}>Require Proof of Completion</p>
+                                    <p style={{ fontSize: '12px', color: '#71717a', margin: '2px 0 0' }}>Assignee must upload a proof file before submitting</p>
+                                </div>
+                                <div
+                                    onClick={() => setFormData(prev => ({ ...prev, proofRequired: !prev.proofRequired }))}
+                                    style={{
+                                        width: '42px', height: '24px', borderRadius: '12px', flexShrink: 0,
+                                        backgroundColor: formData.proofRequired ? '#f97316' : '#3f3f46',
+                                        position: 'relative', cursor: 'pointer', transition: 'background-color 0.2s',
+                                    }}
+                                >
+                                    <div style={{
+                                        width: '18px', height: '18px', borderRadius: '50%', backgroundColor: '#ffffff',
+                                        position: 'absolute', top: '3px', transition: 'left 0.2s',
+                                        left: formData.proofRequired ? '21px' : '3px',
+                                        boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+                                    }} />
+                                </div>
+                            </label>
+
+                            {/* Approval Required toggle */}
+                            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+                                <div>
+                                    <p style={{ fontSize: '14px', fontWeight: 500, color: '#e4e4e7', margin: 0 }}>Require Admin Approval</p>
+                                    <p style={{ fontSize: '12px', color: '#71717a', margin: '2px 0 0' }}>Task goes to Pending Approval instead of Done</p>
+                                </div>
+                                <div
+                                    onClick={() => setFormData(prev => ({ ...prev, approvalRequired: !prev.approvalRequired }))}
+                                    style={{
+                                        width: '42px', height: '24px', borderRadius: '12px', flexShrink: 0,
+                                        backgroundColor: formData.approvalRequired ? '#f97316' : '#3f3f46',
+                                        position: 'relative', cursor: 'pointer', transition: 'background-color 0.2s',
+                                    }}
+                                >
+                                    <div style={{
+                                        width: '18px', height: '18px', borderRadius: '50%', backgroundColor: '#ffffff',
+                                        position: 'absolute', top: '3px', transition: 'left 0.2s',
+                                        left: formData.approvalRequired ? '21px' : '3px',
+                                        boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+                                    }} />
+                                </div>
+                            </label>
+                        </div>
+                    </div>
 
                     {/* Actions */}
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>

@@ -24,6 +24,9 @@ export const ProductivityScoreCard: React.FC<ProductivityScoreCardProps> = ({
     isLoading,
     error
 }) => {
+    // ⚠️ All hooks MUST be called unconditionally before any early returns (Rules of Hooks)
+    const { isMlEnabled } = useMlStore();
+
     if (isLoading) {
         return (
             <div className="bg-white dark:bg-slate-900 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 animate-pulse">
@@ -47,8 +50,6 @@ export const ProductivityScoreCard: React.FC<ProductivityScoreCardProps> = ({
             </div>
         );
     }
-
-    const { isMlEnabled } = useMlStore();
 
     if (!isMlEnabled) {
         return (

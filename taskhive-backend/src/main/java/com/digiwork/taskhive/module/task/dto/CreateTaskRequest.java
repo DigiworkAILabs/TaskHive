@@ -36,4 +36,10 @@ public class CreateTaskRequest {
     private BigDecimal estimatedHours;
 
     private List<String> tags;
+
+    /** P1.1 — Require proof of completion before task can be submitted for review */
+    private boolean proofRequired = false;
+
+    /** P1.2 — Require admin approval before task is marked as Done */
+    private boolean approvalRequired = false;
 }

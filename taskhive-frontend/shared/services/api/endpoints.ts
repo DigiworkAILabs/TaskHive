@@ -28,6 +28,10 @@ export const ENDPOINTS = {
         MY_TASKS: '/tasks/my-tasks',
         OVERDUE: '/tasks/overdue',
         SEARCH: '/tasks/search',
+        // Phase 1 v2.5
+        APPROVE: (id: string) => `/tasks/${id}/approve`,
+        REJECT: (id: string) => `/tasks/${id}/reject`,
+        LATE: '/tasks/late',
     },
     ANALYTICS: {
         DASHBOARD_ADMIN: '/analytics/dashboard/admin',
@@ -38,5 +42,10 @@ export const ENDPOINTS = {
         EMPLOYEE_PERFORMANCE: '/analytics/employees/performance',
         REPORT_EXPORT: '/analytics/reports/export',
         REPORT_DOWNLOAD: (id: string) => `/analytics/reports/${id}/download`,
+        // Phase 1 v2.5
+        DASHBOARD_TODAY: '/analytics/dashboard/today',
+        ANOMALIES: '/analytics/anomalies',
+        MISSED_TASKS: '/analytics/tasks/missed',
+        LATE_TASKS: '/analytics/tasks/late',
     },
 };

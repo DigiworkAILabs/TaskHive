@@ -1,6 +1,7 @@
 // ── Enums ────────────────────────────────────────────────────────────────────
-export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'IN_REVIEW' | 'DONE' | 'CANCELLED';
+export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'IN_REVIEW' | 'PENDING_APPROVAL' | 'DONE' | 'CANCELLED';
 export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+export type AttachmentPurpose = 'GENERAL' | 'PROOF';
 
 // ── Full Task (GET /tasks/{id}) ───────────────────────────────────────────────
 export interface Task {
@@ -21,6 +22,12 @@ export interface Task {
     updatedBy: string;
     createdAt: string;
     updatedAt: string;
+    // Phase 1 v2.5
+    isLate?: boolean;
+    lateByMinutes?: number | null;
+    submittedAt?: string | null;
+    proofRequired?: boolean;
+    approvalRequired?: boolean;
 }
 
 // ── Task List Item (GET /tasks) ───────────────────────────────────────────────
@@ -34,6 +41,8 @@ export interface TaskListItem {
     dueDate: string;
     tags: string[];
     createdAt: string;
+    // Phase 1 v2.5
+    isLate?: boolean;
 }
 
 // ── Create Task DTO ───────────────────────────────────────────────────────────
@@ -45,6 +54,8 @@ export interface CreateTaskData {
     dueDate: string;
     estimatedHours?: number;
     tags?: string[];
+    proofRequired?: boolean;     // P1.1
+    approvalRequired?: boolean;  // P1.2
 }
 
 // ── Update Task DTO ───────────────────────────────────────────────────────────
@@ -56,12 +67,15 @@ export interface UpdateTaskData {
     dueDate?: string;
     estimatedHours?: number;
     tags?: string[];
+    proofRequired?: boolean;     // P1.1
+    approvalRequired?: boolean;  // P1.2
 }
 
 // ── Update Status DTO ─────────────────────────────────────────────────────────
 export interface UpdateTaskStatusData {
     status: TaskStatus;
     comment?: string;
+    reason?: string;  // mandatory for CANCELLED
 }
 
 // ── Task Comment ──────────────────────────────────────────────────────────────
@@ -83,11 +97,12 @@ export interface TaskAttachment {
     id: string;
     taskId: string;
     uploadedBy: string;
-    uploadedByName: string;
+    uploaderName: string;       // matches backend TaskAttachmentResponse.uploaderName
     fileName: string;
     fileUrl: string;
     fileSize: number;
     mimeType: string;
+    attachmentPurpose?: AttachmentPurpose;  // 'PROOF' | 'GENERAL' — sent by backend since P1.1 fix
     createdAt: string;
 }
 
@@ -124,4 +139,22 @@ export interface PageResponse<T> {
     totalElements: number;
     totalPages: number;
     last: boolean;
+}
+
+// ── Analytics ─────────────────────────────────────────────────────────────────
+export interface TodayOverview {
+    totalAssignedToday: number;
+    completedToday: number;
+    inProgress: number;
+    pendingApproval: number;
+    overdueToday: number;
+    lateSubmissionsToday: number;
+    activeAnomalies: number;
+}
+
+export interface AnomalyAlert {
+    ruleId: string;
+    description: string;
+    severity: 'HIGH' | 'MEDIUM' | 'LOW';
+    detectedAt: string;
 }

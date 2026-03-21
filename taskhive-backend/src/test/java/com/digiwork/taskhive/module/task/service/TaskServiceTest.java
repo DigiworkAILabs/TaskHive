@@ -254,11 +254,11 @@ class TaskServiceTest {
 
                         when(employeeRepository.findByUserIdAndIsDeletedFalse(currentUserId))
                                         .thenReturn(Optional.of(currentEmployee));
-                        when(taskRepository.findByAssignedToAndIsDeletedFalse(eq(employeeId), any(Pageable.class)))
+                        when(taskRepository.findMyTasksWithFilters(eq(employeeId), isNull(), isNull(), any(Pageable.class)))
                                         .thenReturn(page);
                         when(taskMapper.toTaskListResponse(testTask)).thenReturn(listResponse);
 
-                        PageResponse<TaskListResponse> result = taskService.getMyTasks(0, 10, "createdAt", "desc");
+                        PageResponse<TaskListResponse> result = taskService.getMyTasks(0, 10, "createdAt", "desc", null, null);
 
                         assertThat(result.getContent()).hasSize(1);
                 }
