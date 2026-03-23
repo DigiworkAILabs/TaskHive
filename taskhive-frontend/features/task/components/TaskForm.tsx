@@ -11,7 +11,6 @@ import { useRecommendWorkload } from '@/features/ml/hooks/useRecommendWorkload';
 import WorkloadRecommendationComponent from '@/features/ml/components/WorkloadRecommendation';
 import { useMlStore } from '@/features/ml/store/mlStore';
 import { Brain, Sparkles } from 'lucide-react';
-
 interface TaskFormProps {
     mode: 'create' | 'edit';
     task?: Task | null;

@@ -50,6 +50,24 @@ export const mlService = {
     },
 
     /**
+     * Gemini Feature — Task Priority Suggestion
+     *
+     * Hits the Gemini controller in Spring Boot wrapper.
+     *
+     * @param data Request payload
+     * @returns Prediction with confidence score and reasoning
+     */
+    predictGeminiTaskPriority: async (
+        data: TaskPriorityRequestDto
+    ): Promise<TaskPriorityPrediction> => {
+        const response = await apiClient.post<TaskPriorityApiResponse>(
+            `${ML_BASE}/gemini/predict/task-priority`,
+            data
+        );
+        return response.data.data;
+    },
+
+    /**
      * Feature 2 — Task Completion Time Estimation
      *
      * Sends task title, description, selected priority, and employee ID.
