@@ -55,7 +55,7 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ isAdmin = false }) => {
 
     const { task, isLoading, error, refetch } = useTask(id);
     const { updateTask, isLoading: isUpdating, error: updateError, success: updateSuccess } = useUpdateTask();
-    const { updateStatus, isLoading: isChangingStatus } = useUpdateTaskStatus();
+    const { updateStatus, isLoading: isChangingStatus, error: statusError } = useUpdateTaskStatus();
 
     const [isEditing, setIsEditing] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -187,6 +187,7 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ isAdmin = false }) => {
         if (s === task.status) return false;                          // no self-transition buttons
         if (s === 'DONE' && task.approvalRequired && !isAdmin) return false;   // blocked — handled by approval
         if (s === 'PENDING_APPROVAL') return false;                   // never a manual target
+        if (s === 'CANCELLED' && !isAdmin) return false;              // employees cannot cancel tasks
         return true;
     });
 
@@ -423,6 +424,16 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ isAdmin = false }) => {
                             onFocus={(e) => (e.currentTarget.style.borderColor = '#f97316')}
                             onBlur={(e) => (e.currentTarget.style.borderColor = '#2a2a2a')}
                         />
+                        {statusError && (
+                            <div style={{
+                                display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px',
+                                padding: '10px 14px', borderRadius: '10px',
+                                backgroundColor: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)',
+                            }}>
+                                <AlertCircle size={15} color="#ef4444" style={{ flexShrink: 0 }} />
+                                <span style={{ fontSize: '13px', color: '#f87171' }}>{statusError}</span>
+                            </div>
+                        )}
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '20px' }}>
                             <button
                                 onClick={() => { setShowStatusModal(false); setStatusComment(''); }}

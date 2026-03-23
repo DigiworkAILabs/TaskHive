@@ -70,9 +70,21 @@ public class TaskCommentService {
 
     @Transactional(readOnly = true)
     public PageResponse<TaskCommentResponse> getComments(UUID taskId, int page, int size) {
+        UUID currentUserId = SecurityUtils.getCurrentUserId();
+        String currentRole = SecurityUtils.getCurrentUserRole();
+
         // Verify task exists
-        taskRepository.findByIdAndIsDeletedFalse(taskId)
+        Task task = taskRepository.findByIdAndIsDeletedFalse(taskId)
                 .orElseThrow(() -> new TaskNotFoundException("Task not found with id: " + taskId));
+
+        // EMPLOYEE can only view comments of their assigned tasks
+        if ("EMPLOYEE".equals(currentRole)) {
+            var employee = employeeRepository.findByUserIdAndIsDeletedFalse(currentUserId)
+                    .orElseThrow(() -> new TaskAccessDeniedException("Employee record not found"));
+            if (!task.getAssignedTo().equals(employee.getId())) {
+                throw new TaskAccessDeniedException("You can only view comments on tasks assigned to you");
+            }
+        }
 
         Pageable pageable = PageRequest.of(page, size);
         Page<TaskComment> commentPage = commentRepository.findByTaskIdOrderByCreatedAtDesc(taskId, pageable);
