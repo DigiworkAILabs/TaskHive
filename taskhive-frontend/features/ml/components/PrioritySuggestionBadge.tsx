@@ -25,6 +25,8 @@ interface PrioritySuggestionBadgeProps {
     isLoading: boolean;
     /** Called when admin clicks "Accept" — parent should update priority field */
     onAccept: (priority: TaskPriority) => void;
+    /** The AI variant used to generate this suggestion (determines theming) */
+    variant?: 'local' | 'gemini';
 }
 
 const PRIORITY_COLORS: Record<TaskPriority, { bg: string; text: string; border: string }> = {
@@ -38,6 +40,7 @@ export const PrioritySuggestionBadge: React.FC<PrioritySuggestionBadgeProps> = (
     prediction,
     isLoading,
     onAccept,
+    variant = 'local',
 }) => {
     const [dismissed, setDismissed] = useState(false);
 
@@ -48,15 +51,19 @@ export const PrioritySuggestionBadge: React.FC<PrioritySuggestionBadgeProps> = (
 
     // ── Loading state ────────────────────────────────────────────────────────
     if (isLoading) {
+        const loadingBg = variant === 'gemini' ? 'rgba(168,85,247,0.05)' : 'rgba(249,115,22,0.05)';
+        const loadingBorder = variant === 'gemini' ? 'rgba(168,85,247,0.15)' : 'rgba(249,115,22,0.15)';
+        const loadingText = variant === 'gemini' ? '#a855f7' : '#f97316';
+        
         return (
             <div style={{
                 display: 'flex', alignItems: 'center', gap: '6px',
                 padding: '6px 10px', marginTop: '6px',
-                backgroundColor: 'rgba(249,115,22,0.05)',
-                border: '1px solid rgba(249,115,22,0.15)',
+                backgroundColor: loadingBg,
+                border: `1px solid ${loadingBorder}`,
                 borderRadius: '8px', fontSize: '12px', color: '#a1a1aa',
             }}>
-                <Loader2 size={12} style={{ animation: 'spin 1s linear infinite', color: '#f97316' }} />
+                <Loader2 size={12} style={{ animation: 'spin 1s linear infinite', color: loadingText }} />
                 Analysing with AI…
             </div>
         );
@@ -66,7 +73,13 @@ export const PrioritySuggestionBadge: React.FC<PrioritySuggestionBadgeProps> = (
     if (!prediction || dismissed) return null;
 
     const priority = prediction.predictedPriority;
-    const colors = PRIORITY_COLORS[priority];
+    const baseColors = PRIORITY_COLORS[priority];
+    
+    // Override colors if Gemini variant to match branding
+    const colors = variant === 'gemini' 
+        ? { bg: 'rgba(168,85,247,0.08)', text: '#a855f7', border: 'rgba(168,85,247,0.25)' }
+        : baseColors;
+
     const pct = Math.round(prediction.confidence * 100);
 
     // ── Suggestion badge ─────────────────────────────────────────────────────
