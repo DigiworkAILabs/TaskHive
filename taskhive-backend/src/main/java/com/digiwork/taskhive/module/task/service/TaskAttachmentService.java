@@ -61,6 +61,12 @@ public class TaskAttachmentService {
         Task task = taskRepository.findByIdAndIsDeletedFalse(taskId)
                 .orElseThrow(() -> new TaskNotFoundException("Task not found with id: " + taskId));
 
+        // State check — cannot upload to completed/cancelled tasks
+        if (com.digiwork.taskhive.module.task.enums.TaskStatus.DONE.name().equals(task.getStatus()) || 
+            com.digiwork.taskhive.module.task.enums.TaskStatus.CANCELLED.name().equals(task.getStatus())) {
+            throw new BusinessException("Cannot add attachments to a completed or cancelled task");
+        }
+
         // EMPLOYEE can only attach to their assigned tasks
         if ("EMPLOYEE".equals(currentRole)) {
             var employee = employeeRepository.findByUserIdAndIsDeletedFalse(currentUserId)
@@ -113,9 +119,21 @@ public class TaskAttachmentService {
 
     @Transactional(readOnly = true)
     public List<TaskAttachmentResponse> getAttachments(UUID taskId) {
+        UUID currentUserId = SecurityUtils.getCurrentUserId();
+        String currentRole = SecurityUtils.getCurrentUserRole();
+
         // Verify task exists
-        taskRepository.findByIdAndIsDeletedFalse(taskId)
+        Task task = taskRepository.findByIdAndIsDeletedFalse(taskId)
                 .orElseThrow(() -> new TaskNotFoundException("Task not found with id: " + taskId));
+
+        // EMPLOYEE can only view attachments of their assigned tasks
+        if ("EMPLOYEE".equals(currentRole)) {
+            var employee = employeeRepository.findByUserIdAndIsDeletedFalse(currentUserId)
+                    .orElseThrow(() -> new TaskAccessDeniedException("Employee record not found"));
+            if (!task.getAssignedTo().equals(employee.getId())) {
+                throw new TaskAccessDeniedException("You can only view attachments of tasks assigned to you");
+            }
+        }
 
         return attachmentRepository.findByTaskIdOrderByCreatedAtDesc(taskId).stream()
                 .map(taskMapper::toTaskAttachmentResponse)

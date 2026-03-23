@@ -277,6 +277,11 @@ public class TaskService {
             throw new BusinessException("Invalid status transition from " + currentStatus + " to " + newStatus);
         }
 
+        // Employees cannot cancel tasks
+        if ("EMPLOYEE".equals(currentRole) && newStatus == TaskStatus.CANCELLED) {
+            throw new TaskAccessDeniedException("Employees are not allowed to cancel tasks");
+        }
+
         // ── P1.3: Mandatory cancel reason ────────────────────────────────────
         validateCancelReason(newStatus, request.getReason());
 
@@ -354,6 +359,10 @@ public class TaskService {
         if (!TaskStatus.PENDING_APPROVAL.name().equals(task.getStatus())) {
             throw new BusinessException("TASK_3002", "Task must be in PENDING_APPROVAL status to reject");
         }
+
+        // Mark all PROOF attachments as REJECTED_PROOF — employee must re-upload fresh proof
+        attachmentRepository.updatePurposeByTaskId(
+            taskId, AttachmentPurpose.PROOF, AttachmentPurpose.REJECTED_PROOF);
 
         String oldStatus = task.getStatus();
         task.setStatus(TaskStatus.IN_REVIEW.name());

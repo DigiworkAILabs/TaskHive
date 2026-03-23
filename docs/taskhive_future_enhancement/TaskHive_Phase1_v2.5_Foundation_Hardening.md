@@ -79,19 +79,21 @@ TODO → IN_PROGRESS → IN_REVIEW ───────────────
 | FR-P1-03 | Critical | If `task.approval_required = true`, task auto-moves to `PENDING_APPROVAL` when employee submits to IN_REVIEW |
 | FR-P1-04 | Critical | ADMIN can approve task: `PENDING_APPROVAL → DONE`, sets `completed_at = now()` |
 | FR-P1-05 | Critical | ADMIN can reject task: `PENDING_APPROVAL → IN_REVIEW`, rejection reason mandatory, stored in `task_status_history.comment` |
-| FR-P1-06 | Critical | Task CANCELLATION requires non-empty `reason` — API returns 400 if missing. Error code: `TASK_3004` |
-| FR-P1-07 | High | `submitted_at` timestamp set when task moves to IN_REVIEW |
-| FR-P1-08 | High | `is_late = true` + `late_by_minutes` set when `submitted_at > due_date` |
-| FR-P1-09 | High | `is_late` is IMMUTABLE once set — cannot be cleared by any endpoint |
-| FR-P1-10 | High | `LateSubmissionScheduler` runs hourly as safety net — catches any IN_PROGRESS/IN_REVIEW tasks past due_date with `is_late = false` |
-| FR-P1-11 | High | `GET /api/v1/tasks/late` returns all tasks with `is_late = true` (ADMIN only) |
-| FR-P1-12 | High | Admin dashboard shows today's overview: assigned, completed, in_progress, pending_approval, overdue, late_submissions, active_anomalies |
-| FR-P1-13 | Medium | Today's overview auto-refreshes every 5 minutes on frontend |
-| FR-P1-14 | Medium | Rule-based anomaly detection runs nightly — 3 rules (see P1.5 detail) |
-| FR-P1-15 | Medium | `GET /api/v1/analytics/anomalies` returns active anomaly alerts (ADMIN only) |
-| FR-P1-16 | Medium | `GET /api/v1/analytics/tasks/missed` returns tasks cancelled/skipped with reasons (ADMIN only) |
-| FR-P1-17 | Medium | `GET /api/v1/analytics/tasks/late` returns late submission patterns (ADMIN only) |
-| FR-P1-18 | Low | `TaskResponse` includes `isLate`, `lateByMinutes`, `submittedAt` fields |
+| FR-P1-06 | Critical | On rejection, ALL `PROOF` attachments on the task are marked as `REJECTED_PROOF` — employee MUST upload a fresh proof before resubmitting |
+| FR-P1-07 | Critical | `REJECTED_PROOF` attachments are preserved (not deleted) — full audit trail maintained |
+| FR-P1-08 | Critical | Task CANCELLATION requires non-empty `reason` — API returns 400 if missing. Error code: `TASK_3004` |
+| FR-P1-09 | High | `submitted_at` timestamp set when task moves to IN_REVIEW |
+| FR-P1-10 | High | `is_late = true` + `late_by_minutes` set when `submitted_at > due_date` |
+| FR-P1-11 | High | `is_late` is IMMUTABLE once set — cannot be cleared by any endpoint |
+| FR-P1-12 | High | `LateSubmissionScheduler` runs hourly as safety net — catches any IN_PROGRESS/IN_REVIEW tasks past due_date with `is_late = false` |
+| FR-P1-13 | High | `GET /api/v1/tasks/late` returns all tasks with `is_late = true` (ADMIN only) |
+| FR-P1-14 | High | Admin dashboard shows today's overview: assigned, completed, in_progress, pending_approval, overdue, late_submissions, active_anomalies |
+| FR-P1-15 | Medium | Today's overview auto-refreshes every 5 minutes on frontend |
+| FR-P1-16 | Medium | Rule-based anomaly detection runs nightly — 3 rules (see P1.5 detail) |
+| FR-P1-17 | Medium | `GET /api/v1/analytics/anomalies` returns active anomaly alerts (ADMIN only) |
+| FR-P1-18 | Medium | `GET /api/v1/analytics/tasks/missed` returns tasks cancelled/skipped with reasons (ADMIN only) |
+| FR-P1-19 | Medium | `GET /api/v1/analytics/tasks/late` returns late submission patterns (ADMIN only) |
+| FR-P1-20 | Low | `TaskResponse` includes `isLate`, `lateByMinutes`, `submittedAt` fields |
 
 ---
 
@@ -154,10 +156,16 @@ CREATE INDEX IF NOT EXISTS idx_tasks_is_late ON tasks(is_late) WHERE is_late = T
 package com.digiwork.taskhive.module.task.enums;
 
 public enum AttachmentPurpose {
-    PROOF,    // Mandatory proof of task completion
-    GENERAL   // Any other attachment
+    PROOF,           // Valid current proof — blocks submission if missing
+    REJECTED_PROOF,  // Was PROOF but admin rejected it — preserves audit trail
+    GENERAL          // Any other attachment
 }
 ```
+
+> **Why `REJECTED_PROOF` instead of deleting?**
+> - Audit trail preserved — admin can see what was submitted before
+> - `existsByTaskIdAndAttachmentPurpose(PROOF)` returns false → employee MUST upload fresh proof
+> - Cleaner than physical delete — files stay on disk/storage
 
 ### `module/task/exception/ProofEnforcementException.java`
 
@@ -188,7 +196,11 @@ public interface TaskApprovalService {
 
 **Implementation rules:**
 - `approveTask`: task must be in `PENDING_APPROVAL` — else throw `TASK_3002`. Set `status = DONE`, `completed_at = now()`. Publish `TaskApprovedEvent`.
-- `rejectTask`: task must be in `PENDING_APPROVAL`. `rejectionReason` must not be blank. Set `status = IN_REVIEW`, store reason in `task_status_history.comment`. Publish `TaskRejectedEvent`.
+- `rejectTask`: task must be in `PENDING_APPROVAL`. `rejectionReason` must not be blank. Do these in order:
+  1. Mark all `PROOF` attachments on this task as `REJECTED_PROOF` (so employee must re-upload)
+  2. Set `status = IN_REVIEW`
+  3. Store rejection reason in `task_status_history.comment`
+  4. Publish `TaskRejectedEvent`
 
 ### `module/task/dto/TaskApprovalRequest.java`
 
@@ -465,10 +477,29 @@ public ResponseEntity<ApiResponse<Page<TaskListResponse>>> getLatePatterns(
 
 ### `module/task/repository/TaskAttachmentRepository.java`
 
-Add one new method:
+Add two new methods:
 
 ```java
+// Check if valid (non-rejected) proof exists
 boolean existsByTaskIdAndAttachmentPurpose(UUID taskId, AttachmentPurpose purpose);
+
+// Called on reject — marks all PROOF attachments as REJECTED_PROOF
+@Modifying
+@Query("UPDATE TaskAttachment a SET a.attachmentPurpose = :newPurpose " +
+       "WHERE a.taskId = :taskId AND a.attachmentPurpose = :oldPurpose")
+void updatePurposeByTaskId(
+    @Param("taskId") UUID taskId,
+    @Param("oldPurpose") AttachmentPurpose oldPurpose,
+    @Param("newPurpose") AttachmentPurpose newPurpose);
+```
+
+Usage in `TaskApprovalServiceImpl.rejectTask()`:
+```java
+attachmentRepository.updatePurposeByTaskId(
+    taskId,
+    AttachmentPurpose.PROOF,
+    AttachmentPurpose.REJECTED_PROOF
+);
 ```
 
 ---
@@ -677,35 +708,58 @@ src/
 interface Props {
   taskId: string;
   proofRequired: boolean;
-  hasProof: boolean;
+  attachments: { purpose: string; fileName: string; fileUrl: string }[];
   onProofUploaded: () => void;
 }
 
-export const ProofUploadSection = ({ taskId, proofRequired, hasProof, onProofUploaded }: Props) => {
+export const ProofUploadSection = ({ taskId, proofRequired, attachments, onProofUploaded }: Props) => {
   if (!proofRequired) return null;
 
+  const validProof = attachments.find(a => a.purpose === 'PROOF');
+  const rejectedProofs = attachments.filter(a => a.purpose === 'REJECTED_PROOF');
+
   return (
-    <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-      <p className="text-sm font-medium text-amber-800 mb-2">
-        Proof required before submission
-      </p>
-      {!hasProof ? (
-        <>
-          <p className="text-xs text-amber-600 mb-3">
-            Upload a screenshot or photo as proof of completion
+    <div className="space-y-3">
+      {/* Show rejected proofs as history */}
+      {rejectedProofs.length > 0 && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3">
+          <p className="text-xs font-medium text-red-700 mb-2">
+            Previously rejected proof{rejectedProofs.length > 1 ? 's' : ''}:
           </p>
-          <FileUploadButton
-            taskId={taskId}
-            purpose="PROOF"
-            onSuccess={onProofUploaded}
-            accept="image/*,application/pdf"
-          />
-        </>
-      ) : (
-        <p className="text-xs text-green-700 flex items-center gap-1">
-          ✓ Proof uploaded — ready to submit
-        </p>
+          {rejectedProofs.map((proof, i) => (
+            <p key={i} className="text-xs text-red-600 line-through">
+              {proof.fileName}
+            </p>
+          ))}
+          <p className="text-xs text-red-600 mt-1">
+            Please upload a new proof to resubmit.
+          </p>
+        </div>
       )}
+
+      {/* Current proof state */}
+      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+        <p className="text-sm font-medium text-amber-800 mb-2">
+          Proof required before submission
+        </p>
+        {!validProof ? (
+          <>
+            <p className="text-xs text-amber-600 mb-3">
+              Upload a screenshot or photo as proof of completion
+            </p>
+            <FileUploadButton
+              taskId={taskId}
+              purpose="PROOF"
+              onSuccess={onProofUploaded}
+              accept="image/*,application/pdf"
+            />
+          </>
+        ) : (
+          <p className="text-xs text-green-700 flex items-center gap-1">
+            ✓ Proof uploaded — ready to submit ({validProof.fileName})
+          </p>
+        )}
+      </div>
     </div>
   );
 };
@@ -932,7 +986,7 @@ Four additions:
 <ProofUploadSection
   taskId={task.id}
   proofRequired={task.proofRequired}
-  hasProof={task.attachments.some(a => a.purpose === 'PROOF')}
+  attachments={task.attachments}
   onProofUploaded={refetch}
 />
 ```
@@ -1070,12 +1124,15 @@ Before calling Phase 1 done and deploying v2.5 to production:
 - [ ] V9 migration applied — `is_late`, `late_by_minutes`, `submitted_at`, `attachment_purpose` columns exist
 - [ ] `daily_metrics.late_tasks` column exists
 - [ ] `employee_performance_cache.tasks_late` column exists
-- [ ] `AttachmentPurpose` enum exists with `PROOF` and `GENERAL`
+- [ ] `AttachmentPurpose` enum exists with `PROOF`, `REJECTED_PROOF`, and `GENERAL`
 - [ ] Proof upload blocked — task with `proof_required = true` cannot move to IN_REVIEW without PROOF attachment — API returns 400 with `TASK_3003`
 - [ ] Legacy tasks (no task type) — proof enforcement skipped, no NPE
 - [ ] Task with `approval_required = true` auto-moves to `PENDING_APPROVAL` after IN_REVIEW
 - [ ] Admin can approve task → status `DONE`, `completed_at` set
 - [ ] Admin can reject task → status back to `IN_REVIEW`, reason in status history
+- [ ] On rejection — all `PROOF` attachments marked as `REJECTED_PROOF` (verify in DB)
+- [ ] After rejection — employee cannot resubmit without uploading new proof (old REJECTED_PROOF not counted)
+- [ ] `REJECTED_PROOF` files still visible in task attachments list (audit trail preserved)
 - [ ] CANCELLED without reason → 400 with `TASK_3004` (not 500)
 - [ ] `submitted_at` set when task moves to IN_REVIEW
 - [ ] `is_late = true` + `late_by_minutes` correct when submitted after `due_date`
@@ -1104,7 +1161,7 @@ Before calling Phase 1 done and deploying v2.5 to production:
 | Backend Service | 2 (TaskApprovalService, TodayOverviewService, AnomalyDetectionService) | 1 (TaskService) |
 | Backend DTO | 2 (TaskApprovalRequest, TodayOverviewResponse) | 1 (TaskResponse) |
 | Backend Model | 0 | 2 (Task, TaskAttachment) |
-| Backend Enum | 2 (AttachmentPurpose, + PENDING_APPROVAL in TaskStatus) | 1 (TaskStatus) |
+| Backend Enum | 2 (AttachmentPurpose with PROOF/REJECTED_PROOF/GENERAL, + PENDING_APPROVAL in TaskStatus) | 1 (TaskStatus) |
 | Backend Event | 2 (TaskApprovedEvent, TaskRejectedEvent) | 0 |
 | Backend Exception | 1 (ProofEnforcementException) | 0 |
 | Backend Repository | 0 | 1 (TaskAttachmentRepository) |

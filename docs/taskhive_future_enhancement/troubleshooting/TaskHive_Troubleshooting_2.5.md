@@ -16,6 +16,10 @@
 | 5 | 2026-03-20 | Backend / Compile | Employee file upload fails — backend compile error after signature change | ✅ Resolved |
 | 6 | 2026-03-20 | Frontend / UX | Employee cannot see admin's revision feedback when task is sent back | ✅ Resolved |
 | 7 | 2026-03-20 | Frontend / UI | Notification preference toggles don't match ML toggle design | ✅ Resolved |
+| 8 | 2026-03-23 | Backend + Frontend | Approved proofs not clearing upon task rejection | ✅ Resolved |
+| 9 | 2026-03-23 | Frontend / UX | Missing error message (TASK_3003) when submitting without proof | ✅ Resolved |
+| 10 | 2026-03-23 | Backend + Frontend | Employees are able to Cancel their own tasks | ✅ Resolved |
+| 11 | 2026-03-23 | Backend / Security | Insecure Direct Object Reference (IDOR) on Task sub-resources | ✅ Resolved |
 
 ---
 
@@ -583,4 +587,97 @@ Replaced the Tailwind `Toggle` component in `app/employee/settings/security/page
 
 ---
 
-*Last updated: 2026-03-20 by Antigravity (AI assistant)*
+## Issue 8 — Approved Proofs Not Clearing Upon Task Rejection
+
+**Date:** 2026-03-23  
+**Area:** Backend + Frontend / Workflow  
+**Severity:** 🟠 Functional Bug (employees submitting old rejected proofs)
+
+---
+
+### Symptom
+
+When an admin rejects a task (moving it from `PENDING_APPROVAL` to `IN_REVIEW`), the old "proof" attachments remained in the database with the active `PROOF` state. If the employee resubmitted the task without uploading new proof, the backend logic incorrectly accepted the submission because the database still found `AttachmentPurpose.PROOF` linked to the `taskId`.
+
+### Root Cause
+
+No logical separation existed between an "active, pending proof" and a "rejected, invalid proof". The system had no `REJECTED_PROOF` purpose mapping.
+
+### Fix
+
+1. **Backend:** Added `REJECTED_PROOF` to `AttachmentPurpose` enum.
+2. **Backend:** Updated `TaskAttachmentRepository.java` with a bulk `@Modifying` query to `updatePurposeByTaskId()`.
+3. **Backend:** In `TaskService.java` `rejectTask()`, automatically converted all existing `PROOF` attachments to `REJECTED_PROOF` when the admin hits Reject.
+4. **Frontend:** Upgraded `ProofUploadSection.tsx` to structurally filter `REJECTED_PROOF` files from `PROOF` files, visually displaying the rejected ones in a red box with strikethrough text to clearly indicate they no longer count for submission.
+
+---
+
+## Issue 9 — Missing Error Message (TASK_3003) When Submitting Without Proof
+
+**Date:** 2026-03-23  
+**Area:** Frontend / UX  
+**Severity:** 🟠 UX Bug (silent failure leaves users confused)
+
+---
+
+### Symptom
+
+When an employee attempts to change a task status to `IN_REVIEW` on a task that requires proof (but hasn't uploaded one), the status change modal remains open but silent. No error is shown to the user explaining why they can't submit the task.
+
+### Root Cause
+
+The `useUpdateTaskStatus` React Hook successfully caught the `TASK_3003` Business Exception ("Proof attachment required..."). However, the consuming `TaskDetail.tsx` component never destructured or rendered the `error` state from the hook, completely swallowing the feedback.
+
+### Fix
+
+Destructured `error: statusError` from the `useUpdateTaskStatus` hook and embedded an inline red banner using the `AlertCircle` icon immediately above the Submit button in the Status Modal. Now, backend rejections securely inform the employee exactly what is missing.
+
+---
+
+## Issue 10 — Employees Are Able to Cancel Their Own Tasks
+
+**Date:** 2026-03-23  
+**Area:** Backend + Frontend / Logic Rules  
+**Severity:** 🔴 Functional Bug (unauthorized state changes)
+
+---
+
+### Symptom
+
+Employees saw the "Move to: Cancelled" option in their `TaskDetail.tsx` view and could freely cancel assigned tasks without Admin intervention. 
+
+### Root Cause
+
+The frontend manually defined `CANCELLED` as an available transition inside the static `STATUS_TRANSITIONS` object. The backend's `updateTaskStatus` endpoint had zero role-based security prohibiting `EMPLOYEE` accounts from forcing a task to the `CANCELLED` step.
+
+### Fix
+
+1. **Frontend:** In `TaskDetail.tsx`'s `availableTransitions` method, added `if (s === 'CANCELLED' && !isAdmin) return false;`. This correctly eliminated the Cancel button via UI permissions.
+2. **Backend:** Upgraded `TaskService.updateTaskStatus()` with a direct check: if the user role is `EMPLOYEE` and the target status is `CANCELLED`, throw a `TaskAccessDeniedException("Employees are not allowed to cancel tasks")`.
+
+---
+
+## Issue 11 — Insecure Direct Object Reference (IDOR) on Task Sub-Resources
+
+**Date:** 2026-03-23  
+**Area:** Backend / Security  
+**Severity:** 🔴 Critical Vulnerability (Data leak across employees)
+
+---
+
+### Symptom
+
+During an overarching logic review, it was discovered that any logged-in user could intercept proof files, internal task comments, and administrative history items of **any** task created in the platform, so long as they knew the task UUID. They were additionally able to upload attachments to tasks that were already declared `DONE` or `CANCELLED`.
+
+### Root Cause
+
+Sub-resource service endpoints like `getAttachments()`, `getHistory()`, and `getComments()` validated whether the task existed, but **did not validate whether the logged-in user had security access to the task** (unlike the main `getTaskById()` endpoint). Furthermore, `uploadAttachment()` never bothered checking the state limit of the task.
+
+### Fix
+
+1. **IDOR Patches:** Patched `TaskAttachmentService.java`, `TaskStatusHistoryService.java`, and `TaskCommentService.java` by injecting the `SecurityUtils` context and the `EmployeeRepository`, verifying explicitly that the authenticated employee is, in fact, the exact `assignedTo` employee on the task.
+2. **State Violation Patch:** Appended simple `DONE` and `CANCELLED` checks to `TaskAttachmentService.uploadAttachment()`, throwing `BusinessException` and stopping all file writes to disabled or closed records.
+
+---
+
+*Last updated: 2026-03-23 by Antigravity (AI assistant)*

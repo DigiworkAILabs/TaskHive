@@ -47,6 +47,11 @@ export const ProofUploadSection: React.FC<ProofUploadSectionProps> = ({
     );
     const hasProof = proofAttachments.length > 0;
 
+    // Filter REJECTED_PROOF attachments (audit trail from admin rejections)
+    const rejectedProofs = attachments.filter(
+        (a) => a.attachmentPurpose === 'REJECTED_PROOF'
+    );
+
     const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -81,12 +86,59 @@ export const ProofUploadSection: React.FC<ProofUploadSectionProps> = ({
         <div
             style={{
                 marginTop: '20px',
-                padding: '16px 18px',
-                background: sectionBg,
-                border: sectionBorder,
-                borderRadius: '12px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
             }}
         >
+            {/* ── Rejected proofs (audit trail) ────────────────────────── */}
+            {rejectedProofs.length > 0 && (
+                <div
+                    style={{
+                        padding: '12px 16px',
+                        background: 'rgba(239,68,68,0.05)',
+                        border: '1px solid rgba(239,68,68,0.2)',
+                        borderRadius: '12px',
+                    }}
+                >
+                    <p style={{ fontSize: '12px', fontWeight: 600, color: '#ef4444', margin: '0 0 8px' }}>
+                        Previously rejected proof{rejectedProofs.length > 1 ? 's' : ''}:
+                    </p>
+                    {rejectedProofs.map((proof, i) => (
+                        <div
+                            key={proof.id}
+                            style={{
+                                display: 'flex', alignItems: 'center', gap: '8px',
+                                padding: '6px 10px', borderRadius: '6px',
+                                backgroundColor: 'rgba(239,68,68,0.04)',
+                                marginBottom: i < rejectedProofs.length - 1 ? '4px' : '0',
+                            }}
+                        >
+                            <FileText size={12} color="#ef4444" style={{ flexShrink: 0 }} />
+                            <span style={{
+                                fontSize: '12px', color: '#71717a',
+                                textDecoration: 'line-through',
+                                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                            }}>
+                                {proof.fileName}
+                            </span>
+                        </div>
+                    ))}
+                    <p style={{ fontSize: '11px', color: '#ef4444', margin: '8px 0 0', opacity: 0.8 }}>
+                        Please upload a new proof to resubmit.
+                    </p>
+                </div>
+            )}
+
+            {/* ── Main proof section ───────────────────────────────────── */}
+            <div
+                style={{
+                    padding: '16px 18px',
+                    background: sectionBg,
+                    border: sectionBorder,
+                    borderRadius: '12px',
+                }}
+            >
             {/* ── Header ──────────────────────────────────────────────── */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -225,6 +277,7 @@ export const ProofUploadSection: React.FC<ProofUploadSectionProps> = ({
                     )}
                 </div>
             )}
+            </div>
         </div>
     );
 };

@@ -1,7 +1,7 @@
 // ── Enums ────────────────────────────────────────────────────────────────────
 export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'IN_REVIEW' | 'PENDING_APPROVAL' | 'DONE' | 'CANCELLED';
 export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-export type AttachmentPurpose = 'GENERAL' | 'PROOF';
+export type AttachmentPurpose = 'GENERAL' | 'PROOF' | 'REJECTED_PROOF';
 
 // ── Full Task (GET /tasks/{id}) ───────────────────────────────────────────────
 export interface Task {
