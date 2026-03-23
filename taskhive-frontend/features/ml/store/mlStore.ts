@@ -14,12 +14,24 @@ export const useMlStore = create<MlState>()(
   persist(
     (set) => ({
       isMlEnabled: false,
-      setMlEnabled: (enabled: boolean) => set({ isMlEnabled: enabled }),
-      toggleMlEnabled: () => set((state) => ({ isMlEnabled: !state.isMlEnabled })),
+      setMlEnabled: (enabled: boolean) => set((state) => ({ 
+          isMlEnabled: enabled, 
+          isGeminiEnabled: enabled ? false : state.isGeminiEnabled 
+      })),
+      toggleMlEnabled: () => set((state) => {
+          const next = !state.isMlEnabled;
+          return { isMlEnabled: next, isGeminiEnabled: next ? false : state.isGeminiEnabled };
+      }),
       
       isGeminiEnabled: true,
-      setGeminiEnabled: (enabled: boolean) => set({ isGeminiEnabled: enabled }),
-      toggleGeminiEnabled: () => set((state) => ({ isGeminiEnabled: !state.isGeminiEnabled })),
+      setGeminiEnabled: (enabled: boolean) => set((state) => ({ 
+          isGeminiEnabled: enabled, 
+          isMlEnabled: enabled ? false : state.isMlEnabled 
+      })),
+      toggleGeminiEnabled: () => set((state) => {
+          const next = !state.isGeminiEnabled;
+          return { isGeminiEnabled: next, isMlEnabled: next ? false : state.isMlEnabled };
+      }),
     }),
     {
       name: 'taskhive-ml-settings',
