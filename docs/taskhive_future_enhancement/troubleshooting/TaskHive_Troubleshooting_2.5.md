@@ -20,6 +20,7 @@
 | 9 | 2026-03-23 | Frontend / UX | Missing error message (TASK_3003) when submitting without proof | ✅ Resolved |
 | 10 | 2026-03-23 | Backend + Frontend | Employees are able to Cancel their own tasks | ✅ Resolved |
 | 11 | 2026-03-23 | Backend / Security | Insecure Direct Object Reference (IDOR) on Task sub-resources | ✅ Resolved |
+| 12 | 2026-03-24 | Frontend / UI | Task Detail UI enhancements (Status Timeline & LCD Timer) | ✅ Implemented |
 
 ---
 
@@ -680,4 +681,42 @@ Sub-resource service endpoints like `getAttachments()`, `getHistory()`, and `get
 
 ---
 
-*Last updated: 2026-03-23 by Antigravity (AI assistant)*
+## Issue 12 — Task Detail UI Enhancements (Status Timeline & LCD Timer)
+
+**Date:** 2026-03-24  
+**Area:** Frontend / UI  
+**Severity:** 🟢 Enhancement
+
+---
+
+### Description
+
+The task detail page required visual enhancements to make task progress and deadlines more immediate and engaging. A standard text-based status and simple date string were insufficient for the desired high-tech aesthetic.
+
+### Implementation Details
+
+Two new premium UI components were created and integrated into the Task Detail page:
+
+**1. 8-Bit Task Status Timeline (`TaskStatusTrail.tsx`):**
+- Replaced basic progress bars with a retro 8-bit battery block design.
+- Uses distinct stage colors (e.g., Dodger Blue for `IN_REVIEW`, Green for `DONE`).
+- Current ongoing status blocks render at 55% opacity to show partial progress, with the blinking animation removed for a cleaner look.
+- Features dynamic layout with multiple blocks per stage.
+
+**2. LCD Countdown Timer (`LcdCountdownTimer.tsx`):**
+- Digital LCD-style countdown timer using the 'Orbitron' font.
+- Dynamic color scheme based on remaining time: Safe (Gold) > Warning (Orange) > Critical (Red) > Overdue (Flashing Dark Red).
+- Implements glassmorphism (`backdrop-filter`) and a glossy reflection CSS animation.
+- Added a `noGlow` property to allow the timer to sit flush inside the dark task detail container without overwhelming the UI with outer neon shadows (while preserving visibility via increased border opacity).
+
+### Files Changed
+
+| File | Change |
+|---|---|
+| `features/task/components/TaskStatusTrail.tsx` | Created 8-bit battery block status component |
+| `features/task/components/LcdCountdownTimer.tsx` | Created animated countdown timer component with conditionally rendered outer glow |
+| `features/task/components/TaskDetail.tsx` | Integrated the new high-fidelity status trail and timer components |
+
+---
+
+*Last updated: 2026-03-24 by Antigravity (AI assistant)*
