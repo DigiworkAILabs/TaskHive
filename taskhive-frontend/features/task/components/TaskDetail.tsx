@@ -15,6 +15,8 @@ import { TaskStatusHistory } from './TaskStatusHistory';
 import { ProofUploadSection } from './ProofUploadSection';     // P1.1
 import { TaskApprovalPanel } from './TaskApprovalPanel';       // P1.2
 import { CancelReasonModal } from './CancelReasonModal';       // P1.3
+import { TaskStatusTrail } from './TaskStatusTrail';
+import { LcdCountdownTimer } from './LcdCountdownTimer';
 import { Task, TaskStatus, UpdateTaskData } from '../types/task.types';
 import {
     ArrowLeft, Pencil, Trash2, Calendar, Clock, Tag, User,
@@ -296,8 +298,11 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ isAdmin = false }) => {
                 </div>
             )}
             <div style={{ backgroundColor: '#161616', border: '1px solid #1f1f1f', borderRadius: '16px', padding: '28px', marginBottom: '20px' }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px', marginBottom: '16px' }}>
-                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                {/* Glowing dot trail */}
+                <TaskStatusTrail status={task.status} />
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px', marginBottom: '16px' }}>
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
                         <TaskStatusBadge status={task.status} />
                         <TaskPriorityBadge priority={task.priority} />
                         {isOverdue && (
@@ -306,6 +311,8 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ isAdmin = false }) => {
                             </span>
                         )}
                     </div>
+                    {/* LCD Countdown Timer */}
+                    <LcdCountdownTimer dueDate={task.dueDate} status={task.status} noGlow />
                 </div>
 
                 {task.description && (
@@ -315,7 +322,12 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ isAdmin = false }) => {
                 {/* Meta Grid */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px' }}>
                     <MetaItem icon={<User size={14} />} label="Assigned To" value={task.assigneeName || task.assignedTo || '—'} />
-                    <MetaItem icon={<Calendar size={14} />} label="Due Date" value={task.dueDate ? new Date(task.dueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—'} valueColor={isOverdue ? '#ef4444' : undefined} />
+                    <MetaItem icon={<Calendar size={14} />} label="Due Date" value={task.dueDate ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                            <span>{new Date(task.dueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                            <span style={{ fontSize: '12px', fontWeight: 500, opacity: 0.8 }}>{new Date(task.dueDate).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                    ) : '—'} valueColor={isOverdue ? '#ef4444' : undefined} />
                     <MetaItem icon={<Clock size={14} />} label="Est. Hours" value={task.estimatedHours != null ? `${task.estimatedHours}h` : '—'} />
                     <MetaItem icon={<Calendar size={14} />} label="Created" value={new Date(task.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })} />
                 </div>
@@ -506,7 +518,7 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ isAdmin = false }) => {
 
 // ── Meta Item ─────────────────────────────────────────────────────────────────
 
-function MetaItem({ icon, label, value, valueColor }: { icon: React.ReactNode; label: string; value: string; valueColor?: string }) {
+function MetaItem({ icon, label, value, valueColor }: { icon: React.ReactNode; label: string; value: React.ReactNode; valueColor?: string }) {
     return (
         <div style={{ backgroundColor: '#111111', border: '1px solid #1f1f1f', borderRadius: '10px', padding: '14px 16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#71717a', fontSize: '11px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>

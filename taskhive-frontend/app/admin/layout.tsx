@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/features/auth/store/authStore';
@@ -11,6 +11,11 @@ import {
 } from 'lucide-react';
 import { NotificationBell } from '@/features/notification/components/NotificationBell';
 import { MlFeatureToggle } from '@/features/ml/components/MlFeatureToggle';
+
+// ── Constants ────────────────────────────────────────────────────────────────
+
+const SIDEBAR_EXPANDED_W = 270;
+const SIDEBAR_COLLAPSED_W = 72;
 
 // ── Sidebar nav items ───────────────────────────────────────────────────────
 
@@ -25,9 +30,16 @@ const navItems = [
 
 // ── TaskHive Logo ───────────────────────────────────────────────────────────
 
-function Logo() {
+function Logo({ collapsed }: { collapsed: boolean }) {
     return (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '0 8px' }}>
+        <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            padding: collapsed ? '0' : '0 8px',
+            justifyContent: collapsed ? 'center' : 'flex-start',
+            transition: 'all 0.25s ease',
+        }}>
             <div
                 style={{
                     width: '36px',
@@ -48,7 +60,57 @@ function Logo() {
                     <rect x="14" y="14" width="7" height="7" rx="1.5" fill="white" opacity="0.4" />
                 </svg>
             </div>
-            <span style={{ fontSize: '18px', fontWeight: 700, color: '#ffffff' }}>TaskHive</span>
+            <span style={{
+                fontSize: '18px',
+                fontWeight: 700,
+                color: '#ffffff',
+                opacity: collapsed ? 0 : 1,
+                maxWidth: collapsed ? 0 : '150px',
+                overflow: 'hidden',
+                whiteSpace: 'nowrap',
+                transition: 'opacity 0.3s ease, max-width 0.3s ease',
+            }}>
+                TaskHive
+            </span>
+        </div>
+    );
+}
+
+// ── Tooltip wrapper for collapsed state ─────────────────────────────────────
+
+function NavTooltip({ label, show, children }: { label: string; show: boolean; children: React.ReactNode }) {
+    const [hovered, setHovered] = useState(false);
+
+    return (
+        <div
+            style={{ position: 'relative' }}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+        >
+            {children}
+            {show && hovered && (
+                <div style={{
+                    position: 'absolute',
+                    left: '100%',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    marginLeft: '12px',
+                    padding: '6px 12px',
+                    borderRadius: '8px',
+                    backgroundColor: '#1f1f1f',
+                    border: '1px solid #2a2a2a',
+                    color: '#ffffff',
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    whiteSpace: 'nowrap',
+                    zIndex: 100,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+                    pointerEvents: 'none',
+                    animation: 'tooltipFadeIn 0.15s ease',
+                }}>
+                    {label}
+                </div>
+            )}
         </div>
     );
 }
@@ -60,20 +122,40 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const router = useRouter();
     const user = useAuthStore((s) => s.user);
     const clearAuth = useAuthStore((s) => s.clearAuth);
-    const [sidebarOpen, setSidebarOpen] = useState(true);
 
-    // Close sidebar on small screens only on route change
-    useEffect(() => {
-        if (window.innerWidth < 768) {
-            setSidebarOpen(false);
-        }
-    }, [pathname]);
+    const [collapsed, setCollapsed] = useState(false);         // desktop: icon-only vs expanded
+    const [mobileOpen, setMobileOpen] = useState(false);       // mobile: off-screen slide
+    const [hoverExpanded, setHoverExpanded] = useState(false);  // temporary expand on hover
+    const [isDesktop, setIsDesktop] = useState(true);           // SSR-safe screen check
+    const sidebarRef = useRef<HTMLElement>(null);
+    const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    // Initialize sidebar based on screen size
+    // The sidebar appears expanded if: not collapsed OR temporarily hover-expanded
+    const isExpanded = !collapsed || hoverExpanded;
+    const sidebarWidth = isExpanded ? SIDEBAR_EXPANDED_W : SIDEBAR_COLLAPSED_W;
+
+    // SSR-safe: detect desktop vs mobile on mount + resize
     useEffect(() => {
-        if (window.innerWidth < 768) {
-            setSidebarOpen(false);
-        }
+        const check = () => setIsDesktop(window.innerWidth >= 768);
+        check();
+        window.addEventListener('resize', check);
+        return () => window.removeEventListener('resize', check);
+    }, []);
+
+    // Close mobile sidebar on route change
+    useEffect(() => {
+        if (!isDesktop) setMobileOpen(false);
+    }, [pathname, isDesktop]);
+
+    // Hover expand/collapse (desktop only, when sidebar is collapsed)
+    const handleMouseEnter = useCallback(() => {
+        if (!collapsed || !isDesktop) return;
+        hoverTimerRef.current = setTimeout(() => setHoverExpanded(true), 200);
+    }, [collapsed, isDesktop]);
+
+    const handleMouseLeave = useCallback(() => {
+        if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+        setHoverExpanded(false);
     }, []);
 
     const handleLogout = async () => {
@@ -84,17 +166,30 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         router.push('/login');
     };
 
+    const toggleCollapsed = () => {
+        setCollapsed((prev) => !prev);
+        setHoverExpanded(false);
+    };
+
     return (
         <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#0a0a0a' }}>
+            {/* ── Global styles ─────────────────────────────────────────── */}
+            <style>{`
+                @keyframes tooltipFadeIn {
+                    from { opacity: 0; transform: translateY(-50%) translateX(-4px); }
+                    to   { opacity: 1; transform: translateY(-50%) translateX(0); }
+                }
+            `}</style>
+
             {/* ── Skip to Content (WCAG 2.4.1) ─────────────────────────── */}
             <a href="#main-content" className="skip-to-content">
                 Skip to content
             </a>
 
             {/* ── Mobile Overlay ──────────────────────────────────────────── */}
-            {sidebarOpen && (
+            {mobileOpen && (
                 <div
-                    onClick={() => setSidebarOpen(false)}
+                    onClick={() => setMobileOpen(false)}
                     style={{
                         position: 'fixed',
                         inset: 0,
@@ -108,28 +203,51 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
             {/* ── Sidebar ──────────────────────────────────────────────────── */}
             <aside
-                className={`
-                    fixed top-0 left-0 bottom-0 z-50
-                    flex flex-col
-                    w-[220px] bg-[#111111] border-r border-[#1a1a1a]
-                    p-6 pl-4 pr-4
-                    transition-transform duration-300 ease-in-out
-                    ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-                `}
+                ref={sidebarRef}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+                style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    bottom: 0,
+                    zIndex: 50,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    backgroundColor: '#111111',
+                    borderRight: '1px solid #1a1a1a',
+                    width: isDesktop ? `${sidebarWidth}px` : '270px',
+                    padding: isExpanded ? '24px 16px' : '24px 14px',
+                    transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s ease',
+                    transform: !isDesktop && !mobileOpen ? 'translateX(-100%)' : 'translateX(0)',
+                    overflowX: 'hidden',
+                    willChange: 'width',
+                }}
             >
                 {/* Close button on mobile */}
-                <button
-                    onClick={() => setSidebarOpen(false)}
-                    className="md:hidden absolute top-4 right-4 text-zinc-400 hover:text-white"
-                    aria-label="Close sidebar"
-                >
-                    <X size={20} />
-                </button>
+                {!isDesktop && (
+                    <button
+                        onClick={() => setMobileOpen(false)}
+                        style={{
+                            position: 'absolute',
+                            top: '16px',
+                            right: '16px',
+                            background: 'none',
+                            border: 'none',
+                            color: '#a1a1aa',
+                            cursor: 'pointer',
+                        }}
+                        aria-label="Close sidebar"
+                    >
+                        <X size={20} />
+                    </button>
+                )}
 
                 {/* Logo */}
-                <div style={{ marginBottom: '36px' }}>
-                    <Logo />
+                <div style={{ marginBottom: '32px' }}>
+                    <Logo collapsed={!isExpanded} />
                 </div>
+
 
                 {/* Nav */}
                 <nav aria-label="Main navigation" style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
@@ -137,7 +255,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         const isActive = pathname.startsWith(item.href) && item.href !== '#';
                         const Icon = item.icon;
 
-                        return (
+                        const link = (
                             <Link
                                 key={item.label}
                                 href={item.enabled ? item.href : '#'}
@@ -148,17 +266,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '12px',
-                                    padding: '11px 14px',
+                                    padding: isExpanded ? '11px 14px' : '11px 0',
                                     borderRadius: '10px',
                                     textDecoration: 'none',
                                     fontSize: '14px',
                                     fontWeight: isActive ? 600 : 400,
                                     color: !item.enabled ? '#3f3f46' : isActive ? '#ffffff' : '#a1a1aa',
                                     backgroundColor: isActive ? 'rgba(249,115,22,0.12)' : 'transparent',
-                                    borderLeft: isActive ? '3px solid #f97316' : '3px solid transparent',
-                                    transition: 'all 0.15s',
+                                    borderLeft: isExpanded ? (isActive ? '3px solid #f97316' : '3px solid transparent') : 'none',
+                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                                     cursor: item.enabled ? 'pointer' : 'not-allowed',
                                     opacity: item.enabled ? 1 : 0.4,
+                                    justifyContent: isExpanded ? 'flex-start' : 'center',
+                                    position: 'relative',
+                                    overflow: 'hidden',
                                 }}
                                 onMouseEnter={(e) => {
                                     if (item.enabled && !isActive) {
@@ -173,9 +294,36 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                     }
                                 }}
                             >
-                                <Icon size={18} color={isActive ? '#f97316' : undefined} />
-                                {item.label}
+                                <Icon size={20} color={isActive ? '#f97316' : undefined} style={{ flexShrink: 0 }} />
+                                {/* Active accent bar when collapsed */}
+                                {!isExpanded && isActive && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        left: '4px',
+                                        top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        width: '3px',
+                                        height: '16px',
+                                        borderRadius: '2px',
+                                        backgroundColor: '#f97316',
+                                    }} />
+                                )}
+                                <span style={{
+                                    opacity: isExpanded ? 1 : 0,
+                                    maxWidth: isExpanded ? '150px' : 0,
+                                    overflow: 'hidden',
+                                    whiteSpace: 'nowrap',
+                                    transition: 'opacity 0.3s ease, max-width 0.3s ease',
+                                }}>
+                                    {item.label}
+                                </span>
                             </Link>
+                        );
+
+                        return (
+                            <NavTooltip key={item.label} label={item.label} show={!isExpanded}>
+                                {link}
+                            </NavTooltip>
                         );
                     })}
                 </nav>
@@ -185,11 +333,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '10px',
-                        padding: '14px',
+                        gap: isExpanded ? '10px' : '0',
+                        padding: isExpanded ? '14px' : '10px',
                         borderRadius: '12px',
                         backgroundColor: 'rgba(255,255,255,0.03)',
                         marginTop: '12px',
+                        justifyContent: isExpanded ? 'flex-start' : 'center',
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     }}
                 >
                     {/* Avatar */}
@@ -211,7 +361,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     >
                         {user ? `${user.firstName.charAt(0)}${user.lastName.charAt(0)}` : '?'}
                     </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
+
+                    {/* Name + Role (hidden when collapsed) */}
+                    <div style={{
+                        flex: 1,
+                        minWidth: 0,
+                        opacity: isExpanded ? 1 : 0,
+                        maxWidth: isExpanded ? '150px' : 0,
+                        overflow: 'hidden',
+                        transition: 'opacity 0.3s ease, max-width 0.3s ease',
+                    }}>
                         <div style={{ fontSize: '13px', fontWeight: 600, color: '#ffffff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {user ? `${user.firstName} ${user.lastName}` : 'Admin'}
                         </div>
@@ -221,25 +380,34 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     </div>
 
                     {/* Logout */}
-                    <button
-                        onClick={handleLogout}
-                        title="Logout"
-                        aria-label="Logout"
-                        style={{
-                            background: 'none', border: 'none', cursor: 'pointer',
-                            color: '#52525b', padding: '4px', transition: 'color 0.15s',
-                        }}
-                        onMouseEnter={(e) => (e.currentTarget.style.color = '#ef4444')}
-                        onMouseLeave={(e) => (e.currentTarget.style.color = '#52525b')}
-                    >
-                        <LogOut size={16} />
-                    </button>
+                    {isExpanded && (
+                        <button
+                            onClick={handleLogout}
+                            title="Logout"
+                            aria-label="Logout"
+                            style={{
+                                background: 'none', border: 'none', cursor: 'pointer',
+                                color: '#52525b', padding: '4px', transition: 'color 0.15s',
+                            }}
+                            onMouseEnter={(e) => (e.currentTarget.style.color = '#ef4444')}
+                            onMouseLeave={(e) => (e.currentTarget.style.color = '#52525b')}
+                        >
+                            <LogOut size={16} />
+                        </button>
+                    )}
                 </div>
             </aside>
 
             {/* ── Main Content ─────────────────────────────────────────────── */}
             <div
-                className={`flex-1 flex flex-col min-w-0 transition-[margin-left] duration-300 ease-in-out ${sidebarOpen ? 'md:ml-[220px]' : 'ml-0'}`}
+                style={{
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    minWidth: 0,
+                    marginLeft: isDesktop ? `${sidebarWidth}px` : 0,
+                    transition: 'margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                }}
             >
                 {/* Top bar */}
                 <header
@@ -248,7 +416,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     {/* Left: Hamburger + Title */}
                     <div className="flex items-center gap-3">
                         <button
-                            onClick={() => setSidebarOpen(!sidebarOpen)}
+                            onClick={() => {
+                                if (!isDesktop) {
+                                    setMobileOpen(!mobileOpen);
+                                } else {
+                                    toggleCollapsed();
+                                }
+                            }}
                             className="text-zinc-400 hover:text-white p-1"
                             aria-label="Toggle menu"
                         >
@@ -272,7 +446,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     </div>
 
                     <div className="flex items-center gap-2 md:gap-3">
-                        {/* System Online badge — hide on very small screens */}
+                        {/* System Online badge */}
                         <div
                             className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium"
                             style={{
@@ -287,7 +461,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         <MlFeatureToggle />
                         <NotificationBell />
 
-                        {/* Add New Employee button (only on employees list page) */}
+                        {/* Add New Employee button */}
                         {pathname === '/admin/employees' && (
                             <Link
                                 href="/admin/employees/new"
@@ -302,7 +476,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                 <span className="lg:hidden">Add</span>
                             </Link>
                         )}
-                        {/* Mobile FAB for Add Employee */}
                         {pathname === '/admin/employees' && (
                             <Link
                                 href="/admin/employees/new"
