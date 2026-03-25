@@ -24,6 +24,12 @@ class TaskModel with _$TaskModel {
     String? createdBy,
     String? createdAt,
     String? updatedAt,
+    // Phase 1 v2.5 fields
+    bool? isLate,
+    int? lateByMinutes,
+    String? submittedAt,
+    bool? proofRequired,
+    bool? approvalRequired,
   }) = _TaskModel;
 
   factory TaskModel.fromJson(Map<String, dynamic> json) =>

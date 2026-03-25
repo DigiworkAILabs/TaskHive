@@ -44,6 +44,22 @@
                     android:scheme="https"
                     android:host="taskhive.digiwork.com"
                     android:pathPrefix="/activate-account"/>
+                <!-- Dev support for local IP and http/https -->
+                <data
+                    android:scheme="http"
+                    android:host="192.168.0.170"
+                    android:port="3000"
+                    android:pathPrefix="/activate-account"/>
+                <data
+                    android:scheme="https"
+                    android:host="192.168.0.170"
+                    android:port="3000"
+                    android:pathPrefix="/activate-account"/>
+                <data
+                    android:scheme="http"
+                    android:host="10.0.2.2"
+                    android:port="3000"
+                    android:pathPrefix="/activate-account"/>
             </intent-filter>
 
             <!-- Deeplink: Password Reset -->
@@ -54,6 +70,22 @@
                 <data
                     android:scheme="https"
                     android:host="taskhive.digiwork.com"
+                    android:pathPrefix="/reset-password"/>
+                <!-- Dev support for local IP and http/https -->
+                <data
+                    android:scheme="http"
+                    android:host="192.168.0.170"
+                    android:port="3000"
+                    android:pathPrefix="/reset-password"/>
+                <data
+                    android:scheme="https"
+                    android:host="192.168.0.170"
+                    android:port="3000"
+                    android:pathPrefix="/reset-password"/>
+                <data
+                    android:scheme="http"
+                    android:host="10.0.2.2"
+                    android:port="3000"
                     android:pathPrefix="/reset-password"/>
             </intent-filter>
 

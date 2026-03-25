@@ -10,6 +10,7 @@ import '../../../domain/providers/task_actions_provider.dart';
 import '../../../domain/providers/task_list_provider.dart';
 import '../../widgets/task_filter_bar.dart';
 import '../../widgets/task_list_tile.dart';
+import '../../widgets/task_sort_sheet.dart';
 import '../../../../notification/presentation/widgets/notification_badge.dart';
 
 /// Admin task list screen.
@@ -54,7 +55,26 @@ class _AdminTaskListScreenState extends ConsumerState<AdminTaskListScreen> {
                 );
               }).value ??
               const SizedBox.shrink(),
-
+          IconButton(
+            icon: const Icon(Icons.sort_rounded),
+            tooltip: 'Sort',
+            onPressed: () {
+              final notifier = ref.read(taskListNotifierProvider.notifier);
+              showModalBottomSheet(
+                context: context,
+                builder: (context) => TaskSortSheet(
+                  currentSortBy: _filter.sortBy,
+                  currentSortDir: _filter.sortDir,
+                  onSortChanged: (sortBy, sortDir) {
+                    final newFilter =
+                        _filter.copyWith(sortBy: sortBy, sortDir: sortDir);
+                    setState(() => _filter = newFilter);
+                    notifier.applyFilter(newFilter);
+                  },
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () =>

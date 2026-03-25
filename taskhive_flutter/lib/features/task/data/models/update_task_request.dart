@@ -18,6 +18,8 @@ class UpdateTaskRequest with _$UpdateTaskRequest {
     String? dueDate,
     double? estimatedHours,
     List<String>? tags,
+    bool? proofRequired,
+    bool? approvalRequired,
   }) = _UpdateTaskRequest;
 
   factory UpdateTaskRequest.fromJson(Map<String, dynamic> json) =>

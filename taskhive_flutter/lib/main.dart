@@ -3,6 +3,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+import 'package:flutter_web_plugins/url_strategy.dart';
+
 import 'app.dart';
 import 'core/network/dio_client.dart';
 
@@ -13,6 +15,7 @@ import 'core/network/cookie_jar_factory_stub.dart'
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  usePathUrlStrategy();
 
   // 1. Load environment variables (change to .env.prod for production)
   await dotenv.load(fileName: 'assets/env/.env.dev');

@@ -6,6 +6,7 @@ import '../../../../../core/router/app_routes.dart';
 import '../../../domain/enums/task_status.dart';
 import '../../../domain/providers/my_tasks_provider.dart';
 import '../../widgets/task_list_tile.dart';
+import '../../widgets/task_sort_sheet.dart';
 
 /// Employee-facing "My Tasks" screen.
 /// Shows the logged-in employee's assigned tasks: filterable by status/priority.
@@ -68,6 +69,20 @@ class _MyTasksScreenState extends ConsumerState<MyTasksScreen>
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.sort_rounded),
+            tooltip: 'Sort',
+            onPressed: () {
+              final notifier = ref.read(myTasksNotifierProvider.notifier);
+              showModalBottomSheet(
+                context: context,
+                builder: (context) => TaskSortSheet(
+                  onSortChanged: (sortBy, sortDir) =>
+                      notifier.applySort(sortBy, sortDir),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () =>

@@ -34,7 +34,13 @@ mixin _$TaskModel {
   bool get isOverdue => throw _privateConstructorUsedError;
   String? get createdBy => throw _privateConstructorUsedError;
   String? get createdAt => throw _privateConstructorUsedError;
-  String? get updatedAt => throw _privateConstructorUsedError;
+  String? get updatedAt =>
+      throw _privateConstructorUsedError; // Phase 1 v2.5 fields
+  bool? get isLate => throw _privateConstructorUsedError;
+  int? get lateByMinutes => throw _privateConstructorUsedError;
+  String? get submittedAt => throw _privateConstructorUsedError;
+  bool? get proofRequired => throw _privateConstructorUsedError;
+  bool? get approvalRequired => throw _privateConstructorUsedError;
 
   /// Serializes this TaskModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -66,7 +72,12 @@ abstract class $TaskModelCopyWith<$Res> {
       bool isOverdue,
       String? createdBy,
       String? createdAt,
-      String? updatedAt});
+      String? updatedAt,
+      bool? isLate,
+      int? lateByMinutes,
+      String? submittedAt,
+      bool? proofRequired,
+      bool? approvalRequired});
 }
 
 /// @nodoc
@@ -99,6 +110,11 @@ class _$TaskModelCopyWithImpl<$Res, $Val extends TaskModel>
     Object? createdBy = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
+    Object? isLate = freezed,
+    Object? lateByMinutes = freezed,
+    Object? submittedAt = freezed,
+    Object? proofRequired = freezed,
+    Object? approvalRequired = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -161,6 +177,26 @@ class _$TaskModelCopyWithImpl<$Res, $Val extends TaskModel>
           ? _value.updatedAt
           : updatedAt // ignore: cast_nullable_to_non_nullable
               as String?,
+      isLate: freezed == isLate
+          ? _value.isLate
+          : isLate // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      lateByMinutes: freezed == lateByMinutes
+          ? _value.lateByMinutes
+          : lateByMinutes // ignore: cast_nullable_to_non_nullable
+              as int?,
+      submittedAt: freezed == submittedAt
+          ? _value.submittedAt
+          : submittedAt // ignore: cast_nullable_to_non_nullable
+              as String?,
+      proofRequired: freezed == proofRequired
+          ? _value.proofRequired
+          : proofRequired // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      approvalRequired: freezed == approvalRequired
+          ? _value.approvalRequired
+          : approvalRequired // ignore: cast_nullable_to_non_nullable
+              as bool?,
     ) as $Val);
   }
 }
@@ -188,7 +224,12 @@ abstract class _$$TaskModelImplCopyWith<$Res>
       bool isOverdue,
       String? createdBy,
       String? createdAt,
-      String? updatedAt});
+      String? updatedAt,
+      bool? isLate,
+      int? lateByMinutes,
+      String? submittedAt,
+      bool? proofRequired,
+      bool? approvalRequired});
 }
 
 /// @nodoc
@@ -219,6 +260,11 @@ class __$$TaskModelImplCopyWithImpl<$Res>
     Object? createdBy = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
+    Object? isLate = freezed,
+    Object? lateByMinutes = freezed,
+    Object? submittedAt = freezed,
+    Object? proofRequired = freezed,
+    Object? approvalRequired = freezed,
   }) {
     return _then(_$TaskModelImpl(
       id: null == id
@@ -281,6 +327,26 @@ class __$$TaskModelImplCopyWithImpl<$Res>
           ? _value.updatedAt
           : updatedAt // ignore: cast_nullable_to_non_nullable
               as String?,
+      isLate: freezed == isLate
+          ? _value.isLate
+          : isLate // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      lateByMinutes: freezed == lateByMinutes
+          ? _value.lateByMinutes
+          : lateByMinutes // ignore: cast_nullable_to_non_nullable
+              as int?,
+      submittedAt: freezed == submittedAt
+          ? _value.submittedAt
+          : submittedAt // ignore: cast_nullable_to_non_nullable
+              as String?,
+      proofRequired: freezed == proofRequired
+          ? _value.proofRequired
+          : proofRequired // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      approvalRequired: freezed == approvalRequired
+          ? _value.approvalRequired
+          : approvalRequired // ignore: cast_nullable_to_non_nullable
+              as bool?,
     ));
   }
 }
@@ -303,7 +369,12 @@ class _$TaskModelImpl implements _TaskModel {
       this.isOverdue = false,
       this.createdBy,
       this.createdAt,
-      this.updatedAt})
+      this.updatedAt,
+      this.isLate,
+      this.lateByMinutes,
+      this.submittedAt,
+      this.proofRequired,
+      this.approvalRequired})
       : _tags = tags;
 
   factory _$TaskModelImpl.fromJson(Map<String, dynamic> json) =>
@@ -347,10 +418,21 @@ class _$TaskModelImpl implements _TaskModel {
   final String? createdAt;
   @override
   final String? updatedAt;
+// Phase 1 v2.5 fields
+  @override
+  final bool? isLate;
+  @override
+  final int? lateByMinutes;
+  @override
+  final String? submittedAt;
+  @override
+  final bool? proofRequired;
+  @override
+  final bool? approvalRequired;
 
   @override
   String toString() {
-    return 'TaskModel(id: $id, title: $title, description: $description, status: $status, priority: $priority, assignedTo: $assignedTo, assigneeName: $assigneeName, dueDate: $dueDate, completedAt: $completedAt, estimatedHours: $estimatedHours, tags: $tags, isOverdue: $isOverdue, createdBy: $createdBy, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'TaskModel(id: $id, title: $title, description: $description, status: $status, priority: $priority, assignedTo: $assignedTo, assigneeName: $assigneeName, dueDate: $dueDate, completedAt: $completedAt, estimatedHours: $estimatedHours, tags: $tags, isOverdue: $isOverdue, createdBy: $createdBy, createdAt: $createdAt, updatedAt: $updatedAt, isLate: $isLate, lateByMinutes: $lateByMinutes, submittedAt: $submittedAt, proofRequired: $proofRequired, approvalRequired: $approvalRequired)';
   }
 
   @override
@@ -382,28 +464,43 @@ class _$TaskModelImpl implements _TaskModel {
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
-                other.updatedAt == updatedAt));
+                other.updatedAt == updatedAt) &&
+            (identical(other.isLate, isLate) || other.isLate == isLate) &&
+            (identical(other.lateByMinutes, lateByMinutes) ||
+                other.lateByMinutes == lateByMinutes) &&
+            (identical(other.submittedAt, submittedAt) ||
+                other.submittedAt == submittedAt) &&
+            (identical(other.proofRequired, proofRequired) ||
+                other.proofRequired == proofRequired) &&
+            (identical(other.approvalRequired, approvalRequired) ||
+                other.approvalRequired == approvalRequired));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      id,
-      title,
-      description,
-      status,
-      priority,
-      assignedTo,
-      assigneeName,
-      dueDate,
-      completedAt,
-      estimatedHours,
-      const DeepCollectionEquality().hash(_tags),
-      isOverdue,
-      createdBy,
-      createdAt,
-      updatedAt);
+  int get hashCode => Object.hashAll([
+        runtimeType,
+        id,
+        title,
+        description,
+        status,
+        priority,
+        assignedTo,
+        assigneeName,
+        dueDate,
+        completedAt,
+        estimatedHours,
+        const DeepCollectionEquality().hash(_tags),
+        isOverdue,
+        createdBy,
+        createdAt,
+        updatedAt,
+        isLate,
+        lateByMinutes,
+        submittedAt,
+        proofRequired,
+        approvalRequired
+      ]);
 
   /// Create a copy of TaskModel
   /// with the given fields replaced by the non-null parameter values.
@@ -437,7 +534,12 @@ abstract class _TaskModel implements TaskModel {
       final bool isOverdue,
       final String? createdBy,
       final String? createdAt,
-      final String? updatedAt}) = _$TaskModelImpl;
+      final String? updatedAt,
+      final bool? isLate,
+      final int? lateByMinutes,
+      final String? submittedAt,
+      final bool? proofRequired,
+      final bool? approvalRequired}) = _$TaskModelImpl;
 
   factory _TaskModel.fromJson(Map<String, dynamic> json) =
       _$TaskModelImpl.fromJson;
@@ -471,7 +573,17 @@ abstract class _TaskModel implements TaskModel {
   @override
   String? get createdAt;
   @override
-  String? get updatedAt;
+  String? get updatedAt; // Phase 1 v2.5 fields
+  @override
+  bool? get isLate;
+  @override
+  int? get lateByMinutes;
+  @override
+  String? get submittedAt;
+  @override
+  bool? get proofRequired;
+  @override
+  bool? get approvalRequired;
 
   /// Create a copy of TaskModel
   /// with the given fields replaced by the non-null parameter values.

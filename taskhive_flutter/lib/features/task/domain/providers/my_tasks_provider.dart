@@ -11,6 +11,8 @@ part 'my_tasks_provider.g.dart';
 class MyTasksNotifier extends _$MyTasksNotifier {
   final _cacheService = CacheService();
   String? _statusFilter;
+  String? _sortBy;
+  String? _sortDir;
 
   @override
   Future<TaskListState> build() async {
@@ -31,8 +33,8 @@ class MyTasksNotifier extends _$MyTasksNotifier {
       page: page,
       size: 20,
       status: _statusFilter,
-      sortBy: 'dueDate',
-      sortDir: 'asc',
+      sortBy: _sortBy,
+      sortDir: _sortDir,
     );
     final content = (data['content'] as List<dynamic>)
         .map((e) => TaskModel.fromJson(e as Map<String, dynamic>))
@@ -72,8 +74,8 @@ class MyTasksNotifier extends _$MyTasksNotifier {
         page: current.currentPage + 1,
         size: 20,
         status: _statusFilter,
-        sortBy: 'dueDate',
-        sortDir: 'asc',
+        sortBy: _sortBy,
+        sortDir: _sortDir,
       );
       final more = (data['content'] as List<dynamic>)
           .map((e) => TaskModel.fromJson(e as Map<String, dynamic>))
@@ -87,6 +89,13 @@ class MyTasksNotifier extends _$MyTasksNotifier {
     } catch (_) {
       state = AsyncData(current.copyWith(isLoadingMore: false));
     }
+  }
+
+  Future<void> applySort(String? sortBy, String? sortDir) async {
+    _sortBy = sortBy;
+    _sortDir = sortDir;
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() => _fetchPage(0));
   }
 
   Future<void> applyFilter(String? status) async {

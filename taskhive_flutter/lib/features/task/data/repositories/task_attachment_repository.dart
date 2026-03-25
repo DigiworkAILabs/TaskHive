@@ -35,8 +35,9 @@ class TaskAttachmentRepository {
   /// Uses multipart field `"file"` (confirmed by Postman step 18).
   Future<TaskAttachmentModel> uploadAttachment(
     String taskId,
-    XFile file,
-  ) async {
+    XFile file, {
+    String purpose = 'GENERAL',
+  }) async {
     try {
       MultipartFile multipartFile;
       if (kIsWeb) {
@@ -54,7 +55,7 @@ class TaskAttachmentRepository {
 
       final formData = FormData.fromMap({'file': multipartFile});
       final response = await _dio.post(
-        ApiEndpoints.taskAttachments(taskId),
+        '${ApiEndpoints.taskAttachments(taskId)}?purpose=$purpose',
         data: formData,
         options: Options(contentType: 'multipart/form-data'),
       );

@@ -23,7 +23,7 @@ class EmployeeKpiRow extends StatelessWidget {
             physics: const NeverScrollableScrollPhysics(),
             mainAxisSpacing: 12,
             crossAxisSpacing: 12,
-            childAspectRatio: 2.2,
+            childAspectRatio: 1.6,
             children: _buildCards(context, active),
           );
         } else if (constraints.maxWidth >= AppBreakpoints.mobile) {
@@ -33,7 +33,7 @@ class EmployeeKpiRow extends StatelessWidget {
             physics: const NeverScrollableScrollPhysics(),
             mainAxisSpacing: 12,
             crossAxisSpacing: 12,
-            childAspectRatio: 2.2,
+            childAspectRatio: 1.6,
             children: _buildCards(context, active),
           );
         } else {

@@ -16,6 +16,8 @@ _$UpdateTaskRequestImpl _$$UpdateTaskRequestImplFromJson(
       dueDate: json['dueDate'] as String?,
       estimatedHours: (json['estimatedHours'] as num?)?.toDouble(),
       tags: (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList(),
+      proofRequired: json['proofRequired'] as bool?,
+      approvalRequired: json['approvalRequired'] as bool?,
     );
 
 Map<String, dynamic> _$$UpdateTaskRequestImplToJson(
@@ -29,6 +31,9 @@ Map<String, dynamic> _$$UpdateTaskRequestImplToJson(
       if (instance.dueDate case final value?) 'dueDate': value,
       if (instance.estimatedHours case final value?) 'estimatedHours': value,
       if (instance.tags case final value?) 'tags': value,
+      if (instance.proofRequired case final value?) 'proofRequired': value,
+      if (instance.approvalRequired case final value?)
+        'approvalRequired': value,
     };
 
 const _$TaskPriorityEnumMap = {

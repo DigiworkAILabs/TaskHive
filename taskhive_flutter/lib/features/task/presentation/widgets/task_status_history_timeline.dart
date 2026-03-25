@@ -27,32 +27,43 @@ class TaskStatusHistoryTimeline extends ConsumerWidget {
             }
             return Column(
               children: history.asMap().entries.map((entry) {
-                final i = entry.key;
                 final h = entry.value;
-                final isLast = i == history.length - 1;
+                final isLast = entry.key == history.length - 1;
+                final isRejection = h.oldStatus == 'PENDING_APPROVAL' &&
+                    h.newStatus == 'IN_REVIEW';
+
                 return IntrinsicHeight(
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Timeline column
                       SizedBox(
-                        width: 24,
+                        width: 32,
                         child: Column(
                           children: [
                             Container(
-                              width: 10,
-                              height: 10,
+                              width: 12,
+                              height: 12,
                               margin: const EdgeInsets.only(top: 4),
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: Theme.of(context).colorScheme.primary,
+                                color: isRejection
+                                    ? Colors.orange
+                                    : Theme.of(context).colorScheme.primary,
+                                border: isRejection
+                                    ? Border.all(
+                                        color: Colors.orange.withValues(alpha: 0.3),
+                                        width: 3)
+                                    : null,
                               ),
                             ),
                             if (!isLast)
                               Expanded(
                                 child: Container(
                                   width: 2,
-                                  color: Colors.grey.shade300,
+                                  color: isRejection
+                                      ? Colors.orange.withValues(alpha: 0.3)
+                                      : Colors.grey.shade300,
                                 ),
                               ),
                           ],
@@ -79,6 +90,25 @@ class TaskStatusHistoryTimeline extends ConsumerWidget {
                                     ),
                                   ],
                                   _statusChip(h.newStatus),
+                                  if (isRejection) ...[
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: Colors.orange.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(4),
+                                        border: Border.all(
+                                            color: Colors.orange
+                                                .withOpacity(0.3)),
+                                      ),
+                                      child: const Text('Revision Requested',
+                                          style: TextStyle(
+                                              color: Colors.orange,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold)),
+                                    ),
+                                  ],
                                 ],
                               ),
                               const SizedBox(height: 4),
@@ -90,15 +120,40 @@ class TaskStatusHistoryTimeline extends ConsumerWidget {
                               ),
                               // Optional comment
                               if (h.comment != null && h.comment!.isNotEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 4),
-                                  child: Text(
-                                    '"${h.comment}"',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontStyle: FontStyle.italic,
-                                      color: Colors.grey.shade700,
+                                Container(
+                                  margin: const EdgeInsets.only(top: 8),
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: isRejection
+                                        ? Colors.orange.withOpacity(0.05)
+                                        : Colors.grey.shade50,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: isRejection
+                                          ? Colors.orange.withOpacity(0.15)
+                                          : Colors.grey.shade200,
                                     ),
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Icon(Icons.chat_bubble_outline,
+                                          size: 12,
+                                          color: isRejection
+                                              ? Colors.orange
+                                              : Colors.grey),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          h.comment!,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey.shade800,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                             ],

@@ -68,7 +68,7 @@ class MyProfileScreen extends ConsumerWidget {
             
             // AI Productivity Section
             isMlEnabledAsync.when(
-              data: (enabled) => enabled
+              data: (mlState) => mlState.isMlEnabled
                   ? _buildAiPerformanceSection(context, scoreAsync)
                   : const SizedBox.shrink(),
               loading: () => const SizedBox.shrink(),

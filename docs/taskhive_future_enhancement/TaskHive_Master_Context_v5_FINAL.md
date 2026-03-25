@@ -54,6 +54,17 @@ TaskHive v2.4 is a **full multi-platform product**, not just a web app.
 
 > ⚠️ **React Native is abandoned.** Flutter is the sole mobile platform going forward. Do not reference or integrate React Native in any v3.x work. All mobile features (scorecard, leaderboard, plugins) are Flutter-only — covered in Phase 9 (v3.7).
 
+### Additional Components Built in v2.5
+
+These premium UI components were added during Phase 1 and exist in the codebase:
+
+| Component | File | Description |
+|---|---|---|
+| `TaskStatusTrail` | `features/task/components/TaskStatusTrail.tsx` | 8-bit battery block status timeline — shows task progress across all statuses |
+| `LcdCountdownTimer` | `features/task/components/LcdCountdownTimer.tsx` | LCD-style countdown timer with dynamic color (gold→orange→red→flashing) based on time remaining. `noGlow` prop available for embedded use |
+
+Both are integrated in `TaskDetail.tsx`. Flutter equivalents needed in Phase 9.
+
 ### Backend Modules — ALL Complete, Do NOT Rebuild
 
 | Module | Package | What it does |
@@ -354,6 +365,190 @@ JOIN employees e ON t.assigned_to = e.id
 CONCAT(e.first_name, ' ', e.last_name) AS employee_name
 ```
 
+### Backend Bugs from v2.5
+
+#### B19 — task_status is VARCHAR, NOT a PostgreSQL Enum (Phase 1 / v2.5)
+
+**CRITICAL — affects all future migrations.**
+
+`tasks.status` column was created as `VARCHAR(20)` in the original migration, NOT as a PostgreSQL native enum type. The master context migration V8 said `ALTER TYPE task_status ADD VALUE` — this is WRONG and will always fail with `type "task_status" does not exist`.
+
+```sql
+-- ❌ WRONG — task_status enum does not exist
+ALTER TYPE task_status ADD VALUE IF NOT EXISTS 'PENDING_APPROVAL';
+
+-- ✅ CORRECT — VARCHAR accepts any string, no DDL needed
+-- Just add the value to TaskStatus.java enum in Java
+-- No SQL migration required for new status values
+SELECT 1; -- no-op migration
+```
+
+**Rule going forward:** NEVER write `ALTER TYPE task_status` in any migration. Status validation is enforced at the Java application layer via `TaskStatus.java` enum only.
+
+**How to verify before writing any migration:**
+```sql
+SELECT column_name, data_type, udt_name
+FROM information_schema.columns
+WHERE table_name = 'tasks' AND column_name = 'status';
+-- If data_type = 'character varying' → VARCHAR, no ALTER TYPE needed
+-- If data_type = 'USER-DEFINED' → native enum, ALTER TYPE needed
+```
+
+**If migration fails and Flyway marks it FAILED:**
+```bash
+mvn flyway:repair \
+  -Dflyway.url=jdbc:postgresql://localhost:5432/taskhive \
+  -Dflyway.user=postgres \
+  -Dflyway.password=password \
+  -Dflyway.locations=classpath:db/migration
+```
+
+#### B20 — React Rules of Hooks: Hooks Must Be Before All Early Returns (Phase 1 / v2.5)
+
+Any hook call (`useState`, `useEffect`, `useSomething`) that appears AFTER a conditional `return` causes React to crash with:
+```
+Internal React error: Expected static flag was missing.
+```
+
+```tsx
+// ❌ WRONG — hook called after early return
+export const MyComponent = ({ id }) => {
+    if (!id) return null;             // early return
+    const { data } = useMyHook();    // ← CRASH — hook after return
+};
+
+// ✅ CORRECT — all hooks at top, before any return
+export const MyComponent = ({ id }) => {
+    const { data } = useMyHook();    // ← always called first
+    if (!id) return null;
+    // rest of component
+};
+```
+
+**Rule:** All hook calls go at the very top of the component body, unconditionally, before any `if`, `return`, or conditional logic.
+
+**Enable ESLint rule** to catch at write-time:
+```json
+"plugin:react-hooks/recommended"
+```
+
+#### B21 — Backend Compile Fail = ALL APIs Return 503 (Phase 1 / v2.5)
+
+When backend fails to compile, Spring Boot never starts. ALL API endpoints return connection errors / 503. This can look like a specific feature bug (e.g. "file upload failing") when actually the entire backend is down.
+
+**Rule:** When multiple unrelated APIs fail simultaneously → check backend compile/startup logs FIRST before debugging individual features.
+
+**When changing any method signature:**
+```bash
+# Find all callers before changing signature
+grep -r "methodName" src/
+# Or IntelliJ: Ctrl+Shift+F
+```
+Update ALL callers + ALL tests before restarting.
+
+#### B22 — JPQL vs Native SQL: Field Name Mapping Difference (Phase 1 / v2.5)
+
+Admin task list used `nativeQuery = true` (raw SQL) — column names must be snake_case (`due_date`, `assigned_to`).
+Employee task list used JPQL — field names must be camelCase (`dueDate`, `assignedTo`) matching Java entity fields.
+
+```java
+// Native SQL (admin) — snake_case column names
+@Query(value = "SELECT * FROM tasks ORDER BY due_date", nativeQuery = true)
+
+// JPQL (employee) — camelCase entity field names
+@Query("SELECT t FROM Task t ORDER BY t.dueDate")
+```
+
+Mixing these causes either silent wrong results or `No property found` errors. Know which query type you're writing before naming fields.
+
+#### B23 — PENDING_APPROVAL → IN_REVIEW Rejection Not Visible to Employee (Phase 1 / v2.5)
+
+When admin rejects a task (PENDING_APPROVAL → IN_REVIEW), the task silently returns to IN_REVIEW status. Employee has NO indication why or what to fix — rejection reason buried in status history.
+
+**Fix applied in v2.5:** Orange "Revision Requested" banner added to `TaskDetail.tsx` — detects most recent `PENDING_APPROVAL → IN_REVIEW` history entry and shows it prominently to employee.
+
+**Rule for future phases:** Any status transition that requires employee action must be visually distinct from the same status reached via normal flow. Never rely on status history alone for actionable feedback.
+
+---
+
+#### B24 — Backend Error Not Surfaced on Frontend — Silent Modal Failure (Phase 1 / v2.5)
+
+When backend throws a `BusinessException` (e.g. `TASK_3003`), the React hook catches it — but if the consuming component never reads `error` from the hook, the user sees nothing. Modal stays open silently.
+
+```tsx
+// ❌ WRONG — error swallowed
+const { mutate: updateStatus } = useUpdateTaskStatus();
+
+// ✅ CORRECT — always destructure and render error
+const { mutate: updateStatus, error: statusError } = useUpdateTaskStatus();
+
+{statusError && (
+  <div className="flex items-center gap-2 rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+    <AlertCircle className="h-4 w-4" />
+    <span>{statusError.message}</span>
+  </div>
+)}
+```
+
+**Rule:** Every mutation hook that can fail must have its `error` state rendered visibly to the user. Never trust that errors are handled upstream.
+
+#### B25 — Employees Can Cancel Their Own Tasks — Missing Role Check (Phase 1 / v2.5)
+
+Frontend had `CANCELLED` in `STATUS_TRANSITIONS` for employees. Backend had no role check on cancellation.
+
+**Fix — Backend `TaskService.updateTaskStatus()`:**
+```java
+if (newStatus == TaskStatus.CANCELLED && currentUserRole == Role.EMPLOYEE) {
+    throw new TaskAccessDeniedException("Employees are not allowed to cancel tasks");
+}
+```
+
+**Fix — Frontend `TaskDetail.tsx`:**
+```ts
+// In availableTransitions()
+if (s === 'CANCELLED' && !isAdmin) return false;
+```
+
+**Rule:** ANY status transition that should be admin-only must be enforced at BOTH frontend (UX) AND backend (security). Frontend check alone is never enough.
+
+#### B26 — IDOR on Task Sub-Resources (Phase 1 / v2.5) ⚠️ CRITICAL SECURITY
+
+Task sub-resource endpoints (`getAttachments`, `getComments`, `getHistory`, `uploadAttachment`) validated task existence but NOT whether the logged-in user had access to that task. Any authenticated employee could access any task's files/comments by knowing the UUID.
+
+Additionally, `uploadAttachment` had no task state check — files could be uploaded to `DONE` or `CANCELLED` tasks.
+
+**Fix pattern for ALL sub-resource services:**
+```java
+// In TaskAttachmentService, TaskCommentService, TaskStatusHistoryService
+Task task = taskRepository.findByIdOrThrow(taskId);
+
+// IDOR check — employee can only access their own assigned tasks
+if (currentUserRole == Role.EMPLOYEE) {
+    Employee employee = employeeRepository.findByUserId(currentUserId);
+    if (!task.getAssignedTo().equals(employee.getId())) {
+        throw new TaskAccessDeniedException("Access denied");
+    }
+}
+```
+
+**State check for upload:**
+```java
+// In uploadAttachment()
+if (task.getStatus() == TaskStatus.DONE || task.getStatus() == TaskStatus.CANCELLED) {
+    throw new BusinessException("TASK_3006", "Cannot upload attachments to a closed task");
+}
+```
+
+**Rule for ALL future phases:** Every sub-resource endpoint (comments, attachments, history, handovers etc.) MUST perform ownership/access validation — not just existence check. Never assume that if the parent resource check exists, children are protected.
+
+#### B27 — PillToggle Shared Component Not Created (Phase 1 / v2.5)
+
+Multiple toggle components exist with slightly different inline styles. Should be extracted into a single `PillToggle` shared component to prevent visual inconsistency.
+
+**TODO (low priority):** Create `components/ui/PillToggle.tsx` and replace all inline toggle implementations across the codebase.
+
+---
+
 ### Frontend (Next.js) Bugs
 
 #### F1 — AI Dropdown Locked to Suggestion
@@ -490,7 +685,10 @@ TODO → IN_PROGRESS → IN_REVIEW → PENDING_APPROVAL → DONE
 
 Migration: `V8__alter_task_status_add_pending_approval.sql`
 ```sql
-ALTER TYPE task_status ADD VALUE IF NOT EXISTS 'PENDING_APPROVAL';
+-- tasks.status is VARCHAR(20) — NOT a PostgreSQL enum type.
+-- No DDL change needed. PENDING_APPROVAL supported by adding to TaskStatus.java only.
+-- See Bug B19 for full explanation.
+SELECT 1; -- intentional no-op
 ```
 
 New file: `module/task/service/TaskApprovalService.java`
@@ -1863,7 +2061,7 @@ Add these to `TaskEventListener.java` and `NotificationService.java` in the phas
 V1   → V7.1  (users, roles, employees, tasks, notifications, audit, ml, indexes)
 
 -- Phase 1 (v2.5)
-V8   alter_task_status_add_pending_approval
+V8   alter_task_status_add_pending_approval      (SELECT 1 no-op — status is VARCHAR, not enum. See B19)
 V9   alter_tasks_add_late_and_analytics_columns    (is_late, submitted_at, attachment_purpose, daily_metrics.late_tasks)
 
 -- Phase 2 (v3.0 — Multi-Tenant Foundation)

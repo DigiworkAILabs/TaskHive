@@ -8,6 +8,8 @@ enum TaskStatus {
   inProgress,
   @JsonValue('IN_REVIEW')
   inReview,
+  @JsonValue('PENDING_APPROVAL')
+  pendingApproval,
   @JsonValue('DONE')
   done,
   @JsonValue('CANCELLED')
@@ -23,6 +25,8 @@ extension TaskStatusX on TaskStatus {
         return 'In Progress';
       case TaskStatus.inReview:
         return 'In Review';
+      case TaskStatus.pendingApproval:
+        return 'Pending Approval';
       case TaskStatus.done:
         return 'Done';
       case TaskStatus.cancelled:
@@ -38,6 +42,8 @@ extension TaskStatusX on TaskStatus {
         return 'IN_PROGRESS';
       case TaskStatus.inReview:
         return 'IN_REVIEW';
+      case TaskStatus.pendingApproval:
+        return 'PENDING_APPROVAL';
       case TaskStatus.done:
         return 'DONE';
       case TaskStatus.cancelled:
@@ -48,22 +54,25 @@ extension TaskStatusX on TaskStatus {
   Color get color {
     switch (this) {
       case TaskStatus.todo:
-        return Colors.grey;
+        return const Color(0xFFFF2200); // traffic red
       case TaskStatus.inProgress:
-        return Colors.blue;
+        return const Color(0xFFFCF005); // bright traffic amber
       case TaskStatus.inReview:
-        return Colors.orange;
+        return const Color(0xFF1E90FF); // bright dodger blue
+      case TaskStatus.pendingApproval:
+        return const Color(0xFFFF6600); // deep orange
       case TaskStatus.done:
-        return Colors.green;
+        return const Color(0xFF00DD00); // traffic green
       case TaskStatus.cancelled:
-        return Colors.red;
+        return const Color(0xFF3F3F46);
     }
   }
 
   /// Valid next statuses per business rules:
   /// TODO → IN_PROGRESS, CANCELLED
   /// IN_PROGRESS → IN_REVIEW, CANCELLED
-  /// IN_REVIEW → DONE, IN_PROGRESS, CANCELLED
+  /// IN_REVIEW → DONE, PENDING_APPROVAL, IN_PROGRESS, CANCELLED
+  /// PENDING_APPROVAL → DONE, IN_REVIEW, CANCELLED
   /// DONE → (terminal)
   /// CANCELLED → (terminal)
   List<TaskStatus> get allowedTransitions {
@@ -73,7 +82,14 @@ extension TaskStatusX on TaskStatus {
       case TaskStatus.inProgress:
         return [TaskStatus.inReview, TaskStatus.cancelled];
       case TaskStatus.inReview:
-        return [TaskStatus.done, TaskStatus.inProgress, TaskStatus.cancelled];
+        return [
+          TaskStatus.done,
+          TaskStatus.pendingApproval,
+          TaskStatus.inProgress,
+          TaskStatus.cancelled
+        ];
+      case TaskStatus.pendingApproval:
+        return [TaskStatus.done, TaskStatus.inReview, TaskStatus.cancelled];
       case TaskStatus.done:
       case TaskStatus.cancelled:
         return [];

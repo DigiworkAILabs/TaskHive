@@ -25,6 +25,11 @@ _$TaskModelImpl _$$TaskModelImplFromJson(Map<String, dynamic> json) =>
       createdBy: json['createdBy'] as String?,
       createdAt: json['createdAt'] as String?,
       updatedAt: json['updatedAt'] as String?,
+      isLate: json['isLate'] as bool?,
+      lateByMinutes: (json['lateByMinutes'] as num?)?.toInt(),
+      submittedAt: json['submittedAt'] as String?,
+      proofRequired: json['proofRequired'] as bool?,
+      approvalRequired: json['approvalRequired'] as bool?,
     );
 
 Map<String, dynamic> _$$TaskModelImplToJson(_$TaskModelImpl instance) =>
@@ -44,12 +49,19 @@ Map<String, dynamic> _$$TaskModelImplToJson(_$TaskModelImpl instance) =>
       if (instance.createdBy case final value?) 'createdBy': value,
       if (instance.createdAt case final value?) 'createdAt': value,
       if (instance.updatedAt case final value?) 'updatedAt': value,
+      if (instance.isLate case final value?) 'isLate': value,
+      if (instance.lateByMinutes case final value?) 'lateByMinutes': value,
+      if (instance.submittedAt case final value?) 'submittedAt': value,
+      if (instance.proofRequired case final value?) 'proofRequired': value,
+      if (instance.approvalRequired case final value?)
+        'approvalRequired': value,
     };
 
 const _$TaskStatusEnumMap = {
   TaskStatus.todo: 'TODO',
   TaskStatus.inProgress: 'IN_PROGRESS',
   TaskStatus.inReview: 'IN_REVIEW',
+  TaskStatus.pendingApproval: 'PENDING_APPROVAL',
   TaskStatus.done: 'DONE',
   TaskStatus.cancelled: 'CANCELLED',
 };

@@ -6,7 +6,7 @@ part of 'productivity_score_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$productivityScoreHash() => r'aa714d5f9cb52ec217351ae2225e78ba82eb1f33';
+String _$productivityScoreHash() => r'efdb1468ffa02fb3b65b223e3717f6116f480a4a';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -35,7 +35,7 @@ const productivityScoreProvider = ProductivityScoreFamily();
 
 /// See also [productivityScore].
 class ProductivityScoreFamily
-    extends Family<AsyncValue<ProductivityScoreResponse?>> {
+    extends Family<AsyncValue<ProductivityScoreResponse>> {
   /// See also [productivityScore].
   const ProductivityScoreFamily();
 
@@ -74,7 +74,7 @@ class ProductivityScoreFamily
 
 /// See also [productivityScore].
 class ProductivityScoreProvider
-    extends AutoDisposeFutureProvider<ProductivityScoreResponse?> {
+    extends AutoDisposeFutureProvider<ProductivityScoreResponse> {
   /// See also [productivityScore].
   ProductivityScoreProvider(
     String employeeId,
@@ -109,7 +109,7 @@ class ProductivityScoreProvider
 
   @override
   Override overrideWith(
-    FutureOr<ProductivityScoreResponse?> Function(ProductivityScoreRef provider)
+    FutureOr<ProductivityScoreResponse> Function(ProductivityScoreRef provider)
         create,
   ) {
     return ProviderOverride(
@@ -127,7 +127,7 @@ class ProductivityScoreProvider
   }
 
   @override
-  AutoDisposeFutureProviderElement<ProductivityScoreResponse?> createElement() {
+  AutoDisposeFutureProviderElement<ProductivityScoreResponse> createElement() {
     return _ProductivityScoreProviderElement(this);
   }
 
@@ -148,13 +148,13 @@ class ProductivityScoreProvider
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 mixin ProductivityScoreRef
-    on AutoDisposeFutureProviderRef<ProductivityScoreResponse?> {
+    on AutoDisposeFutureProviderRef<ProductivityScoreResponse> {
   /// The parameter `employeeId` of this provider.
   String get employeeId;
 }
 
 class _ProductivityScoreProviderElement
-    extends AutoDisposeFutureProviderElement<ProductivityScoreResponse?>
+    extends AutoDisposeFutureProviderElement<ProductivityScoreResponse>
     with ProductivityScoreRef {
   _ProductivityScoreProviderElement(super.provider);
 

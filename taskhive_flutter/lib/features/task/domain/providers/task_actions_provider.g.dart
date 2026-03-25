@@ -6,7 +6,7 @@ part of 'task_actions_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$taskActionsHash() => r'b3291a5f0afbdb2d37f5e0a80818a0e2952f509d';
+String _$taskActionsHash() => r'ec28eebd0af77200e57ab3793b8e76c3181f5706';
 
 /// Handles all task mutations: create, update, delete, status change.
 /// After each mutation it updates the relevant list providers and invalidates

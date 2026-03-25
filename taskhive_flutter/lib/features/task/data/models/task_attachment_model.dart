@@ -14,6 +14,7 @@ class TaskAttachmentModel with _$TaskAttachmentModel {
     required String fileUrl,
     required int fileSize,
     required String mimeType,
+    String? attachmentPurpose,
     String? createdAt,
   }) = _TaskAttachmentModel;
 

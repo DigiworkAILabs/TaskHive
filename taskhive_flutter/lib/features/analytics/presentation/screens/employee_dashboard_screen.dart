@@ -239,8 +239,8 @@ class _EmployeeDashboardScreenState extends ConsumerState<EmployeeDashboardScree
       final isMlEnabledAsync = ref.watch(mlFeatureToggleProvider);
       
       return isMlEnabledAsync.when(
-        data: (isMlEnabled) {
-          if (!isMlEnabled) {
+        data: (mlState) {
+          if (!mlState.isMlEnabled) {
             return Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(

@@ -113,6 +113,29 @@ class TaskRepository {
     }
   }
 
+  /// Approve task (ADMIN only). Moves status to DONE.
+  Future<TaskModel> approveTask(String id) async {
+    try {
+      final response = await _dio.patch('${ApiEndpoints.tasks}/$id/approve');
+      return TaskModel.fromJson(response.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  /// Reject task / Request Revision (ADMIN only). Moves status back to IN_REVIEW.
+  Future<TaskModel> rejectTask(String id, String reason) async {
+    try {
+      final response = await _dio.patch(
+        '${ApiEndpoints.tasks}/$id/reject',
+        data: {'reason': reason},
+      );
+      return TaskModel.fromJson(response.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
   /// Fetch employee's own assigned tasks (paginated).
   Future<Map<String, dynamic>> getMyTasks({
     int page = 0,
