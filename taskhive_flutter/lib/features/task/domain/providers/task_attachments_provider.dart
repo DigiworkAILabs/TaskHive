@@ -19,10 +19,11 @@ class TaskAttachments extends _$TaskAttachments {
     return repo.getAttachments(taskId);
   }
 
-  Future<void> uploadAttachment(XFile file) async {
+  Future<void> uploadAttachment(XFile file, {String purpose = 'GENERAL'}) async {
     final repo = ref.read(taskAttachmentRepositoryProvider);
-    final attachment = await repo.uploadAttachment(_taskId, file);
+    final attachment =
+        await repo.uploadAttachment(_taskId, file, purpose: purpose);
     final current = state.valueOrNull ?? [];
-    state = AsyncData([...current, attachment]);
+    state = AsyncValue.data([...current, attachment]);
   }
 }

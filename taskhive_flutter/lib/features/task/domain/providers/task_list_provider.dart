@@ -13,6 +13,8 @@ class TaskListFilter {
   final String? assignedTo;
   final List<String>? tags;
   final String? search;
+  final String? sortBy;
+  final String? sortDir;
 
   const TaskListFilter({
     this.status,
@@ -20,6 +22,8 @@ class TaskListFilter {
     this.assignedTo,
     this.tags,
     this.search,
+    this.sortBy,
+    this.sortDir,
   });
 
   TaskListFilter copyWith({
@@ -28,6 +32,8 @@ class TaskListFilter {
     String? assignedTo,
     List<String>? tags,
     String? search,
+    String? sortBy,
+    String? sortDir,
   }) =>
       TaskListFilter(
         status: status ?? this.status,
@@ -35,6 +41,8 @@ class TaskListFilter {
         assignedTo: assignedTo ?? this.assignedTo,
         tags: tags ?? this.tags,
         search: search ?? this.search,
+        sortBy: sortBy ?? this.sortBy,
+        sortDir: sortDir ?? this.sortDir,
       );
 
   bool get hasFilters =>
@@ -42,7 +50,9 @@ class TaskListFilter {
       priority != null ||
       assignedTo != null ||
       (tags != null && tags!.isNotEmpty) ||
-      (search != null && search!.isNotEmpty);
+      (search != null && search!.isNotEmpty) ||
+      sortBy != null ||
+      sortDir != null;
 }
 
 /// Paginated task list state.
@@ -118,6 +128,8 @@ class TaskListNotifier extends _$TaskListNotifier {
             priority: _filter.priority,
             assignedTo: _filter.assignedTo,
             tags: _filter.tags,
+            sortBy: _filter.sortBy,
+            sortDir: _filter.sortDir,
           );
 
     final content = (data['content'] as List<dynamic>)
@@ -169,6 +181,8 @@ class TaskListNotifier extends _$TaskListNotifier {
               priority: _filter.priority,
               assignedTo: _filter.assignedTo,
               tags: _filter.tags,
+              sortBy: _filter.sortBy,
+              sortDir: _filter.sortDir,
             );
 
       final more = (data['content'] as List<dynamic>)

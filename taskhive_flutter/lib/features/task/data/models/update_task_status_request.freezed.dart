@@ -23,6 +23,7 @@ UpdateTaskStatusRequest _$UpdateTaskStatusRequestFromJson(
 mixin _$UpdateTaskStatusRequest {
   TaskStatus get status => throw _privateConstructorUsedError;
   String? get comment => throw _privateConstructorUsedError;
+  String? get reason => throw _privateConstructorUsedError;
 
   /// Serializes this UpdateTaskStatusRequest to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -40,7 +41,7 @@ abstract class $UpdateTaskStatusRequestCopyWith<$Res> {
           $Res Function(UpdateTaskStatusRequest) then) =
       _$UpdateTaskStatusRequestCopyWithImpl<$Res, UpdateTaskStatusRequest>;
   @useResult
-  $Res call({TaskStatus status, String? comment});
+  $Res call({TaskStatus status, String? comment, String? reason});
 }
 
 /// @nodoc
@@ -61,6 +62,7 @@ class _$UpdateTaskStatusRequestCopyWithImpl<$Res,
   $Res call({
     Object? status = null,
     Object? comment = freezed,
+    Object? reason = freezed,
   }) {
     return _then(_value.copyWith(
       status: null == status
@@ -70,6 +72,10 @@ class _$UpdateTaskStatusRequestCopyWithImpl<$Res,
       comment: freezed == comment
           ? _value.comment
           : comment // ignore: cast_nullable_to_non_nullable
+              as String?,
+      reason: freezed == reason
+          ? _value.reason
+          : reason // ignore: cast_nullable_to_non_nullable
               as String?,
     ) as $Val);
   }
@@ -84,7 +90,7 @@ abstract class _$$UpdateTaskStatusRequestImplCopyWith<$Res>
       __$$UpdateTaskStatusRequestImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({TaskStatus status, String? comment});
+  $Res call({TaskStatus status, String? comment, String? reason});
 }
 
 /// @nodoc
@@ -104,6 +110,7 @@ class __$$UpdateTaskStatusRequestImplCopyWithImpl<$Res>
   $Res call({
     Object? status = null,
     Object? comment = freezed,
+    Object? reason = freezed,
   }) {
     return _then(_$UpdateTaskStatusRequestImpl(
       status: null == status
@@ -114,6 +121,10 @@ class __$$UpdateTaskStatusRequestImplCopyWithImpl<$Res>
           ? _value.comment
           : comment // ignore: cast_nullable_to_non_nullable
               as String?,
+      reason: freezed == reason
+          ? _value.reason
+          : reason // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -121,7 +132,8 @@ class __$$UpdateTaskStatusRequestImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$UpdateTaskStatusRequestImpl implements _UpdateTaskStatusRequest {
-  const _$UpdateTaskStatusRequestImpl({required this.status, this.comment});
+  const _$UpdateTaskStatusRequestImpl(
+      {required this.status, this.comment, this.reason});
 
   factory _$UpdateTaskStatusRequestImpl.fromJson(Map<String, dynamic> json) =>
       _$$UpdateTaskStatusRequestImplFromJson(json);
@@ -130,10 +142,12 @@ class _$UpdateTaskStatusRequestImpl implements _UpdateTaskStatusRequest {
   final TaskStatus status;
   @override
   final String? comment;
+  @override
+  final String? reason;
 
   @override
   String toString() {
-    return 'UpdateTaskStatusRequest(status: $status, comment: $comment)';
+    return 'UpdateTaskStatusRequest(status: $status, comment: $comment, reason: $reason)';
   }
 
   @override
@@ -142,12 +156,13 @@ class _$UpdateTaskStatusRequestImpl implements _UpdateTaskStatusRequest {
         (other.runtimeType == runtimeType &&
             other is _$UpdateTaskStatusRequestImpl &&
             (identical(other.status, status) || other.status == status) &&
-            (identical(other.comment, comment) || other.comment == comment));
+            (identical(other.comment, comment) || other.comment == comment) &&
+            (identical(other.reason, reason) || other.reason == reason));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, status, comment);
+  int get hashCode => Object.hash(runtimeType, status, comment, reason);
 
   /// Create a copy of UpdateTaskStatusRequest
   /// with the given fields replaced by the non-null parameter values.
@@ -169,7 +184,8 @@ class _$UpdateTaskStatusRequestImpl implements _UpdateTaskStatusRequest {
 abstract class _UpdateTaskStatusRequest implements UpdateTaskStatusRequest {
   const factory _UpdateTaskStatusRequest(
       {required final TaskStatus status,
-      final String? comment}) = _$UpdateTaskStatusRequestImpl;
+      final String? comment,
+      final String? reason}) = _$UpdateTaskStatusRequestImpl;
 
   factory _UpdateTaskStatusRequest.fromJson(Map<String, dynamic> json) =
       _$UpdateTaskStatusRequestImpl.fromJson;
@@ -178,6 +194,8 @@ abstract class _UpdateTaskStatusRequest implements UpdateTaskStatusRequest {
   TaskStatus get status;
   @override
   String? get comment;
+  @override
+  String? get reason;
 
   /// Create a copy of UpdateTaskStatusRequest
   /// with the given fields replaced by the non-null parameter values.

@@ -28,6 +28,8 @@ class EditTaskScreen extends ConsumerWidget {
               task.dueDate != null ? DateTime.tryParse(task.dueDate!) : null,
           initialEstimatedHours: task.estimatedHours,
           initialTags: task.tags,
+          initialProofRequired: task.proofRequired,
+          initialApprovalRequired: task.approvalRequired,
           onUpdateSubmit: (request) async {
             await ref
                 .read(taskActionsProvider.notifier)

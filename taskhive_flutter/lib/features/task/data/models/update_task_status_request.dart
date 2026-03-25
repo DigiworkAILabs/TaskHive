@@ -12,6 +12,7 @@ class UpdateTaskStatusRequest with _$UpdateTaskStatusRequest {
   const factory UpdateTaskStatusRequest({
     required TaskStatus status,
     String? comment,
+    String? reason,
   }) = _UpdateTaskStatusRequest;
 
   factory UpdateTaskStatusRequest.fromJson(Map<String, dynamic> json) =>

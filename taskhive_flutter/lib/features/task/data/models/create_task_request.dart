@@ -15,6 +15,8 @@ class CreateTaskRequest with _$CreateTaskRequest {
     required String dueDate,
     double? estimatedHours,
     @Default([]) List<String> tags,
+    @Default(false) bool proofRequired,
+    @Default(false) bool approvalRequired,
   }) = _CreateTaskRequest;
 
   factory CreateTaskRequest.fromJson(Map<String, dynamic> json) =>

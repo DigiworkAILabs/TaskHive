@@ -3,34 +3,82 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 part 'ml_feature_provider.g.dart';
 
-const _kMlFeatureEnabledKey = 'ml_feature_enabled';
+class MlFeatureState {
+  final bool isMlEnabled;
+  final bool isGeminiEnabled;
+
+  const MlFeatureState({
+    required this.isMlEnabled,
+    required this.isGeminiEnabled,
+  });
+}
+
+const _kMlEnabledKey = 'ml_enabled';
+const _kGeminiEnabledKey = 'gemini_enabled';
 
 @riverpod
 class MlFeatureToggle extends _$MlFeatureToggle {
   @override
-  FutureOr<bool> build() async {
+  FutureOr<MlFeatureState> build() async {
     final prefs = await SharedPreferences.getInstance();
-    // Default to false if not set
-    return prefs.getBool(_kMlFeatureEnabledKey) ?? false;
+    bool isMlEnabled = prefs.getBool(_kMlEnabledKey) ?? false;
+    bool isGeminiEnabled = prefs.getBool(_kGeminiEnabledKey) ?? false;
+
+    // Enforce mutual exclusivity on load:
+    if (isMlEnabled && isGeminiEnabled) {
+      isGeminiEnabled = false;
+      await prefs.setBool(_kGeminiEnabledKey, false);
+    }
+
+    return MlFeatureState(
+      isMlEnabled: isMlEnabled,
+      isGeminiEnabled: isGeminiEnabled,
+    );
   }
 
-  Future<void> toggle() async {
+  Future<void> toggleMl() async {
+    final current = state.value;
+    if (current == null) return;
+
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       final prefs = await SharedPreferences.getInstance();
-      final currentValue = prefs.getBool(_kMlFeatureEnabledKey) ?? false;
-      final newValue = !currentValue;
-      await prefs.setBool(_kMlFeatureEnabledKey, newValue);
-      return newValue;
+      final newValue = !current.isMlEnabled;
+      await prefs.setBool(_kMlEnabledKey, newValue);
+      
+      bool newGeminiValue = current.isGeminiEnabled;
+      if (newValue) {
+        newGeminiValue = false;
+        await prefs.setBool(_kGeminiEnabledKey, false);
+      }
+
+      return MlFeatureState(
+        isMlEnabled: newValue,
+        isGeminiEnabled: newGeminiValue,
+      );
     });
   }
 
-  Future<void> setEnabled(bool enabled) async {
+  Future<void> toggleGemini() async {
+    final current = state.value;
+    if (current == null) return;
+
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(_kMlFeatureEnabledKey, enabled);
-      return enabled;
+      final newValue = !current.isGeminiEnabled;
+      await prefs.setBool(_kGeminiEnabledKey, newValue);
+      
+      bool newMlValue = current.isMlEnabled;
+      if (newValue) {
+        newMlValue = false;
+        await prefs.setBool(_kMlEnabledKey, false);
+      }
+
+      return MlFeatureState(
+        isMlEnabled: newMlValue,
+        isGeminiEnabled: newValue,
+      );
     });
   }
 }

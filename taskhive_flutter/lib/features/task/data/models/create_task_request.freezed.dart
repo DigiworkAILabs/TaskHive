@@ -27,6 +27,8 @@ mixin _$CreateTaskRequest {
   String get dueDate => throw _privateConstructorUsedError;
   double? get estimatedHours => throw _privateConstructorUsedError;
   List<String> get tags => throw _privateConstructorUsedError;
+  bool get proofRequired => throw _privateConstructorUsedError;
+  bool get approvalRequired => throw _privateConstructorUsedError;
 
   /// Serializes this CreateTaskRequest to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -51,7 +53,9 @@ abstract class $CreateTaskRequestCopyWith<$Res> {
       String assignedTo,
       String dueDate,
       double? estimatedHours,
-      List<String> tags});
+      List<String> tags,
+      bool proofRequired,
+      bool approvalRequired});
 }
 
 /// @nodoc
@@ -76,6 +80,8 @@ class _$CreateTaskRequestCopyWithImpl<$Res, $Val extends CreateTaskRequest>
     Object? dueDate = null,
     Object? estimatedHours = freezed,
     Object? tags = null,
+    Object? proofRequired = null,
+    Object? approvalRequired = null,
   }) {
     return _then(_value.copyWith(
       title: null == title
@@ -106,6 +112,14 @@ class _$CreateTaskRequestCopyWithImpl<$Res, $Val extends CreateTaskRequest>
           ? _value.tags
           : tags // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      proofRequired: null == proofRequired
+          ? _value.proofRequired
+          : proofRequired // ignore: cast_nullable_to_non_nullable
+              as bool,
+      approvalRequired: null == approvalRequired
+          ? _value.approvalRequired
+          : approvalRequired // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 }
@@ -125,7 +139,9 @@ abstract class _$$CreateTaskRequestImplCopyWith<$Res>
       String assignedTo,
       String dueDate,
       double? estimatedHours,
-      List<String> tags});
+      List<String> tags,
+      bool proofRequired,
+      bool approvalRequired});
 }
 
 /// @nodoc
@@ -148,6 +164,8 @@ class __$$CreateTaskRequestImplCopyWithImpl<$Res>
     Object? dueDate = null,
     Object? estimatedHours = freezed,
     Object? tags = null,
+    Object? proofRequired = null,
+    Object? approvalRequired = null,
   }) {
     return _then(_$CreateTaskRequestImpl(
       title: null == title
@@ -178,6 +196,14 @@ class __$$CreateTaskRequestImplCopyWithImpl<$Res>
           ? _value._tags
           : tags // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      proofRequired: null == proofRequired
+          ? _value.proofRequired
+          : proofRequired // ignore: cast_nullable_to_non_nullable
+              as bool,
+      approvalRequired: null == approvalRequired
+          ? _value.approvalRequired
+          : approvalRequired // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -192,7 +218,9 @@ class _$CreateTaskRequestImpl implements _CreateTaskRequest {
       required this.assignedTo,
       required this.dueDate,
       this.estimatedHours,
-      final List<String> tags = const []})
+      final List<String> tags = const [],
+      this.proofRequired = false,
+      this.approvalRequired = false})
       : _tags = tags;
 
   factory _$CreateTaskRequestImpl.fromJson(Map<String, dynamic> json) =>
@@ -220,8 +248,15 @@ class _$CreateTaskRequestImpl implements _CreateTaskRequest {
   }
 
   @override
+  @JsonKey()
+  final bool proofRequired;
+  @override
+  @JsonKey()
+  final bool approvalRequired;
+
+  @override
   String toString() {
-    return 'CreateTaskRequest(title: $title, description: $description, priority: $priority, assignedTo: $assignedTo, dueDate: $dueDate, estimatedHours: $estimatedHours, tags: $tags)';
+    return 'CreateTaskRequest(title: $title, description: $description, priority: $priority, assignedTo: $assignedTo, dueDate: $dueDate, estimatedHours: $estimatedHours, tags: $tags, proofRequired: $proofRequired, approvalRequired: $approvalRequired)';
   }
 
   @override
@@ -239,7 +274,11 @@ class _$CreateTaskRequestImpl implements _CreateTaskRequest {
             (identical(other.dueDate, dueDate) || other.dueDate == dueDate) &&
             (identical(other.estimatedHours, estimatedHours) ||
                 other.estimatedHours == estimatedHours) &&
-            const DeepCollectionEquality().equals(other._tags, _tags));
+            const DeepCollectionEquality().equals(other._tags, _tags) &&
+            (identical(other.proofRequired, proofRequired) ||
+                other.proofRequired == proofRequired) &&
+            (identical(other.approvalRequired, approvalRequired) ||
+                other.approvalRequired == approvalRequired));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -252,7 +291,9 @@ class _$CreateTaskRequestImpl implements _CreateTaskRequest {
       assignedTo,
       dueDate,
       estimatedHours,
-      const DeepCollectionEquality().hash(_tags));
+      const DeepCollectionEquality().hash(_tags),
+      proofRequired,
+      approvalRequired);
 
   /// Create a copy of CreateTaskRequest
   /// with the given fields replaced by the non-null parameter values.
@@ -279,7 +320,9 @@ abstract class _CreateTaskRequest implements CreateTaskRequest {
       required final String assignedTo,
       required final String dueDate,
       final double? estimatedHours,
-      final List<String> tags}) = _$CreateTaskRequestImpl;
+      final List<String> tags,
+      final bool proofRequired,
+      final bool approvalRequired}) = _$CreateTaskRequestImpl;
 
   factory _CreateTaskRequest.fromJson(Map<String, dynamic> json) =
       _$CreateTaskRequestImpl.fromJson;
@@ -298,6 +341,10 @@ abstract class _CreateTaskRequest implements CreateTaskRequest {
   double? get estimatedHours;
   @override
   List<String> get tags;
+  @override
+  bool get proofRequired;
+  @override
+  bool get approvalRequired;
 
   /// Create a copy of CreateTaskRequest
   /// with the given fields replaced by the non-null parameter values.

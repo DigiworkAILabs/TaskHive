@@ -18,6 +18,8 @@ _$CreateTaskRequestImpl _$$CreateTaskRequestImplFromJson(
       tags:
           (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList() ??
               const [],
+      proofRequired: json['proofRequired'] as bool? ?? false,
+      approvalRequired: json['approvalRequired'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$$CreateTaskRequestImplToJson(
@@ -30,6 +32,8 @@ Map<String, dynamic> _$$CreateTaskRequestImplToJson(
       'dueDate': instance.dueDate,
       if (instance.estimatedHours case final value?) 'estimatedHours': value,
       'tags': instance.tags,
+      'proofRequired': instance.proofRequired,
+      'approvalRequired': instance.approvalRequired,
     };
 
 const _$TaskPriorityEnumMap = {

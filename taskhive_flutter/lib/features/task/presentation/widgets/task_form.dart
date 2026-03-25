@@ -4,12 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/network/api_exception.dart'; // Add ApiException
 import '../../data/models/create_task_request.dart';
 import '../../data/models/update_task_request.dart';
 import '../../domain/enums/task_priority.dart';
 import '../../domain/providers/completion_time_prediction_provider.dart';
 import '../../domain/providers/priority_prediction_provider.dart';
 import '../../domain/providers/workload_recommendation_provider.dart';
+import '../../../ml/domain/providers/ml_feature_provider.dart';
 import '../../../employee/data/models/employee_model.dart';
 import '../../../employee/domain/providers/employee_search_provider.dart';
 import 'assignee_picker.dart';
@@ -34,6 +36,8 @@ class TaskForm extends ConsumerStatefulWidget {
   final DateTime? initialDueDate;
   final double? initialEstimatedHours;
   final List<String> initialTags;
+  final bool? initialProofRequired;
+  final bool? initialApprovalRequired;
 
   /// Called on create form submission with the full request object.
   final Future<void> Function(CreateTaskRequest)? onCreateSubmit;
@@ -50,6 +54,8 @@ class TaskForm extends ConsumerStatefulWidget {
     this.initialDueDate,
     this.initialEstimatedHours,
     this.initialTags = const [],
+    this.initialProofRequired,
+    this.initialApprovalRequired,
     this.onCreateSubmit,
     this.onUpdateSubmit,
   }) : assert(
@@ -71,6 +77,8 @@ class _TaskFormState extends ConsumerState<TaskForm> {
   String? _assigneeId;
   DateTime? _dueDate;
   List<String> _tags = [];
+  bool _proofRequired = false;
+  bool _approvalRequired = false;
   bool _submitting = false;
   Timer? _debounce;
 
@@ -89,6 +97,8 @@ class _TaskFormState extends ConsumerState<TaskForm> {
     _assigneeId = widget.initialAssigneeId;
     _dueDate = widget.initialDueDate;
     _tags = List<String>.from(widget.initialTags);
+    _proofRequired = widget.initialProofRequired ?? false;
+    _approvalRequired = widget.initialApprovalRequired ?? false;
 
     _titleController.addListener(_onInputChanged);
     _descriptionController.addListener(_onInputChanged);
@@ -99,9 +109,17 @@ class _TaskFormState extends ConsumerState<TaskForm> {
     if (!_isCreate) return; // Only suggest on creation
     if (_debounce?.isActive ?? false) _debounce!.cancel();
 
-    _debounce = Timer(const Duration(milliseconds: 600), () {
+    _debounce = Timer(const Duration(milliseconds: 600), () async {
       final title = _titleController.text.trim();
       if (title.length < 2) {
+        ref.read(priorityPredictionProvider.notifier).reset();
+        ref.read(completionTimePredictionNotifierProvider.notifier).clear();
+        return;
+      }
+
+      // Check ML feature toggles
+      final mlState = await ref.read(mlFeatureToggleProvider.future);
+      if (!mlState.isMlEnabled && !mlState.isGeminiEnabled) {
         ref.read(priorityPredictionProvider.notifier).reset();
         ref.read(completionTimePredictionNotifierProvider.notifier).clear();
         return;
@@ -143,15 +161,27 @@ class _TaskFormState extends ConsumerState<TaskForm> {
     _debounce = Timer(const Duration(milliseconds: 300), _onInputChanged);
   }
 
-  void _onRecommendBestFit() {
+  void _onRecommendBestFit() async {
+    // Check ML feature toggles
+    final mlState = await ref.read(mlFeatureToggleProvider.future);
+    if (!mlState.isMlEnabled && !mlState.isGeminiEnabled) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('AI suggestions are currently disabled. Enable Local ML or Gemini in Settings.')),
+      );
+      return;
+    }
+
     final title = _titleController.text.trim();
     if (title.isEmpty) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter a task title first')),
       );
       return;
     }
     if (_priority == null) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select a priority first')),
       );
@@ -215,6 +245,8 @@ class _TaskFormState extends ConsumerState<TaskForm> {
           ),
           estimatedHours: double.tryParse(_hoursController.text),
           tags: _tags,
+          proofRequired: _proofRequired,
+          approvalRequired: _approvalRequired,
         );
         await widget.onCreateSubmit!(request);
       } else {
@@ -231,14 +263,17 @@ class _TaskFormState extends ConsumerState<TaskForm> {
               ? DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(_dueDate!)
               : null,
           estimatedHours: double.tryParse(_hoursController.text),
-          tags: _tags,
+          tags: _tags.isEmpty ? null : _tags,
+          proofRequired: _proofRequired,
+          approvalRequired: _approvalRequired,
         );
         await widget.onUpdateSubmit!(request);
       }
     } catch (e) {
       if (mounted) {
+        String message = e is ApiException ? e.message : e.toString();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
+          SnackBar(content: Text('Error: $message')),
         );
       }
     } finally {
@@ -404,6 +439,35 @@ class _TaskFormState extends ConsumerState<TaskForm> {
           TagsInputField(
             initialTags: _tags,
             onChanged: (tags) => setState(() => _tags = tags),
+          ),
+          const SizedBox(height: 24),
+
+          // P1.1 / P1.2 — Task Requirements
+          const Text(
+            'Task Requirements',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey,
+              letterSpacing: 1.2,
+            ),
+          ),
+          const SizedBox(height: 8),
+          SwitchListTile(
+            title: const Text('Require Proof of Completion'),
+            subtitle: const Text('Assignee must upload a file before submitting'),
+            value: _proofRequired,
+            onChanged: (v) => setState(() => _proofRequired = v),
+            secondary: const Icon(Icons.verified_outlined),
+            contentPadding: EdgeInsets.zero,
+          ),
+          SwitchListTile(
+            title: const Text('Require Admin Approval'),
+            subtitle: const Text('Task goes to Pending Approval instead of Done'),
+            value: _approvalRequired,
+            onChanged: (v) => setState(() => _approvalRequired = v),
+            secondary: const Icon(Icons.rule_folder_outlined),
+            contentPadding: EdgeInsets.zero,
           ),
           const SizedBox(height: 24),
 

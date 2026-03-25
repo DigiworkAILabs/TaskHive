@@ -28,6 +28,7 @@ mixin _$TaskAttachmentModel {
   String get fileUrl => throw _privateConstructorUsedError;
   int get fileSize => throw _privateConstructorUsedError;
   String get mimeType => throw _privateConstructorUsedError;
+  String? get attachmentPurpose => throw _privateConstructorUsedError;
   String? get createdAt => throw _privateConstructorUsedError;
 
   /// Serializes this TaskAttachmentModel to a JSON map.
@@ -55,6 +56,7 @@ abstract class $TaskAttachmentModelCopyWith<$Res> {
       String fileUrl,
       int fileSize,
       String mimeType,
+      String? attachmentPurpose,
       String? createdAt});
 }
 
@@ -81,6 +83,7 @@ class _$TaskAttachmentModelCopyWithImpl<$Res, $Val extends TaskAttachmentModel>
     Object? fileUrl = null,
     Object? fileSize = null,
     Object? mimeType = null,
+    Object? attachmentPurpose = freezed,
     Object? createdAt = freezed,
   }) {
     return _then(_value.copyWith(
@@ -116,6 +119,10 @@ class _$TaskAttachmentModelCopyWithImpl<$Res, $Val extends TaskAttachmentModel>
           ? _value.mimeType
           : mimeType // ignore: cast_nullable_to_non_nullable
               as String,
+      attachmentPurpose: freezed == attachmentPurpose
+          ? _value.attachmentPurpose
+          : attachmentPurpose // ignore: cast_nullable_to_non_nullable
+              as String?,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -141,6 +148,7 @@ abstract class _$$TaskAttachmentModelImplCopyWith<$Res>
       String fileUrl,
       int fileSize,
       String mimeType,
+      String? attachmentPurpose,
       String? createdAt});
 }
 
@@ -165,6 +173,7 @@ class __$$TaskAttachmentModelImplCopyWithImpl<$Res>
     Object? fileUrl = null,
     Object? fileSize = null,
     Object? mimeType = null,
+    Object? attachmentPurpose = freezed,
     Object? createdAt = freezed,
   }) {
     return _then(_$TaskAttachmentModelImpl(
@@ -200,6 +209,10 @@ class __$$TaskAttachmentModelImplCopyWithImpl<$Res>
           ? _value.mimeType
           : mimeType // ignore: cast_nullable_to_non_nullable
               as String,
+      attachmentPurpose: freezed == attachmentPurpose
+          ? _value.attachmentPurpose
+          : attachmentPurpose // ignore: cast_nullable_to_non_nullable
+              as String?,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -220,6 +233,7 @@ class _$TaskAttachmentModelImpl implements _TaskAttachmentModel {
       required this.fileUrl,
       required this.fileSize,
       required this.mimeType,
+      this.attachmentPurpose,
       this.createdAt});
 
   factory _$TaskAttachmentModelImpl.fromJson(Map<String, dynamic> json) =>
@@ -242,11 +256,13 @@ class _$TaskAttachmentModelImpl implements _TaskAttachmentModel {
   @override
   final String mimeType;
   @override
+  final String? attachmentPurpose;
+  @override
   final String? createdAt;
 
   @override
   String toString() {
-    return 'TaskAttachmentModel(id: $id, taskId: $taskId, uploadedBy: $uploadedBy, uploaderName: $uploaderName, fileName: $fileName, fileUrl: $fileUrl, fileSize: $fileSize, mimeType: $mimeType, createdAt: $createdAt)';
+    return 'TaskAttachmentModel(id: $id, taskId: $taskId, uploadedBy: $uploadedBy, uploaderName: $uploaderName, fileName: $fileName, fileUrl: $fileUrl, fileSize: $fileSize, mimeType: $mimeType, attachmentPurpose: $attachmentPurpose, createdAt: $createdAt)';
   }
 
   @override
@@ -267,14 +283,26 @@ class _$TaskAttachmentModelImpl implements _TaskAttachmentModel {
                 other.fileSize == fileSize) &&
             (identical(other.mimeType, mimeType) ||
                 other.mimeType == mimeType) &&
+            (identical(other.attachmentPurpose, attachmentPurpose) ||
+                other.attachmentPurpose == attachmentPurpose) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, taskId, uploadedBy,
-      uploaderName, fileName, fileUrl, fileSize, mimeType, createdAt);
+  int get hashCode => Object.hash(
+      runtimeType,
+      id,
+      taskId,
+      uploadedBy,
+      uploaderName,
+      fileName,
+      fileUrl,
+      fileSize,
+      mimeType,
+      attachmentPurpose,
+      createdAt);
 
   /// Create a copy of TaskAttachmentModel
   /// with the given fields replaced by the non-null parameter values.
@@ -303,6 +331,7 @@ abstract class _TaskAttachmentModel implements TaskAttachmentModel {
       required final String fileUrl,
       required final int fileSize,
       required final String mimeType,
+      final String? attachmentPurpose,
       final String? createdAt}) = _$TaskAttachmentModelImpl;
 
   factory _TaskAttachmentModel.fromJson(Map<String, dynamic> json) =
@@ -324,6 +353,8 @@ abstract class _TaskAttachmentModel implements TaskAttachmentModel {
   int get fileSize;
   @override
   String get mimeType;
+  @override
+  String? get attachmentPurpose;
   @override
   String? get createdAt;
 

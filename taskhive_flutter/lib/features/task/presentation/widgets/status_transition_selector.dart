@@ -7,17 +7,34 @@ import '../../domain/enums/task_status.dart';
 /// This is the single source of truth for status transition UI — do not duplicate logic.
 class StatusTransitionSelector extends StatelessWidget {
   final TaskStatus currentStatus;
+  final bool isAdmin;
+  final bool approvalRequired;
   final ValueChanged<TaskStatus> onChanged;
 
   const StatusTransitionSelector({
     super.key,
     required this.currentStatus,
+    this.isAdmin = false,
+    this.approvalRequired = false,
     required this.onChanged,
   });
 
   @override
   Widget build(BuildContext context) {
-    final transitions = currentStatus.allowedTransitions;
+    List<TaskStatus> transitions;
+    if (currentStatus == TaskStatus.pendingApproval) {
+      transitions = [];
+    } else {
+      transitions = currentStatus.allowedTransitions.where((s) {
+        if (s == currentStatus) return false;
+        if (s == TaskStatus.done && approvalRequired && !isAdmin) return false;
+        if (s == TaskStatus.pendingApproval) return false;
+        if (s == TaskStatus.cancelled && !isAdmin) return false;
+        return true;
+      }).toList();
+    }
+
+
     if (transitions.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(12),

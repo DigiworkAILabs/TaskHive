@@ -11,6 +11,7 @@ _$UpdateTaskStatusRequestImpl _$$UpdateTaskStatusRequestImplFromJson(
     _$UpdateTaskStatusRequestImpl(
       status: $enumDecode(_$TaskStatusEnumMap, json['status']),
       comment: json['comment'] as String?,
+      reason: json['reason'] as String?,
     );
 
 Map<String, dynamic> _$$UpdateTaskStatusRequestImplToJson(
@@ -18,12 +19,14 @@ Map<String, dynamic> _$$UpdateTaskStatusRequestImplToJson(
     <String, dynamic>{
       'status': _$TaskStatusEnumMap[instance.status]!,
       if (instance.comment case final value?) 'comment': value,
+      if (instance.reason case final value?) 'reason': value,
     };
 
 const _$TaskStatusEnumMap = {
   TaskStatus.todo: 'TODO',
   TaskStatus.inProgress: 'IN_PROGRESS',
   TaskStatus.inReview: 'IN_REVIEW',
+  TaskStatus.pendingApproval: 'PENDING_APPROVAL',
   TaskStatus.done: 'DONE',
   TaskStatus.cancelled: 'CANCELLED',
 };

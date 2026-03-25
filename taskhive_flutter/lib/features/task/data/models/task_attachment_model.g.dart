@@ -17,6 +17,7 @@ _$TaskAttachmentModelImpl _$$TaskAttachmentModelImplFromJson(
       fileUrl: json['fileUrl'] as String,
       fileSize: (json['fileSize'] as num).toInt(),
       mimeType: json['mimeType'] as String,
+      attachmentPurpose: json['attachmentPurpose'] as String?,
       createdAt: json['createdAt'] as String?,
     );
 
@@ -31,5 +32,7 @@ Map<String, dynamic> _$$TaskAttachmentModelImplToJson(
       'fileUrl': instance.fileUrl,
       'fileSize': instance.fileSize,
       'mimeType': instance.mimeType,
+      if (instance.attachmentPurpose case final value?)
+        'attachmentPurpose': value,
       if (instance.createdAt case final value?) 'createdAt': value,
     };

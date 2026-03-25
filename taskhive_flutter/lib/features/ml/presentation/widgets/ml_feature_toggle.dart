@@ -8,34 +8,40 @@ class MlFeatureToggleWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isEnabledAsync = ref.watch(mlFeatureToggleProvider);
+    final stateAsync = ref.watch(mlFeatureToggleProvider);
 
-    return isEnabledAsync.when(
-      data: (isEnabled) {
-        return Tooltip(
-          message: isEnabled ? 'Disable ML Insights' : 'Enable ML Insights',
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.auto_awesome,
-                size: 18,
-                color: isEnabled ? Theme.of(context).primaryColor : Colors.grey.shade400,
-              ),
-              const SizedBox(width: 4),
-              Switch(
-                value: isEnabled,
-                onChanged: (value) {
-                  ref.read(mlFeatureToggleProvider.notifier).setEnabled(value);
-                },
-                activeColor: Theme.of(context).primaryColor,
-              ),
-            ],
-          ),
+    return stateAsync.when(
+      data: (mlState) {
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Local ML Toggle
+            _ToggleItem(
+              isEnabled: mlState.isMlEnabled,
+              onChanged: (_) =>
+                  ref.read(mlFeatureToggleProvider.notifier).toggleMl(),
+              icon: Icons.psychology_outlined,
+              activeColor: Colors.orange,
+              tooltip: mlState.isMlEnabled
+                  ? 'Local ML Service: ON'
+                  : 'Local ML Service: OFF',
+            ),
+            const SizedBox(width: 8),
+            // Gemini AI Toggle
+            _ToggleItem(
+              isEnabled: mlState.isGeminiEnabled,
+              onChanged: (_) =>
+                  ref.read(mlFeatureToggleProvider.notifier).toggleGemini(),
+              icon: Icons.auto_awesome_outlined,
+              activeColor: Colors.purple,
+              tooltip: mlState.isGeminiEnabled
+                  ? 'Gemini AI Suggest: ON'
+                  : 'Gemini AI Suggest: OFF',
+            ),
+          ],
         );
       },
-      loading: () => const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16.0),
+      loading: () => const Center(
         child: SizedBox(
           width: 20,
           height: 20,
@@ -43,6 +49,44 @@ class MlFeatureToggleWidget extends ConsumerWidget {
         ),
       ),
       error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+}
+
+class _ToggleItem extends StatelessWidget {
+  final bool isEnabled;
+  final ValueChanged<bool> onChanged;
+  final IconData icon;
+  final Color activeColor;
+  final String tooltip;
+
+  const _ToggleItem({
+    required this.isEnabled,
+    required this.onChanged,
+    required this.icon,
+    required this.activeColor,
+    required this.tooltip,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 20, color: isEnabled ? activeColor : Colors.grey),
+          Transform.scale(
+            scale: 0.8,
+            child: Switch(
+              value: isEnabled,
+              onChanged: onChanged,
+              activeColor: activeColor,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

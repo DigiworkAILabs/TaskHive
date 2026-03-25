@@ -55,11 +55,35 @@ class TaskActions extends _$TaskActions {
     final repo = ref.read(taskRepositoryProvider);
     final task = await repo.updateTaskStatus(id, request);
     // Update both admin and employee list views
-    ref.read(taskListNotifierProvider.notifier).updateTask(task);
-    ref.read(myTasksNotifierProvider.notifier).updateTask(task);
+    _refreshLists(task);
     ref.invalidate(taskDetailProvider(id));
     ref.invalidate(overdueTasksProvider);
-    state = const AsyncData(null);
+    state = const AsyncValue.data(null);
     return task;
+  }
+
+  Future<TaskModel> approveTask(String id) async {
+    state = const AsyncLoading();
+    final repo = ref.read(taskRepositoryProvider);
+    final task = await repo.approveTask(id);
+    _refreshLists(task);
+    ref.invalidate(taskDetailProvider(id));
+    state = const AsyncValue.data(null);
+    return task;
+  }
+
+  Future<TaskModel> rejectTask(String id, String reason) async {
+    state = const AsyncLoading();
+    final repo = ref.read(taskRepositoryProvider);
+    final task = await repo.rejectTask(id, reason);
+    _refreshLists(task);
+    ref.invalidate(taskDetailProvider(id));
+    state = const AsyncValue.data(null);
+    return task;
+  }
+
+  void _refreshLists(TaskModel task) {
+    ref.read(taskListNotifierProvider.notifier).updateTask(task);
+    ref.read(myTasksNotifierProvider.notifier).updateTask(task);
   }
 }
