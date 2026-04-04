@@ -124,11 +124,7 @@ class JwtTokenProviderTest {
             JwtTokenProvider shortProvider = new JwtTokenProvider(shortConfig);
             String token = shortProvider.generateAccessToken(testUserId, "user@test.com", "ADMIN");
 
-            // Small sleep to ensure token expires
-            try {
-                Thread.sleep(10);
-            } catch (InterruptedException ignored) {
-            }
+
 
             assertThat(shortProvider.validateToken(token)).isFalse();
         }

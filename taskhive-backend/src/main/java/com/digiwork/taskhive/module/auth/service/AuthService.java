@@ -49,7 +49,7 @@ public class AuthService {
     @Value("${app.auth.lockout-duration}")
     private long lockoutDurationMs;
 
-    @Transactional
+    @Transactional(noRollbackFor = {InvalidCredentialsException.class, AccountLockedException.class, AccountNotActiveException.class})
     public LoginResponse login(LoginRequest request, HttpServletResponse response) {
         User user = userRepository.findByEmailAndIsDeletedFalse(request.getEmail())
                 .orElseThrow(() -> new InvalidCredentialsException(MessageConstants.INVALID_CREDENTIALS));

@@ -10,6 +10,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class CookieUtil {
 
+    private static final String SET_COOKIE_HEADER = "Set-Cookie";
+
     @Value("${app.cookie.secure}")
     private boolean secure;
 
@@ -19,15 +21,21 @@ public class CookieUtil {
     @Value("${app.cookie.domain}")
     private String domain;
 
+    @Value("${app.cookie.refresh-token-path:/api/v1/auth/refresh}")
+    private String refreshTokenPath;
+
+    @Value("${app.cookie.default-path:/}")
+    private String defaultPath;
+
     public void addAccessTokenCookie(HttpServletResponse response, String token) {
         ResponseCookie cookie = ResponseCookie.from(CookieConstants.ACCESS_TOKEN_COOKIE, token)
                 .httpOnly(true)
                 .secure(secure)
                 .sameSite(sameSite)
-                .path(CookieConstants.DEFAULT_PATH)
+                .path(defaultPath)
                 .maxAge(CookieConstants.ACCESS_TOKEN_MAX_AGE)
                 .build();
-        response.addHeader("Set-Cookie", cookie.toString());
+        response.addHeader(SET_COOKIE_HEADER, cookie.toString());
     }
 
     public void addRefreshTokenCookie(HttpServletResponse response, String token) {
@@ -35,10 +43,10 @@ public class CookieUtil {
                 .httpOnly(true)
                 .secure(secure)
                 .sameSite(sameSite)
-                .path(CookieConstants.REFRESH_TOKEN_PATH)
+                .path(refreshTokenPath)
                 .maxAge(CookieConstants.REFRESH_TOKEN_MAX_AGE)
                 .build();
-        response.addHeader("Set-Cookie", cookie.toString());
+        response.addHeader(SET_COOKIE_HEADER, cookie.toString());
     }
 
     public void addUserRoleCookie(HttpServletResponse response, String role) {
@@ -46,16 +54,16 @@ public class CookieUtil {
                 .httpOnly(false) // Non-HttpOnly — readable by Next.js middleware
                 .secure(secure)
                 .sameSite(sameSite)
-                .path(CookieConstants.DEFAULT_PATH)
+                .path(defaultPath)
                 .maxAge(CookieConstants.USER_ROLE_MAX_AGE)
                 .build();
-        response.addHeader("Set-Cookie", cookie.toString());
+        response.addHeader(SET_COOKIE_HEADER, cookie.toString());
     }
 
     public void clearAllAuthCookies(HttpServletResponse response) {
-        clearCookie(response, CookieConstants.ACCESS_TOKEN_COOKIE, CookieConstants.DEFAULT_PATH);
-        clearCookie(response, CookieConstants.REFRESH_TOKEN_COOKIE, CookieConstants.REFRESH_TOKEN_PATH);
-        clearCookie(response, CookieConstants.USER_ROLE_COOKIE, CookieConstants.DEFAULT_PATH);
+        clearCookie(response, CookieConstants.ACCESS_TOKEN_COOKIE, defaultPath);
+        clearCookie(response, CookieConstants.REFRESH_TOKEN_COOKIE, refreshTokenPath);
+        clearCookie(response, CookieConstants.USER_ROLE_COOKIE, defaultPath);
     }
 
     private void clearCookie(HttpServletResponse response, String name, String path) {
@@ -66,7 +74,7 @@ public class CookieUtil {
                 .path(path)
                 .maxAge(0)
                 .build();
-        response.addHeader("Set-Cookie", cookie.toString());
+        response.addHeader(SET_COOKIE_HEADER, cookie.toString());
     }
 
     public String extractCookieValue(jakarta.servlet.http.HttpServletRequest request, String cookieName) {

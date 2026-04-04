@@ -3,7 +3,6 @@ package com.digiwork.taskhive.module.auth.service;
 import com.digiwork.taskhive.module.auth.dto.ActivateAccountRequest;
 import com.digiwork.taskhive.module.auth.enums.UserStatus;
 import com.digiwork.taskhive.module.auth.exception.InvalidTokenException;
-import com.digiwork.taskhive.module.auth.exception.TokenAlreadyUsedException;
 import com.digiwork.taskhive.module.auth.exception.TokenExpiredException;
 import com.digiwork.taskhive.module.auth.model.AccountActivationToken;
 import com.digiwork.taskhive.module.auth.model.User;

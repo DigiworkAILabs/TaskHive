@@ -1,6 +1,7 @@
 package com.digiwork.taskhive.module.ml.config;
 
 import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
@@ -36,14 +37,19 @@ public class MLClientConfig {
     @Bean("mlRestTemplate")
     public RestTemplate mlRestTemplate() {
 
+        // Connection configuration (Connect Timeout moved here as per HttpClient 5.x standard)
+        ConnectionConfig connectionConfig = ConnectionConfig.custom()
+                .setConnectTimeout(Timeout.of(connectTimeoutMs, TimeUnit.MILLISECONDS))
+                .build();
+
         // Connection pool to avoid creating new connections per request
         PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
         connectionManager.setMaxTotal(10);
         connectionManager.setDefaultMaxPerRoute(10);
+        connectionManager.setDefaultConnectionConfig(connectionConfig);
 
-        // Request timeouts
+        // Request timeouts (Response timeout remains in RequestConfig)
         RequestConfig requestConfig = RequestConfig.custom()
-                .setConnectTimeout(Timeout.of(connectTimeoutMs, TimeUnit.MILLISECONDS))
                 .setResponseTimeout(Timeout.of(responseTimeoutMs, TimeUnit.MILLISECONDS))
                 .build();
 

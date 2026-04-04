@@ -192,5 +192,46 @@ class PasswordResetServiceTest {
             assertThatThrownBy(() -> passwordResetService.resetPassword(request))
                     .isInstanceOf(BusinessException.class);
         }
-    }
+
+        @Test
+                @DisplayName("should throw TokenAlreadyUsedException when token is already used")
+                void shouldThrowException_whenTokenAlreadyUsed() {
+                    ResetPasswordRequest request = new ResetPasswordRequest();
+                    request.setToken("usedToken");
+                    request.setNewPassword("NewPass1!");
+
+                    PasswordResetToken usedToken = PasswordResetToken.builder()
+                            .userId(testUserId).tokenHash("usedHash").used(true)
+                            .expiresAt(LocalDateTime.now().plusHours(1)).build();
+
+                    when(tokenService.hashToken("usedToken")).thenReturn("usedHash");
+                    // Assuming findByTokenHashAndUsedFalse would NOT return it, 
+                    // but the service check at line 83 handles it if found.
+                    when(resetTokenRepository.findByTokenHashAndUsedFalse("usedHash"))
+                            .thenReturn(Optional.of(usedToken));
+
+                    assertThatThrownBy(() -> passwordResetService.resetPassword(request))
+                            .isInstanceOf(com.digiwork.taskhive.module.auth.exception.TokenAlreadyUsedException.class);
+                }
+
+                @Test
+                @DisplayName("should throw ResourceNotFoundException when user not found")
+                void shouldThrowException_whenUserNotFound() {
+                    ResetPasswordRequest request = new ResetPasswordRequest();
+                    request.setToken("rawToken");
+                    request.setNewPassword("NewPass1!");
+
+                    PasswordResetToken resetToken = PasswordResetToken.builder()
+                            .userId(testUserId).tokenHash("hash").used(false)
+                            .expiresAt(LocalDateTime.now().plusHours(1)).build();
+
+                    when(tokenService.hashToken("rawToken")).thenReturn("hash");
+                    when(resetTokenRepository.findByTokenHashAndUsedFalse("hash"))
+                            .thenReturn(Optional.of(resetToken));
+                    when(userRepository.findById(testUserId)).thenReturn(Optional.empty());
+
+                    assertThatThrownBy(() -> passwordResetService.resetPassword(request))
+                            .isInstanceOf(com.digiwork.taskhive.common.exception.ResourceNotFoundException.class);
+                }
+        }
 }

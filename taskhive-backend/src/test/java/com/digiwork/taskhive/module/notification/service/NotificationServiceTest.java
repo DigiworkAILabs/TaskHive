@@ -24,6 +24,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -135,6 +136,23 @@ class NotificationServiceTest {
 
             assertThat(testNotification.getIsRead()).isTrue();
             verify(notificationRepository).save(testNotification);
+        }
+
+        @Test
+        @DisplayName("should throw exception when marking another user's notification as read")
+        void shouldThrowException_whenMarkingOtherUsersNotification() {
+            UUID otherUserId = UUID.randomUUID();
+            Notification otherNotification = Notification.builder()
+                    .id(notificationId)
+                    .userId(otherUserId) // belongs to ANOTHER user
+                    .isRead(false)
+                    .build();
+
+            when(notificationRepository.findById(notificationId))
+                    .thenReturn(Optional.of(otherNotification));
+
+            assertThatThrownBy(() -> notificationService.markAsRead(notificationId))
+                    .isInstanceOf(com.digiwork.taskhive.common.exception.UnauthorizedException.class);
         }
     }
 

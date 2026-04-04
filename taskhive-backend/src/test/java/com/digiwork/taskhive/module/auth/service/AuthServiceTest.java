@@ -1,6 +1,5 @@
 package com.digiwork.taskhive.module.auth.service;
 
-import com.digiwork.taskhive.common.constants.MessageConstants;
 import com.digiwork.taskhive.common.util.CookieUtil;
 import com.digiwork.taskhive.module.audit.service.AuditService;
 import com.digiwork.taskhive.module.auth.dto.*;
@@ -82,6 +81,11 @@ class AuthServiceTest {
 
         ReflectionTestUtils.setField(authService, "maxFailedAttempts", 5);
         ReflectionTestUtils.setField(authService, "lockoutDurationMs", 900000L);
+    }
+
+    @org.junit.jupiter.api.AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
     }
 
     private void setSecurityContext() {
@@ -174,6 +178,38 @@ class AuthServiceTest {
 
             assertThatThrownBy(() -> authService.login(request, response))
                     .isInstanceOf(InvalidCredentialsException.class);
+            verify(userRepository).save(testUser);
+        }
+
+        @Test
+        @DisplayName("should increment failedAttempts when password is incorrect")
+        void shouldIncrementFailedAttempts_whenPasswordIncorrect() {
+            LoginRequest request = new LoginRequest("test@example.com", "wrongPassword");
+            when(userRepository.findByEmailAndIsDeletedFalse("test@example.com"))
+                    .thenReturn(Optional.of(testUser));
+            when(passwordService.matches("wrongPassword", "encodedPassword")).thenReturn(false);
+
+            assertThatThrownBy(() -> authService.login(request, response))
+                    .isInstanceOf(InvalidCredentialsException.class);
+
+            assertThat(testUser.getFailedAttempts()).isEqualTo(1);
+            verify(userRepository).save(testUser);
+        }
+
+        @Test
+        @DisplayName("should lock account after maxFailedAttempts consecutive failures")
+        void shouldLockAccount_whenMaxAttemptsExceeded() {
+            testUser.setFailedAttempts(4); // 1 more will trigger lockout (maxFailedAttempts = 5)
+            LoginRequest request = new LoginRequest("test@example.com", "wrongPassword");
+            when(userRepository.findByEmailAndIsDeletedFalse("test@example.com"))
+                    .thenReturn(Optional.of(testUser));
+            when(passwordService.matches("wrongPassword", "encodedPassword")).thenReturn(false);
+
+            assertThatThrownBy(() -> authService.login(request, response))
+                    .isInstanceOf(InvalidCredentialsException.class);
+
+            assertThat(testUser.getLockedUntil()).isNotNull();
+            assertThat(testUser.getLockedUntil()).isAfter(LocalDateTime.now());
             verify(userRepository).save(testUser);
         }
     }

@@ -34,6 +34,12 @@ public class MLService {
     private final TaskCommentRepository taskCommentRepository;
     private final MLPredictionLogRepository predictionLogRepository;
     private final UserRepository userRepository;
+    
+    private static final double DEFAULT_COMPLETION_RATE = 0.75;
+    private static final double DEFAULT_ON_TIME_RATE = 0.78;
+    private static final double DEFAULT_AVG_HOURS = 4.0;
+    private static final double DEFAULT_AVG_HOURS_HIGH = 6.2;
+    private static final double DEFAULT_AVG_HOURS_MEDIUM = 3.8;
 
     // ── Feature 1: Task Priority Suggestion ──────────────────────────────────
 
@@ -59,8 +65,8 @@ public class MLService {
         payload.put("task_description", request.getTaskDescription() != null ? request.getTaskDescription() : "");
         payload.put("priority", request.getPriority());
         payload.put("emp_on_time_rate", getEmpOnTimeRate(request.getEmployeeId()));
-        payload.put("emp_avg_hours_high", getEmpAvgHoursHigh(request.getEmployeeId()));
-        payload.put("emp_avg_hours_medium", getEmpAvgHoursMedium(request.getEmployeeId()));
+        payload.put("emp_avg_hours_high", DEFAULT_AVG_HOURS_HIGH);
+        payload.put("emp_avg_hours_medium", DEFAULT_AVG_HOURS_MEDIUM);
         payload.put("emp_active_tasks", getEmpActiveTasks(request.getEmployeeId()));
         payload.put("manual_estimate", request.getEstimatedHours());
         return mlClientService.predictCompletionTime(payload);
@@ -191,20 +197,20 @@ public class MLService {
 
     private double getEmpCompletionRate(UUID employeeId) {
         if (employeeId == null)
-            return 0.75;
+            return DEFAULT_COMPLETION_RATE;
         List<Task> tasks = taskRepository.findByAssignedToAndIsDeletedFalse(employeeId);
         if (tasks.isEmpty())
-            return 0.75;
+            return DEFAULT_COMPLETION_RATE;
         long done = tasks.stream().filter(t -> "DONE".equals(t.getStatus())).count();
         return (double) done / tasks.size();
     }
 
     private double getEmpAvgHours(UUID employeeId) {
         if (employeeId == null)
-            return 4.0;
+            return DEFAULT_AVG_HOURS;
         List<Task> tasks = taskRepository.findByAssignedToAndIsDeletedFalse(employeeId);
         return tasks.stream().filter(t -> t.getEstimatedHours() != null)
-                .mapToDouble(t -> t.getEstimatedHours().doubleValue()).average().orElse(4.0);
+                .mapToDouble(t -> t.getEstimatedHours().doubleValue()).average().orElse(DEFAULT_AVG_HOURS);
     }
 
     private String getDepartment(UUID employeeId) {
@@ -215,22 +221,14 @@ public class MLService {
 
     private double getEmpOnTimeRate(UUID employeeId) {
         if (employeeId == null)
-            return 0.78;
+            return DEFAULT_ON_TIME_RATE;
         List<Task> tasks = taskRepository.findByAssignedToAndIsDeletedFalse(employeeId);
         long completed = tasks.stream().filter(t -> "DONE".equals(t.getStatus())).count();
         if (completed == 0)
-            return 0.78;
+            return DEFAULT_ON_TIME_RATE;
         long onTime = tasks.stream().filter(t -> "DONE".equals(t.getStatus()) && t.getCompletedAt() != null
                 && t.getDueDate() != null && !t.getCompletedAt().isAfter(t.getDueDate())).count();
         return (double) onTime / completed;
-    }
-
-    private double getEmpAvgHoursHigh(UUID employeeId) {
-        return 6.2;
-    }
-
-    private double getEmpAvgHoursMedium(UUID employeeId) {
-        return 3.8;
     }
 
     private int getEmpActiveTasks(UUID employeeId) {

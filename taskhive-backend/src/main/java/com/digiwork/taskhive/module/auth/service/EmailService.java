@@ -26,6 +26,7 @@ public class EmailService {
     private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
     private final UserRepository userRepository;
+    private static final String VAR_FIRST_NAME = "firstName";
 
     @Value("${app.frontend.url}")
     private String frontendUrl;
@@ -43,7 +44,7 @@ public class EmailService {
         String resetLink = frontendUrl + "/reset-password?token=" + event.getResetToken();
 
         Context context = new Context();
-        context.setVariable("firstName", user.getFirstName());
+        context.setVariable(VAR_FIRST_NAME, user.getFirstName());
         context.setVariable("resetLink", resetLink);
 
         String htmlContent = templateEngine.process("email/password-reset", context);
@@ -58,7 +59,7 @@ public class EmailService {
             return;
 
         Context context = new Context();
-        context.setVariable("firstName", user.getFirstName());
+        context.setVariable(VAR_FIRST_NAME, user.getFirstName());
 
         String htmlContent = templateEngine.process("email/password-changed", context);
         sendEmail(event.getEmail(), "Password Changed - TaskHive", htmlContent);
@@ -70,7 +71,7 @@ public class EmailService {
         String activationLink = frontendUrl + "/activate-account?token=" + event.getActivationToken();
 
         Context context = new Context();
-        context.setVariable("firstName", event.getFirstName());
+        context.setVariable(VAR_FIRST_NAME, event.getFirstName());
         context.setVariable("activationLink", activationLink);
 
         String htmlContent = templateEngine.process("email/account-activation", context);
@@ -87,7 +88,7 @@ public class EmailService {
             helper.setText(htmlContent, true);
             mailSender.send(message);
             log.info("Email sent to: {} with subject: {}", to, subject);
-        } catch (MessagingException e) {
+        } catch (MessagingException | org.springframework.mail.MailException e) {
             log.error("Failed to send email to: {}", to, e);
         }
     }

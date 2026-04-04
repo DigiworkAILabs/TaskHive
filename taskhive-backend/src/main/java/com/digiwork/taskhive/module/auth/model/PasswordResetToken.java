@@ -30,7 +30,7 @@ public class PasswordResetToken {
 
     @Column(nullable = false)
     @Builder.Default
-    private Boolean used = false;
+    private boolean used = false;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

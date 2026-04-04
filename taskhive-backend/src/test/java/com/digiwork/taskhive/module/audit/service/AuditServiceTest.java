@@ -76,8 +76,17 @@ class AuditServiceTest {
                     .thenAnswer(invocation -> invocation.getArgument(0));
 
             // when
-            auditService.logAction(testUserId, email, action, entityType,
-                    testEntityId, beforeState, afterState, ipAddress, userAgent);
+            auditService.logAction(AuditLog.builder()
+                    .actorId(testUserId)
+                    .actorEmail(email)
+                    .action(action)
+                    .entityType(entityType)
+                    .entityId(testEntityId)
+                    .beforeState(beforeState)
+                    .afterState(afterState)
+                    .ipAddress(ipAddress)
+                    .userAgent(userAgent)
+                    .build());
 
             // then
             ArgumentCaptor<AuditLog> captor = ArgumentCaptor.forClass(AuditLog.class);
@@ -103,8 +112,11 @@ class AuditServiceTest {
                     .thenAnswer(invocation -> invocation.getArgument(0));
 
             // when
-            auditService.logAction(null, null, "USER_LOGIN", "USER",
-                    testUserId, null, null, null, null);
+            auditService.logAction(AuditLog.builder()
+                    .action("USER_LOGIN")
+                    .entityType("USER")
+                    .entityId(testUserId)
+                    .build());
 
             // then
             ArgumentCaptor<AuditLog> captor = ArgumentCaptor.forClass(AuditLog.class);

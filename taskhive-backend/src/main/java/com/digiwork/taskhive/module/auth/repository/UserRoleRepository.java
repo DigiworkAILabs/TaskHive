@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -19,4 +20,7 @@ public interface UserRoleRepository extends JpaRepository<UserRole, UserRole.Use
 
     @Query("SELECT ur.userId FROM UserRole ur JOIN ur.role r WHERE r.name = :roleName")
     List<UUID> findUserIdsByRoleName(@Param("roleName") String roleName);
+
+    @Transactional
+    void deleteByUserId(UUID userId);
 }

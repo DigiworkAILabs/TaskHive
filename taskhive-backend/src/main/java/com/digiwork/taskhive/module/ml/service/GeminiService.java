@@ -22,7 +22,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GeminiService {
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final RestTemplate restTemplate;
+    private final ObjectMapper objectMapper;
+    private static final String DEFAULT_PRIORITY = "MEDIUM";
 
     @Value("${gemini.api.key}")
     private String geminiApiKey;
@@ -45,7 +47,6 @@ public class GeminiService {
             String promptText = buildPrompt(request);
             
             // Construct Google Gemini JSON Request Body
-            // { "contents": [{ "parts": [{"text": "prompt"}] }] }
             Map<String, Object> requestBody = Map.of(
                 "contents", List.of(
                     Map.of("parts", List.of(
@@ -56,12 +57,12 @@ public class GeminiService {
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("x-goog-api-key", geminiApiKey);
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
-            String url = String.format("%s%s:generateContent?key=%s", geminiApiUrl, geminiModel, geminiApiKey);
+            String url = String.format("%s%s:generateContent", geminiApiUrl, geminiModel);
 
-            RestTemplate rawRestTemplate = new RestTemplate();
-            ResponseEntity<String> response = rawRestTemplate.postForEntity(url, entity, String.class);
+            ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
 
             return parseGeminiResponse(response.getBody());
 
@@ -75,23 +76,23 @@ public class GeminiService {
         String safeDesc = (request.getTaskDescription() != null && !request.getTaskDescription().isBlank())
             ? request.getTaskDescription() : "No description provided";
 
-        return String.format(
-            "You are a task management AI for an enterprise system.\n" +
-            "Analyze this task and suggest the appropriate priority level.\n" +
-            "Return ONLY valid JSON. No explanation. No markdown formatting.\n" +
-            "=== TASK ===\n" +
-            "Title: %s\n" +
-            "Description: %s\n\n" +
-            "Return ONLY in this format:\n" +
-            "{\"predictedPriority\":\"MEDIUM\",\"confidence\":0.85,\"reasoning\":\"one sentence\"}\n\n" +
-            "Rules:\n" +
-            "- predictedPriority must be EXACTLY: LOW | MEDIUM | HIGH | CRITICAL\n" +
-            "- Login, payment, security, crash, data loss -> HIGH or CRITICAL\n" +
-            "- UI change, minor improvement, documentation -> LOW or MEDIUM\n" +
-            "- confidence: 0.0 to 1.0\n" +
-            "- reasoning: one sentence only",
-            request.getTaskTitle(), safeDesc
-        );
+        return String.format("""
+            You are a task management AI for an enterprise system.
+            Analyze this task and suggest the appropriate priority level.
+            Return ONLY valid JSON. No explanation. No markdown formatting.
+            === TASK ===
+            Title: %s
+            Description: %s
+            
+            Return ONLY in this format:
+            {"predictedPriority":"MEDIUM","confidence":0.85,"reasoning":"one sentence"}
+            
+            Rules:
+            - predictedPriority must be EXACTLY: LOW | MEDIUM | HIGH | CRITICAL
+            - Login, payment, security, crash, data loss -> HIGH or CRITICAL
+            - UI change, minor improvement, documentation -> LOW or MEDIUM
+            - confidence: 0.0 to 1.0
+            - reasoning: one sentence only""", request.getTaskTitle(), safeDesc);
     }
 
     private TaskPriorityResponse parseGeminiResponse(String jsonBody) {
@@ -100,15 +101,15 @@ public class GeminiService {
             String rawText = root.path("candidates").get(0).path("content").path("parts").get(0).path("text").asText();
             
             // Remove markdown json formatting if Gemini includes it
-            rawText = rawText.replaceAll("```json", "").replaceAll("```", "").trim();
+            rawText = rawText.replace("```json", "").replace("```", "").trim();
             
             JsonNode resultNode = objectMapper.readTree(rawText);
-            String priority = resultNode.path("predictedPriority").asText("MEDIUM").toUpperCase();
+            String priority = resultNode.path("predictedPriority").asText(DEFAULT_PRIORITY).toUpperCase();
             double confidence = resultNode.path("confidence").asDouble(0.5);
             String reasoning = resultNode.path("reasoning").asText("Gemini AI suggested priority");
 
-            if (!List.of("LOW", "MEDIUM", "HIGH", "CRITICAL").contains(priority)) {
-                priority = "MEDIUM";
+            if (!List.of("LOW", DEFAULT_PRIORITY, "HIGH", "CRITICAL").contains(priority)) {
+                priority = DEFAULT_PRIORITY;
             }
 
             return TaskPriorityResponse.of(priority, confidence, reasoning);

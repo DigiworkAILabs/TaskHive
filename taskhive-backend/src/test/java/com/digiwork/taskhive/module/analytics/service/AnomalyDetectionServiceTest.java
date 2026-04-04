@@ -63,7 +63,7 @@ class AnomalyDetectionServiceTest {
             // Today: only 3 completions (below 60% = 6)
             DailyMetrics today = DailyMetrics.builder()
                     .metricDate(LocalDate.now())
-                    .completedTasks(3)
+                    .completedTasks(3L)
                     .build();
             when(dailyMetricsRepository.findTopByOrderByMetricDateDesc()).thenReturn(Optional.of(today));
 
@@ -84,7 +84,7 @@ class AnomalyDetectionServiceTest {
 
             DailyMetrics today = DailyMetrics.builder()
                     .metricDate(LocalDate.now())
-                    .completedTasks(7)
+                    .completedTasks(7L)
                     .build();
             when(dailyMetricsRepository.findTopByOrderByMetricDateDesc()).thenReturn(Optional.of(today));
 
@@ -186,14 +186,14 @@ class AnomalyDetectionServiceTest {
         List<DailyMetrics> last7 = buildMetricsWithCompletions(10, 10, 10, 10, 10, 10, 10);
         when(dailyMetricsRepository.findTop7ByOrderByMetricDateDesc()).thenReturn(last7);
         when(dailyMetricsRepository.findTopByOrderByMetricDateDesc())
-                .thenReturn(Optional.of(DailyMetrics.builder().completedTasks(2).build()));
+                .thenReturn(Optional.of(DailyMetrics.builder().completedTasks(2L).build()));
 
         service.runNightlyDetection();
         assertThat(service.getActiveAlerts()).isNotEmpty();
 
         // Second run: all normal — alerts should clear
         when(dailyMetricsRepository.findTopByOrderByMetricDateDesc())
-                .thenReturn(Optional.of(DailyMetrics.builder().completedTasks(10).build()));
+                .thenReturn(Optional.of(DailyMetrics.builder().completedTasks(10L).build()));
 
         service.runNightlyDetection();
         assertThat(service.getActiveAlerts()).isEmpty();
@@ -208,7 +208,7 @@ class AnomalyDetectionServiceTest {
         for (int c : completions) {
             list.add(DailyMetrics.builder()
                     .metricDate(LocalDate.now().minusDays(list.size()))
-                    .completedTasks(c)
+                    .completedTasks((long) c)
                     .lateTasks(0)
                     .build());
         }
@@ -218,7 +218,7 @@ class AnomalyDetectionServiceTest {
     private DailyMetrics metricsWithLateTasks(int lateTasks) {
         return DailyMetrics.builder()
                 .metricDate(LocalDate.now())
-                .completedTasks(5)
+                .completedTasks(5L)
                 .lateTasks(lateTasks)
                 .build();
     }

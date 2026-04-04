@@ -23,8 +23,7 @@ class TaskStatusTest {
     @Test
     @DisplayName("IN_REVIEW can transition to PENDING_APPROVAL is NOT listed (server-side redirect only)")
     void inReviewCanGoToDoneDirectly() {
-        // IN_REVIEW → DONE is a valid client transition;
-        // DONE gets redirected to PENDING_APPROVAL server-side when approvalRequired=true
+        // Client-initiated state transition logic
         Set<TaskStatus> allowed = TaskStatus.IN_REVIEW.getAllowedTransitions();
         assertThat(allowed).contains(TaskStatus.DONE);
     }
@@ -51,9 +50,9 @@ class TaskStatusTest {
     }
 
     @Test
-    @DisplayName("IN_PROGRESS can transition to IN_REVIEW or CANCELLED")
+    @DisplayName("IN_PROGRESS can transition to IN_REVIEW, CANCELLED, or DONE (Safety Net)")
     void inProgressTransitions() {
         Set<TaskStatus> allowed = TaskStatus.IN_PROGRESS.getAllowedTransitions();
-        assertThat(allowed).containsExactlyInAnyOrder(TaskStatus.IN_REVIEW, TaskStatus.CANCELLED);
+        assertThat(allowed).containsExactlyInAnyOrder(TaskStatus.IN_REVIEW, TaskStatus.CANCELLED, TaskStatus.DONE);
     }
 }

@@ -30,7 +30,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onView, onEdit, onDele
 
     return (
         <tr
-            style={{ borderBottom: '1px solid #1f1f1f', transition: 'background-color 0.15s' }}
+            style={{ borderBottom: '1px solid #1f1f1f', transition: 'background-color 0.15s', cursor: 'pointer' }}
+            onClick={() => onView(task.id)}
             onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)')}
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
         >
@@ -39,8 +40,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onView, onEdit, onDele
             <td style={{ padding: '14px 16px', maxWidth: '300px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                     <span
-                        style={{ fontWeight: 600, color: '#ffffff', fontSize: '14px', cursor: 'pointer' }}
-                        onClick={() => onView(task.id)}
+                        style={{ fontWeight: 600, color: '#ffffff', fontSize: '14px' }}
                     >
                         {task.title}
                     </span>
@@ -124,7 +124,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onView, onEdit, onDele
             {/* Actions */}
             <td style={{ padding: '14px 16px', position: 'relative' }}>
                 <button
-                    onClick={() => setMenuOpen(!menuOpen)}
+                    onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen); }}
                     style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#71717a', padding: '4px', borderRadius: '6px', transition: 'color 0.15s' }}
                     onMouseEnter={(e) => (e.currentTarget.style.color = '#ffffff')}
                     onMouseLeave={(e) => (e.currentTarget.style.color = '#71717a')}
@@ -134,7 +134,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onView, onEdit, onDele
 
                 {menuOpen && (
                     <>
-                        <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setMenuOpen(false)} />
+                        <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={(e) => { e.stopPropagation(); setMenuOpen(false); }} />
                         <div
                             style={{
                                 position: 'absolute', right: '16px', top: '44px',
@@ -143,9 +143,9 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onView, onEdit, onDele
                                 zIndex: 50, minWidth: '150px', overflow: 'hidden',
                             }}
                         >
-                            <ActionItem icon={<Eye size={14} />} label="View" onClick={() => { setMenuOpen(false); onView(task.id); }} />
+                            <ActionItem icon={<Eye size={14} />} label="View" onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onView(task.id); }} />
                             <div style={{ height: '1px', backgroundColor: '#2a2a2a', margin: '4px 0' }} />
-                            <ActionItem icon={<Trash2 size={14} />} label="Delete" onClick={() => { setMenuOpen(false); onDelete(task.id); }} color="#ef4444" />
+                            <ActionItem icon={<Trash2 size={14} />} label="Delete" onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onDelete(task.id); }} color="#ef4444" />
                         </div>
                     </>
                 )}
@@ -154,7 +154,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onView, onEdit, onDele
     );
 };
 
-function ActionItem({ icon, label, onClick, color }: { icon: React.ReactNode; label: string; onClick: () => void; color?: string }) {
+function ActionItem({ icon, label, onClick, color }: { icon: React.ReactNode; label: string; onClick: (e: React.MouseEvent) => void; color?: string }) {
     return (
         <button
             onClick={onClick}

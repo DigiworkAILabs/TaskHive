@@ -63,7 +63,7 @@ public class AnomalyDetectionService {
             if (last7.isEmpty()) return;
 
             double avg7 = last7.stream()
-                    .mapToInt(m -> m.getCompletedTasks())
+                    .mapToDouble(m -> m.getCompletedTasks())
                     .average()
                     .orElse(0.0);
 
@@ -71,7 +71,7 @@ public class AnomalyDetectionService {
             var todayMetrics = dailyMetricsRepository.findTopByOrderByMetricDateDesc();
             if (todayMetrics.isEmpty()) return;
 
-            int todayCompleted = todayMetrics.get().getCompletedTasks();
+            long todayCompleted = todayMetrics.get().getCompletedTasks();
 
             if (avg7 > 0 && todayCompleted < avg7 * 0.6) {
                 activeAlerts.add(AnomalyAlertResponse.builder()

@@ -204,8 +204,9 @@ class TokenServiceTest {
             String hash1 = tokenService.hashToken(rawToken);
             String hash2 = tokenService.hashToken(rawToken);
 
-            assertThat(hash1).isEqualTo(hash2);
-            assertThat(hash1).isNotEmpty();
+            assertThat(hash1)
+                    .isEqualTo(hash2)
+                    .isNotEmpty();
         }
 
         @Test

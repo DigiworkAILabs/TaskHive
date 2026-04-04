@@ -80,7 +80,7 @@ public class PasswordResetService {
                 .findByTokenHashAndUsedFalse(tokenHash)
                 .orElseThrow(() -> new InvalidTokenException(MessageConstants.INVALID_TOKEN));
 
-        if (resetToken.getUsed()) {
+        if (resetToken.isUsed()) {
             throw new TokenAlreadyUsedException(MessageConstants.TOKEN_ALREADY_USED);
         }
 
