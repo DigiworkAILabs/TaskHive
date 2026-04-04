@@ -89,7 +89,7 @@ public class ReportService {
 
         } catch (IOException e) {
             log.error("Failed to export report: type={}", request.getReportType(), e);
-            throw new RuntimeException("Failed to generate report file", e);
+            throw new IllegalStateException("Failed to generate report file", e);
         }
     }
 
@@ -97,16 +97,16 @@ public class ReportService {
 
     public Resource downloadReport(UUID fileId) {
         FileMetadata metadata = analyticsRepository.findById(fileId)
-                .orElseThrow(() -> new RuntimeException("Report not found with id: " + fileId));
+                .orElseThrow(() -> new IllegalArgumentException("Report not found with id: " + fileId));
 
         // Validate 24-hour expiry
         if (metadata.getCreatedAt().plusHours(24).isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("Report download link has expired (24-hour retention)");
+            throw new IllegalStateException("Report download link has expired (24-hour retention)");
         }
 
         Path filePath = Paths.get(uploadDir, metadata.getFileUrl());
         if (!Files.exists(filePath)) {
-            throw new RuntimeException("Report file not found on disk: " + metadata.getFileName());
+            throw new IllegalStateException("Report file not found on disk: " + metadata.getFileName());
         }
 
         return new FileSystemResource(filePath);
@@ -114,7 +114,7 @@ public class ReportService {
 
     public FileMetadata getReportMetadata(UUID fileId) {
         return analyticsRepository.findById(fileId)
-                .orElseThrow(() -> new RuntimeException("Report not found with id: " + fileId));
+                .orElseThrow(() -> new IllegalArgumentException("Report not found with id: " + fileId));
     }
 
     // ─── CSV Generation (StringBuilder pattern from ComplianceReportService) ─

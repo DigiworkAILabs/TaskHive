@@ -36,6 +36,11 @@ public class TaskEventListener {
     private final UserRoleRepository userRoleRepository;
     private final UserRepository userRepository;
 
+    private static final String KEY_EMPLOYEE_NAME = "employeeName";
+    private static final String KEY_TASK_TITLE = "taskTitle";
+    private static final String KEY_DUE_DATE = "dueDate";
+    private static final String MSG_PREFIX_TASK = "Task \"";
+
     // ─── Helper: get all admin user IDs ──────────────────────────────────────
 
     private List<UUID> getAdminUserIds() {
@@ -77,10 +82,10 @@ public class TaskEventListener {
                 "New Task Assigned - TaskHive",
                 "task-assigned",
                 Map.of(
-                        "employeeName", employeeName,
-                        "taskTitle", event.getTaskTitle(),
+                        KEY_EMPLOYEE_NAME, employeeName,
+                        KEY_TASK_TITLE, event.getTaskTitle(),
                         "priority", priority,
-                        "dueDate", dueDate));
+                        KEY_DUE_DATE, dueDate));
     }
 
     // ─── Task Status Changed ─────────────────────────────────────────────────
@@ -111,14 +116,18 @@ public class TaskEventListener {
                 employee.getUserId(),
                 NotificationType.TASK_STATUS_CHANGED,
                 "Task Status Updated",
-                "Task \"" + task.getTitle() + "\" status changed from " +
+                MSG_PREFIX_TASK + task.getTitle() + "\" status changed from " +
                         event.getOldStatus() + " to " + event.getNewStatus(),
                 "TASK",
                 event.getTaskId());
 
         // ─── Admin notifications ─────────────────────────────────────────
-        boolean isCompleted = "COMPLETED".equalsIgnoreCase(event.getNewStatus());
         String employeeName = employee.getFirstName() + " " + employee.getLastName();
+        notifyAdminsOfStatusChange(task, event, employeeName);
+    }
+
+    private void notifyAdminsOfStatusChange(Task task, TaskStatusChangedEvent event, String employeeName) {
+        boolean isCompleted = "COMPLETED".equalsIgnoreCase(event.getNewStatus());
 
         for (UUID adminUserId : getAdminUserIds()) {
             // Skip if admin is the one who changed the status (avoid self-notification)
@@ -131,7 +140,7 @@ public class TaskEventListener {
                         adminUserId,
                         NotificationType.TASK_COMPLETED,
                         "Task Completed",
-                        "Task \"" + task.getTitle() + "\" has been completed by " + employeeName,
+                        MSG_PREFIX_TASK + task.getTitle() + "\" has been completed by " + employeeName,
                         "TASK",
                         event.getTaskId());
 
@@ -146,10 +155,10 @@ public class TaskEventListener {
                             "Task Completed - TaskHive",
                             "task-assigned",
                             Map.of(
-                                    "employeeName", admin.getFirstName() + " " + admin.getLastName(),
-                                    "taskTitle", task.getTitle() + " — Completed by " + employeeName,
+                                    KEY_EMPLOYEE_NAME, admin.getFirstName() + " " + admin.getLastName(),
+                                    KEY_TASK_TITLE, task.getTitle() + " — Completed by " + employeeName,
                                     "priority", task.getPriority() != null ? task.getPriority() : "MEDIUM",
-                                    "dueDate", dueDate));
+                                    KEY_DUE_DATE, dueDate));
                 });
             } else {
                 // Other status changes → admin gets in-app only
@@ -157,7 +166,7 @@ public class TaskEventListener {
                         adminUserId,
                         NotificationType.TASK_STATUS_CHANGED,
                         "Task Status Updated",
-                        "Task \"" + task.getTitle() + "\" status changed from " +
+                        MSG_PREFIX_TASK + task.getTitle() + "\" status changed from " +
                                 event.getOldStatus() + " to " + event.getNewStatus() +
                                 " (by " + employeeName + ")",
                         "TASK",
@@ -230,12 +239,11 @@ public class TaskEventListener {
         Employee employee = employeeOpt.get();
         String employeeName = employee.getFirstName() + " " + employee.getLastName();
 
-        // Create in-app notification for employee
         notificationService.createNotification(
                 employee.getUserId(),
                 NotificationType.TASK_OVERDUE,
                 "Task Overdue",
-                "Task \"" + event.getTaskTitle() + "\" is " + event.getOverdueDays() + " day(s) overdue",
+                MSG_PREFIX_TASK + event.getTaskTitle() + "\" is " + event.getOverdueDays() + " day(s) overdue",
                 "TASK",
                 event.getTaskId());
 
@@ -245,19 +253,18 @@ public class TaskEventListener {
                 "Task Overdue Alert - TaskHive",
                 "task-overdue",
                 Map.of(
-                        "employeeName", employeeName,
-                        "taskTitle", event.getTaskTitle(),
-                        "dueDate", event.getDueDate().toLocalDate().toString(),
+                        KEY_EMPLOYEE_NAME, employeeName,
+                        KEY_TASK_TITLE, event.getTaskTitle(),
+                        KEY_DUE_DATE, event.getDueDate().toLocalDate().toString(),
                         "overdueDays", String.valueOf(event.getOverdueDays())));
 
         // ─── Admin notifications (in-app + email) ────────────────────────
         for (UUID adminUserId : getAdminUserIds()) {
-            // In-app notification
             notificationService.createNotification(
                     adminUserId,
                     NotificationType.TASK_OVERDUE,
                     "Task Overdue",
-                    "Task \"" + event.getTaskTitle() + "\" assigned to " + employeeName +
+                    MSG_PREFIX_TASK + event.getTaskTitle() + "\" assigned to " + employeeName +
                             " is " + event.getOverdueDays() + " day(s) overdue",
                     "TASK",
                     event.getTaskId());
@@ -271,8 +278,8 @@ public class TaskEventListener {
                     Map.of(
                             "recipientName", admin.getFirstName() + " " + admin.getLastName(),
                             "assigneeName", employeeName,
-                            "taskTitle", event.getTaskTitle(),
-                            "dueDate", event.getDueDate().toLocalDate().toString(),
+                            KEY_TASK_TITLE, event.getTaskTitle(),
+                            KEY_DUE_DATE, event.getDueDate().toLocalDate().toString(),
                             "overdueDays", String.valueOf(event.getOverdueDays()))));
         }
     }

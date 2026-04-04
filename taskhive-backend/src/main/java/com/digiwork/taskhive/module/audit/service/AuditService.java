@@ -31,29 +31,17 @@ public class AuditService {
 
     // ─── Log an audit action ─────────────────────────────────────────────────
 
-    @Transactional
-    public void logAction(UUID actorId, String actorEmail, String action,
-            String entityType, UUID entityId,
-            String beforeState, String afterState,
-            String ipAddress, String userAgent) {
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+    public void logAction(AuditLog auditLog) {
 
         // Auto-resolve email from users table if not provided with the event
-        String resolvedEmail = (actorEmail != null) ? actorEmail : resolveEmail(actorId);
-
-        AuditLog auditLog = AuditLog.builder()
-                .actorId(actorId)
-                .actorEmail(resolvedEmail)
-                .action(action)
-                .entityType(entityType)
-                .entityId(entityId)
-                .beforeState(beforeState)
-                .afterState(afterState)
-                .ipAddress(ipAddress)
-                .userAgent(userAgent)
-                .build();
+        if (auditLog.getActorEmail() == null) {
+            auditLog.setActorEmail(resolveEmail(auditLog.getActorId()));
+        }
 
         auditLogRepository.save(auditLog);
-        log.debug("Audit log created: action={}, entityType={}, entityId={}", action, entityType, entityId);
+        log.debug("Audit log created: action={}, entityType={}, entityId={}",
+                auditLog.getAction(), auditLog.getEntityType(), auditLog.getEntityId());
     }
 
     // ─── Resolve actor email by user ID ──────────────────────────────────────

@@ -141,7 +141,7 @@ export const TaskStatusTrail: React.FC<TaskStatusTrailProps> = ({ status }) => {
                                                         backgroundColor: isFuture ? 'transparent' : fillColor,
                                                         boxShadow: !isFuture ? `0 0 6px 1px ${glowColor}` : undefined,
                                                         animation: undefined,
-                                                        opacity: (isCurrent && blockIdx === stage.blocks - 1) ? 0.55 : 1,
+                                                        opacity: (isCurrent && blockIdx === stage.blocks - 1 && !isDone) ? 0.55 : 1,
                                                         transition: 'border-color 0.2s, background-color 0.2s',
                                                     }}
                                                 >

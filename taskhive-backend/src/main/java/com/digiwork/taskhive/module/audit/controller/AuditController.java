@@ -92,7 +92,7 @@ public class AuditController {
 
     @GetMapping("/compliance/report")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> getComplianceReport(
+    public ResponseEntity<Object> getComplianceReport(
             @RequestParam String reportType,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
@@ -109,7 +109,7 @@ public class AuditController {
 
     // ─── Private helpers ─────────────────────────────────────────────────────
 
-    private ResponseEntity<?> handleJsonReport(String reportType, LocalDateTime startDate,
+    private ResponseEntity<Object> handleJsonReport(String reportType, LocalDateTime startDate,
             LocalDateTime endDate, int page, int size) {
         return switch (reportType.toUpperCase()) {
             case "USER_ACCESS" -> {
@@ -130,7 +130,7 @@ public class AuditController {
         };
     }
 
-    private ResponseEntity<byte[]> handleCsvExport(String reportType, LocalDateTime startDate,
+    private ResponseEntity<Object> handleCsvExport(String reportType, LocalDateTime startDate,
             LocalDateTime endDate) {
         String csvContent = switch (reportType.toUpperCase()) {
             case "USER_ACCESS" -> complianceReportService.getUserAccessReportCsv(startDate, endDate);
@@ -147,6 +147,6 @@ public class AuditController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                 .contentType(MediaType.parseMediaType("text/csv"))
-                .body(csvContent.getBytes());
+                .body((Object) csvContent.getBytes());
     }
 }

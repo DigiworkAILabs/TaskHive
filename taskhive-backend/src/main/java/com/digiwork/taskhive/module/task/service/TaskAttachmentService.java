@@ -36,7 +36,7 @@ public class TaskAttachmentService {
     private final StorageService storageService;
     private final TaskMapper taskMapper;
 
-    private static final long MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB per SRS NFR-SEC-10
+    private static final long MAX_FILE_SIZE = 20L * 1024 * 1024; // 20MB per SRS NFR-SEC-10
     private static final List<String> ALLOWED_CONTENT_TYPES = List.of(
             // Images
             "image/jpeg", "image/png", "image/webp", "image/gif",

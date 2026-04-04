@@ -50,7 +50,7 @@ public class MLClientService {
         return TaskPriorityResponse.of(body.getPredictedPriority(), body.getConfidence(), body.getReasoning());
     }
 
-    private TaskPriorityResponse predictPriorityFallback(Map<String, Object> payload, Throwable t) {
+    private TaskPriorityResponse predictPriorityFallback(Throwable t) {
         log.warn("[MLClient] Priority fallback: {}", t.getMessage());
         return TaskPriorityResponse.fallback();
     }
@@ -79,9 +79,9 @@ public class MLClientService {
                 .build();
     }
 
-    private CompletionTimeResponse predictCompletionFallback(Map<String, Object> payload, Throwable t) {
+    private CompletionTimeResponse predictCompletionFallback(Throwable t) {
         log.warn("[MLClient] Completion fallback: {}", t.getMessage());
-        return CompletionTimeResponse.fallback((Double) payload.get("manual_estimate"));
+        return CompletionTimeResponse.fallback(null);
     }
 
     // ── Workload ─────────────────────────────────────────────────────────────
@@ -101,10 +101,10 @@ public class MLClientService {
                         entry.getScore()))
                 .collect(Collectors.toList());
         return new WorkloadRecommendationResponse(body.getRecommendedEmployeeId(), scores, body.getReasoning(),
-                body.getFallbackUsed() != null ? body.getFallbackUsed() : false);
+                Boolean.TRUE.equals(body.getFallbackUsed()));
     }
 
-    private WorkloadRecommendationResponse recommendWorkloadFallback(Map<String, Object> payload, Throwable t) {
+    private WorkloadRecommendationResponse recommendWorkloadFallback(Throwable t) {
         log.warn("[MLClient] Workload fallback: {}", t.getMessage());
         return WorkloadRecommendationResponse.fallback();
     }
@@ -128,11 +128,11 @@ public class MLClientService {
                 .breakdown(body.getBreakdown())
                 .trend(body.getTrend())
                 .reasoning(body.getReasoning())
-                .fallbackUsed(body.getFallbackUsed() != null ? body.getFallbackUsed() : false)
+                .fallbackUsed(Boolean.TRUE.equals(body.getFallbackUsed()))
                 .build();
     }
 
-    private ProductivityScoreResponse predictProductivityFallback(Map<String, Object> payload, Throwable t) {
+    private ProductivityScoreResponse predictProductivityFallback(Throwable t) {
         log.warn("[MLClient] Productivity fallback: {}", t.getMessage());
         return ProductivityScoreResponse.fallback();
     }
@@ -173,7 +173,7 @@ public class MLClientService {
         }
 
         public Boolean getFallbackUsed() {
-            return fallbackUsed != null ? fallbackUsed : false;
+            return Boolean.TRUE.equals(fallbackUsed);
         }
     }
 

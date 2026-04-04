@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.Mockito.*;
 
@@ -64,12 +65,13 @@ class LateSubmissionSchedulerTest {
                 .lateByMinutes(300)
                 .build();
 
-        // findLateInProgressTasks filters by is_late=false, so already-late tasks won't appear
-        when(taskRepository.findLateInProgressTasks(any())).thenReturn(List.of());
+        // Simulate a broken query that returns an already-late task
+        when(taskRepository.findLateInProgressTasks(any())).thenReturn(List.of(alreadyLate));
 
         scheduler.flagLateSubmissions();
 
-        // Task should not be saved again
-        verify(taskRepository, never()).save(alreadyLate);
+        // Even if returned by the query, the scheduler should not overwrite existing late data
+        assertThat(alreadyLate.getIsLate()).isTrue();
+        assertThat(alreadyLate.getLateByMinutes()).isEqualTo(300);
     }
 }

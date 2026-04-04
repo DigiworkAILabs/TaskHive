@@ -55,8 +55,12 @@ public class TaskController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
-        PageResponse<TaskListResponse> tasks = taskService.getAllTasks(
-                status, priority, assignedTo, dueDateFrom, dueDateTo, page, size, sortBy, sortDir);
+        TaskFilterRequest filter = TaskFilterRequest.builder()
+                .status(status).priority(priority).assignedTo(assignedTo)
+                .dueDateFrom(dueDateFrom).dueDateTo(dueDateTo)
+                .page(page).size(size).sortBy(sortBy).sortDir(sortDir)
+                .build();
+        PageResponse<TaskListResponse> tasks = taskService.getAllTasks(filter);
         return ResponseEntity.ok(ApiResponse.success("Tasks retrieved successfully", tasks));
     }
 

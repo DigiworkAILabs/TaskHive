@@ -30,7 +30,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -121,20 +120,82 @@ class EmployeeServiceTest {
     @DisplayName("createEmployee")
     class CreateEmployeeTests {
 
-        @Test
-        @DisplayName("should throw EmployeeAlreadyExistsException when email exists")
-        void shouldThrowException_whenDuplicateEmail() {
-            CreateEmployeeRequest request = new CreateEmployeeRequest();
-            request.setFirstName("Jane");
-            request.setLastName("Doe");
-            request.setEmail("existing@example.com");
+                @Test
+                @DisplayName("should throw EmployeeAlreadyExistsException when email exists")
+                void shouldThrowException_whenDuplicateEmail() {
+                        CreateEmployeeRequest request = new CreateEmployeeRequest();
+                        request.setFirstName("Jane");
+                        request.setLastName("Doe");
+                        request.setEmail("existing@example.com");
 
-            when(employeeRepository.existsByEmail("existing@example.com")).thenReturn(true);
+                        when(employeeRepository.existsByEmail("existing@example.com")).thenReturn(true);
 
-            assertThatThrownBy(() -> employeeService.createEmployee(request))
-                    .isInstanceOf(EmployeeAlreadyExistsException.class);
+                        assertThatThrownBy(() -> employeeService.createEmployee(request))
+                                .isInstanceOf(EmployeeAlreadyExistsException.class);
+                }
+
+                @Test
+                @DisplayName("should throw EmployeeNotFoundException when manager not found")
+                void shouldThrowException_whenManagerNotFound() {
+                        UUID managerId = UUID.randomUUID();
+                        CreateEmployeeRequest request = new CreateEmployeeRequest();
+                        request.setEmail("new@example.com");
+                        request.setManagerId(managerId);
+
+                        when(employeeRepository.existsByEmail(anyString())).thenReturn(false);
+                        when(employeeRepository.findByIdAndIsDeletedFalse(managerId)).thenReturn(Optional.empty());
+
+                        assertThatThrownBy(() -> employeeService.createEmployee(request))
+                                .isInstanceOf(EmployeeNotFoundException.class)
+                                .hasMessageContaining("Manager not found");
+                }
+
+                @Test
+                @DisplayName("should create employee successfully with User and Token")
+                void shouldCreateEmployeeSuccessfully() {
+                        CreateEmployeeRequest request = new CreateEmployeeRequest();
+                        request.setFirstName("New");
+                        request.setLastName("User");
+                        request.setEmail("new@example.com");
+
+                        when(employeeRepository.existsByEmail(anyString())).thenReturn(false);
+                        when(userRepository.save(any(User.class))).thenAnswer(i -> {
+                                User u = i.getArgument(0);
+                                u.setId(UUID.randomUUID());
+                                return u;
+                        });
+                        when(roleRepository.findByName(anyString())).thenReturn(Optional.of(com.digiwork.taskhive.module.auth.model.Role.builder().id(UUID.randomUUID()).build()));
+                        when(employeeRepository.save(any(Employee.class))).thenAnswer(i -> i.getArgument(0));
+                        when(employeeMapper.toEmployeeResponse(any(), any())).thenReturn(new EmployeeResponse());
+
+                        EmployeeResponse result = employeeService.createEmployee(request);
+
+                        assertThat(result).isNotNull();
+                        verify(userRepository).save(any(User.class));
+                        verify(userRoleRepository).save(any());
+                        verify(activationTokenRepository).save(any());
+                        verify(eventPublisher).publishEvent(any());
+                }
+
+                @Test
+                @DisplayName("should throw RuntimeException when EMPLOYEE role is missing")
+                void shouldThrowException_whenRoleMissing() {
+                        CreateEmployeeRequest request = new CreateEmployeeRequest();
+                        request.setEmail("new@example.com");
+
+                        when(employeeRepository.existsByEmail(anyString())).thenReturn(false);
+                        when(userRepository.save(any(User.class))).thenAnswer(i -> {
+                                User u = i.getArgument(0);
+                                u.setId(UUID.randomUUID());
+                                return u;
+                        });
+                        when(roleRepository.findByName(anyString())).thenReturn(Optional.empty());
+
+                        assertThatThrownBy(() -> employeeService.createEmployee(request))
+                                .isInstanceOf(RuntimeException.class)
+                                .hasMessageContaining("EMPLOYEE role not found");
+                }
         }
-    }
 
     // ═══════════════════════════════════════════════════════════════════════════
     // listEmployees Tests
@@ -154,8 +215,10 @@ class EmployeeServiceTest {
                     .thenReturn(page);
             when(employeeMapper.toEmployeeListResponse(testEmployee)).thenReturn(listResponse);
 
-            PageResponse<EmployeeListResponse> result = employeeService.listEmployees(null, null, null, null, 0, 10,
-                    "firstName", "asc");
+            EmployeeFilterRequest filter = EmployeeFilterRequest.builder()
+                    .page(0).size(10).sortBy("firstName").sortDir("asc")
+                    .build();
+            PageResponse<EmployeeListResponse> result = employeeService.listEmployees(filter);
 
             assertThat(result.getContent()).hasSize(1);
             assertThat(result.getTotalElements()).isEqualTo(1);
@@ -186,6 +249,20 @@ class EmployeeServiceTest {
         }
 
         @Test
+        @DisplayName("should resolve manager name when manager exists")
+        void shouldResolveManagerName() {
+            Employee manager = Employee.builder().firstName("Boss").lastName("Man").build();
+            when(employeeRepository.findByIdAndIsDeletedFalse(employeeId)).thenReturn(Optional.of(testEmployee));
+            testEmployee.setManagerId(UUID.randomUUID());
+            when(employeeRepository.findByIdAndIsDeletedFalse(testEmployee.getManagerId())).thenReturn(Optional.of(manager));
+            when(employeeMapper.toEmployeeResponse(any(), eq("Boss Man"))).thenReturn(new EmployeeResponse());
+
+            employeeService.getEmployee(employeeId);
+
+            verify(employeeMapper).toEmployeeResponse(any(), eq("Boss Man"));
+        }
+
+        @Test
         @DisplayName("should throw EmployeeNotFoundException when not found")
         void shouldThrowException_whenEmployeeNotFound() {
             when(employeeRepository.findByIdAndIsDeletedFalse(employeeId))
@@ -204,29 +281,77 @@ class EmployeeServiceTest {
     @DisplayName("updateEmployee")
     class UpdateEmployeeTests {
 
-        @Test
-        @DisplayName("should update employee fields successfully")
-        void shouldUpdateEmployeeSuccessfully() {
-            UpdateEmployeeRequest request = new UpdateEmployeeRequest();
-            request.setFirstName("Jane");
-            request.setDepartment("HR");
-            EmployeeResponse expectedResponse = new EmployeeResponse();
+                @Test
+                @DisplayName("should update employee fields successfully")
+                void shouldUpdateEmployeeSuccessfully() {
+                        UpdateEmployeeRequest request = new UpdateEmployeeRequest();
+                        request.setFirstName("Jane");
+                        request.setDepartment("HR");
+                        EmployeeResponse expectedResponse = new EmployeeResponse();
 
-            when(employeeRepository.findByIdAndIsDeletedFalse(employeeId))
-                    .thenReturn(Optional.of(testEmployee));
-            when(employeeRepository.save(any(Employee.class))).thenReturn(testEmployee);
-            when(userRepository.findByIdAndIsDeletedFalse(testEmployee.getUserId()))
-                    .thenReturn(Optional.of(testUser));
-            when(employeeMapper.toEmployeeResponse(eq(testEmployee), any()))
-                    .thenReturn(expectedResponse);
+                        when(employeeRepository.findByIdAndIsDeletedFalse(employeeId))
+                                .thenReturn(Optional.of(testEmployee));
+                        when(employeeRepository.save(any(Employee.class))).thenReturn(testEmployee);
+                        when(userRepository.findByIdAndIsDeletedFalse(testEmployee.getUserId()))
+                                .thenReturn(Optional.of(testUser));
+                        when(employeeMapper.toEmployeeResponse(eq(testEmployee), any()))
+                                .thenReturn(expectedResponse);
 
-            EmployeeResponse result = employeeService.updateEmployee(employeeId, request);
+                        EmployeeResponse result = employeeService.updateEmployee(employeeId, request);
 
-            assertThat(result).isEqualTo(expectedResponse);
-            verify(employeeRepository).save(any(Employee.class));
-            verify(eventPublisher).publishEvent(any());
+                        assertThat(result).isEqualTo(expectedResponse);
+                        verify(employeeRepository).save(any(Employee.class));
+                        verify(eventPublisher).publishEvent(any());
+                }
+
+                @Test
+                @DisplayName("should sync names to User record during update")
+                void shouldSyncNamesToUser() {
+                        UpdateEmployeeRequest request = new UpdateEmployeeRequest();
+                        request.setFirstName("UpdatedFirstName");
+                        request.setLastName("UpdatedLastName");
+
+                        when(employeeRepository.findByIdAndIsDeletedFalse(employeeId))
+                                .thenReturn(Optional.of(testEmployee));
+                        when(userRepository.findByIdAndIsDeletedFalse(testEmployee.getUserId()))
+                                .thenReturn(Optional.of(testUser));
+                        when(employeeRepository.save(any(Employee.class))).thenReturn(testEmployee);
+
+                        employeeService.updateEmployee(employeeId, request);
+
+                        assertThat(testUser.getFirstName()).isEqualTo("UpdatedFirstName");
+                        assertThat(testUser.getLastName()).isEqualTo("UpdatedLastName");
+                        verify(userRepository).save(testUser);
+                }
+
+                @Test
+                @DisplayName("should throw exception when updating with invalid manager")
+                void shouldThrowException_whenInvalidManager() {
+                        UUID invalidManagerId = UUID.randomUUID();
+                        UpdateEmployeeRequest request = new UpdateEmployeeRequest();
+                        request.setManagerId(invalidManagerId);
+
+                        when(employeeRepository.findByIdAndIsDeletedFalse(employeeId)).thenReturn(Optional.of(testEmployee));
+                        when(employeeRepository.findByIdAndIsDeletedFalse(invalidManagerId)).thenReturn(Optional.empty());
+
+                        assertThatThrownBy(() -> employeeService.updateEmployee(employeeId, request))
+                                .isInstanceOf(EmployeeNotFoundException.class);
+                }
+                @Test
+                @DisplayName("should handle null user record during update")
+                void shouldHandleNullUserDuringUpdate() {
+                        UpdateEmployeeRequest request = new UpdateEmployeeRequest();
+                        request.setFirstName("Jane");
+
+                        when(employeeRepository.findByIdAndIsDeletedFalse(employeeId)).thenReturn(Optional.of(testEmployee));
+                        when(userRepository.findByIdAndIsDeletedFalse(any())).thenReturn(Optional.empty());
+                        when(employeeRepository.save(any())).thenReturn(testEmployee);
+
+                        employeeService.updateEmployee(employeeId, request);
+
+                        verify(userRepository, never()).save(any(User.class));
+                }
         }
-    }
 
     // ═══════════════════════════════════════════════════════════════════════════
     // softDeleteEmployee Tests

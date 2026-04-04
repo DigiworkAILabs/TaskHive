@@ -32,7 +32,7 @@ public class LocalStorageService implements StorageService {
         Path filePath = dirPath.resolve(fullFilename);
         Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-        String relativePath = directory + "/" + fullFilename;
+        String relativePath = Path.of(directory, fullFilename).toString().replace('\\', '/');
         log.info("File stored at: {}", filePath.toAbsolutePath());
         return relativePath;
     }

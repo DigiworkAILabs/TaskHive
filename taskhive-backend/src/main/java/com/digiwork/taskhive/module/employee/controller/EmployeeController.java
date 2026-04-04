@@ -48,8 +48,11 @@ public class EmployeeController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String sortBy,
             @RequestParam(defaultValue = "asc") String sortDir) {
-        PageResponse<EmployeeListResponse> employees = employeeService.listEmployees(
-                name, email, department, status, page, size, sortBy, sortDir);
+        EmployeeFilterRequest filter = EmployeeFilterRequest.builder()
+                .name(name).email(email).department(department).status(status)
+                .page(page).size(size).sortBy(sortBy).sortDir(sortDir)
+                .build();
+        PageResponse<EmployeeListResponse> employees = employeeService.listEmployees(filter);
         return ResponseEntity.ok(ApiResponse.success("Employees retrieved successfully", employees));
     }
 

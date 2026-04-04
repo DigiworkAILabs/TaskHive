@@ -44,6 +44,7 @@ public class GdprService {
     private final AuditLogRepository auditLogRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final PasswordEncoder passwordEncoder;
+    private static final String ANONYMIZED_VALUE = "[DELETED]";
 
     // ─── GDPR Data Export ────────────────────────────────────────────────────
 
@@ -86,8 +87,8 @@ public class GdprService {
 
         // Anonymize User entity
         user.setEmail(anonymizedEmail);
-        user.setFirstName("[DELETED]");
-        user.setLastName("[DELETED]");
+        user.setFirstName(ANONYMIZED_VALUE);
+        user.setLastName(ANONYMIZED_VALUE);
         user.setPasswordHash(invalidatedPasswordHash);
         user.setStatus(UserStatus.DELETED);
         user.setIsDeleted(true);
@@ -96,8 +97,8 @@ public class GdprService {
 
         // Anonymize Employee entity if exists
         employeeRepository.findByUserIdAndIsDeletedFalse(userId).ifPresent(employee -> {
-            employee.setFirstName("[DELETED]");
-            employee.setLastName("[DELETED]");
+            employee.setFirstName(ANONYMIZED_VALUE);
+            employee.setLastName(ANONYMIZED_VALUE);
             employee.setEmail(anonymizedEmail);
             employee.setPhone(null);
             employee.setIsDeleted(true);

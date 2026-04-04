@@ -22,7 +22,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -69,7 +68,7 @@ class ProfilePhotoServiceTest {
 
             when(employeeRepository.findByIdAndIsDeletedFalse(employeeId))
                     .thenReturn(Optional.of(testEmployee));
-            when(storageService.store(eq(file), eq("employees/photos"), eq(employeeId.toString())))
+            when(storageService.store(file, "employees/photos", employeeId.toString()))
                     .thenReturn("employees/photos/" + employeeId);
             when(storageService.getUrl("employees/photos/" + employeeId))
                     .thenReturn("http://localhost/photos/" + employeeId);
@@ -91,7 +90,7 @@ class ProfilePhotoServiceTest {
 
             when(employeeRepository.findByIdAndIsDeletedFalse(employeeId))
                     .thenReturn(Optional.of(testEmployee));
-            when(storageService.store(eq(file), eq("employees/photos"), eq(employeeId.toString())))
+            when(storageService.store(file, "employees/photos", employeeId.toString()))
                     .thenReturn("employees/photos/" + employeeId);
             when(storageService.getUrl(any())).thenReturn("http://localhost/photo");
 

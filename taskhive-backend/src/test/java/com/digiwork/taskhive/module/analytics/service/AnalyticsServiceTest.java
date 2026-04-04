@@ -65,10 +65,10 @@ class AnalyticsServiceTest {
             // given
             DailyMetrics metrics = DailyMetrics.builder()
                     .metricDate(LocalDate.of(2026, 2, 25))
-                    .totalTasks(100)
-                    .activeTasks(40)
-                    .overdueTasks(5)
-                    .completedTasks(50)
+                    .totalTasks(100L)
+                    .activeTasks(40L)
+                    .overdueTasks(5L)
+                    .completedTasks(50L)
                     .completionRate(BigDecimal.valueOf(50.00))
                     .avgCompletionHours(BigDecimal.valueOf(24.50))
                     .totalEmployees(10)
@@ -81,10 +81,10 @@ class AnalyticsServiceTest {
             AdminDashboardResponse response = analyticsService.getAdminDashboard();
 
             // then
-            assertThat(response.getTotalTasks()).isEqualTo(100);
-            assertThat(response.getActiveTasks()).isEqualTo(40);
-            assertThat(response.getOverdueTasks()).isEqualTo(5);
-            assertThat(response.getCompletedTasks()).isEqualTo(50);
+            assertThat(response.getTotalTasks()).isEqualTo(100L);
+            assertThat(response.getActiveTasks()).isEqualTo(40L);
+            assertThat(response.getOverdueTasks()).isEqualTo(5L);
+            assertThat(response.getCompletedTasks()).isEqualTo(50L);
             assertThat(response.getCompletionRate()).isEqualByComparingTo(BigDecimal.valueOf(50.00));
             assertThat(response.getAvgCompletionHours()).isEqualByComparingTo(BigDecimal.valueOf(24.50));
             assertThat(response.getTotalEmployees()).isEqualTo(10);
@@ -100,9 +100,8 @@ class AnalyticsServiceTest {
                     .thenReturn(Optional.empty());
 
             // Mock the two native queries inside getAdminDashboardRealTime():
-            // 1st query: task stats → Object[] {total, active, overdue, completed,
-            // avgHours}
-            // 2nd query: employee count → long
+            // 1st query: task stats (total, active, overdue, completed, avgHours)
+            // 2nd query: employee count (long)
             Query mockQuery = mock(Query.class);
             when(entityManager.createNativeQuery(anyString())).thenReturn(mockQuery);
 

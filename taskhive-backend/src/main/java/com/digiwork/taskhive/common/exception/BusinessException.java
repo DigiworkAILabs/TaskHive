@@ -2,10 +2,11 @@ package com.digiwork.taskhive.common.exception;
 
 public class BusinessException extends RuntimeException {
 
-    private String errorCode;
+    private final String errorCode;
 
     public BusinessException(String message) {
         super(message);
+        this.errorCode = null;
     }
 
     public BusinessException(String errorCode, String message) {

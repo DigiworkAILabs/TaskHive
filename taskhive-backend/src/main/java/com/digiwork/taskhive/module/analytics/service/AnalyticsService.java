@@ -59,12 +59,12 @@ public class AnalyticsService {
 
         @SuppressWarnings("unchecked")
         private AdminDashboardResponse getAdminDashboardRealTime() {
-                // Single query: total, active (TODO+IN_PROGRESS+IN_REVIEW), overdue, completed,
+                // Single query: total, active (To-Do+IN_PROGRESS+IN_REVIEW+PENDING_APPROVAL), overdue, completed,
                 // avg hours
                 String taskSql = "SELECT " +
                                 "COUNT(*) AS total, " +
-                                "COUNT(*) FILTER (WHERE t.status IN ('TODO', 'IN_PROGRESS', 'IN_REVIEW')) AS active, " +
-                                "COUNT(*) FILTER (WHERE t.status != 'DONE' AND t.due_date < NOW()) AS overdue, " +
+                                "COUNT(*) FILTER (WHERE t.status IN ('TODO', 'IN_PROGRESS', 'IN_REVIEW', 'PENDING_APPROVAL')) AS active, " +
+                                "COUNT(*) FILTER (WHERE t.status NOT IN ('DONE', 'CANCELLED') AND t.due_date < NOW()) AS overdue, " +
                                 "COUNT(*) FILTER (WHERE t.status = 'DONE') AS completed, " +
                                 "COALESCE(AVG(EXTRACT(EPOCH FROM (t.completed_at - t.created_at)) / 3600) " +
                                 "FILTER (WHERE t.status = 'DONE' AND t.completed_at IS NOT NULL), 0) AS avg_hours " +

@@ -14,7 +14,7 @@ public enum TaskStatus {
 
     private static final Map<TaskStatus, Set<TaskStatus>> VALID_TRANSITIONS = Map.ofEntries(
             Map.entry(TODO, Set.of(IN_PROGRESS, CANCELLED)),
-            Map.entry(IN_PROGRESS, Set.of(IN_REVIEW, CANCELLED)),
+            Map.entry(IN_PROGRESS, Set.of(IN_REVIEW, CANCELLED, DONE)),
             Map.entry(IN_REVIEW, Set.of(DONE, IN_PROGRESS, CANCELLED, PENDING_APPROVAL)),
             Map.entry(PENDING_APPROVAL, Set.of(DONE, IN_REVIEW, CANCELLED)),
             Map.entry(DONE, Set.of(CANCELLED)),

@@ -26,19 +26,19 @@ public class DailyMetrics {
 
     @Column(name = "total_tasks", nullable = false)
     @Builder.Default
-    private Integer totalTasks = 0;
+    private Long totalTasks = 0L;
 
     @Column(name = "active_tasks", nullable = false)
     @Builder.Default
-    private Integer activeTasks = 0;
+    private Long activeTasks = 0L;
 
     @Column(name = "overdue_tasks", nullable = false)
     @Builder.Default
-    private Integer overdueTasks = 0;
+    private Long overdueTasks = 0L;
 
     @Column(name = "completed_tasks", nullable = false)
     @Builder.Default
-    private Integer completedTasks = 0;
+    private Long completedTasks = 0L;
 
     @Column(name = "completion_rate", nullable = false, precision = 5, scale = 2)
     @Builder.Default

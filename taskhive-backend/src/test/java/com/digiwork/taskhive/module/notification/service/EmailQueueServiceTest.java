@@ -1,21 +1,20 @@
 package com.digiwork.taskhive.module.notification.service;
 
-import com.digiwork.taskhive.module.notification.model.EmailQueue;
+import com.digiwork.taskhive.module.notification.enums.EmailStatus;
 import com.digiwork.taskhive.module.notification.repository.EmailQueueRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class EmailQueueServiceTest {
@@ -29,35 +28,35 @@ class EmailQueueServiceTest {
     private EmailQueueService emailQueueService;
 
     @Test
-    @DisplayName("should queue an email successfully with template data")
-    void shouldQueueEmailSuccessfully() throws Exception {
-        Map<String, Object> templateData = Map.of("name", "John", "link", "http://example.com");
-        when(objectMapper.writeValueAsString(templateData))
-                .thenReturn("{\"name\":\"John\",\"link\":\"http://example.com\"}");
+    @DisplayName("queueEmail: should serialize data and save to repository")
+    void queueEmail_Success() throws JsonProcessingException {
+        String to = "to@example.com";
+        String subject = "Subject";
+        String template = "template";
+        Map<String, Object> data = Map.of("key", "value");
+        String json = "{\"key\":\"value\"}";
 
-        emailQueueService.queueEmail("user@example.com", "Welcome", "activation", templateData);
+        when(objectMapper.writeValueAsString(data)).thenReturn(json);
 
-        ArgumentCaptor<EmailQueue> captor = ArgumentCaptor.forClass(EmailQueue.class);
-        verify(emailQueueRepository).save(captor.capture());
-        EmailQueue saved = captor.getValue();
-        assertThat(saved.getToEmail()).isEqualTo("user@example.com");
-        assertThat(saved.getSubject()).isEqualTo("Welcome");
-        assertThat(saved.getTemplateName()).isEqualTo("activation");
-        assertThat(saved.getTemplateData()).contains("John");
+        emailQueueService.queueEmail(to, subject, template, data);
+
+        verify(emailQueueRepository).save(argThat(email -> 
+            email.getToEmail().equals(to) &&
+            email.getSubject().equals(subject) &&
+            email.getTemplateName().equals(template) &&
+            email.getTemplateData().equals(json) &&
+            email.getStatus() == EmailStatus.PENDING &&
+            email.getScheduledAt() != null
+        ));
     }
 
     @Test
-    @DisplayName("should queue email with empty template data")
-    void shouldQueueEmailWithEmptyData() throws Exception {
-        Map<String, Object> templateData = Map.of();
-        when(objectMapper.writeValueAsString(templateData)).thenReturn("{}");
+    @DisplayName("queueEmail: should handle serialization errors gracefully")
+    void queueEmail_SerializationError() throws JsonProcessingException {
+        when(objectMapper.writeValueAsString(any())).thenThrow(new JsonProcessingException("Error") {});
 
-        emailQueueService.queueEmail("admin@example.com", "Report", "report-template", templateData);
+        emailQueueService.queueEmail("to@ex.com", "Sub", "tmp", Map.of());
 
-        ArgumentCaptor<EmailQueue> captor = ArgumentCaptor.forClass(EmailQueue.class);
-        verify(emailQueueRepository).save(captor.capture());
-        EmailQueue saved = captor.getValue();
-        assertThat(saved.getToEmail()).isEqualTo("admin@example.com");
-        assertThat(saved.getTemplateName()).isEqualTo("report-template");
+        verifyNoInteractions(emailQueueRepository);
     }
 }

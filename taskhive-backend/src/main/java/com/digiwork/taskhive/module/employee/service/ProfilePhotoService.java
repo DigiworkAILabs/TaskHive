@@ -23,7 +23,7 @@ public class ProfilePhotoService {
     private final EmployeeRepository employeeRepository;
     private final StorageService storageService;
 
-    private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    private static final long MAX_FILE_SIZE = 5L * 1024 * 1024; // 5MB
     private static final List<String> ALLOWED_CONTENT_TYPES = List.of(
             "image/jpeg", "image/png", "image/webp");
     private static final String PHOTO_DIRECTORY = "employees/photos";

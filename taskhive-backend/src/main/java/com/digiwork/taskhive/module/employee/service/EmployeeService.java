@@ -127,7 +127,7 @@ public class EmployeeService {
 
         // 6. Publish event (EmailService will send activation email)
         eventPublisher.publishEvent(new EmployeeCreatedEvent(
-                this, employee.getId(), user.getId(), request.getEmail(), request.getFirstName(), rawToken));
+                this, employee.getId(), user.getId(), request.getEmail(), request.getFirstName(), rawToken, currentUserId));
 
         log.info("Employee created: {} ({})", employee.getEmail(), employee.getId());
 
@@ -137,16 +137,15 @@ public class EmployeeService {
     // ─── LIST ─────────────────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
-    public PageResponse<EmployeeListResponse> listEmployees(
-            String name, String email, String department, String status,
-            int page, int size, String sortBy, String sortDir) {
+    public PageResponse<EmployeeListResponse> listEmployees(EmployeeFilterRequest filter) {
 
         Sort sort = Sort.by(
-                "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC,
-                sortBy != null ? sortBy : "firstName");
+                "desc".equalsIgnoreCase(filter.getSortDir()) ? Sort.Direction.DESC : Sort.Direction.ASC,
+                filter.getSortBy() != null ? filter.getSortBy() : "firstName");
 
-        Pageable pageable = PageRequest.of(page, size, sort);
-        Page<Employee> employeePage = employeeRepository.findAllWithFilters(name, email, department, status, pageable);
+        Pageable pageable = PageRequest.of(filter.getPage(), filter.getSize(), sort);
+        Page<Employee> employeePage = employeeRepository.findAllWithFilters(
+                filter.getName(), filter.getEmail(), filter.getDepartment(), filter.getStatus(), pageable);
 
         return PageResponse.<EmployeeListResponse>builder()
                 .content(employeePage.getContent().stream()

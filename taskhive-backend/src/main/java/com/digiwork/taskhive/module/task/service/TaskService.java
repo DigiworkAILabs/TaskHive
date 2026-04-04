@@ -47,6 +47,11 @@ public class TaskService {
     private final TaskMapper taskMapper;
     private final ApplicationEventPublisher eventPublisher;
 
+    private static final String FIELD_CREATED_AT = "createdAt";
+    private static final String FIELD_UPDATED_AT = "updatedAt";
+    private static final String FIELD_DUE_DATE = "dueDate";
+    private static final String ROLE_EMPLOYEE = "EMPLOYEE";
+
     // ─── CREATE ───────────────────────────────────────────────────────────────
 
     @Transactional
@@ -108,20 +113,18 @@ public class TaskService {
     // ─── GET ALL TASKS (ADMIN) ────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
-    public PageResponse<TaskListResponse> getAllTasks(
-            String status, String priority, UUID assignedTo,
-            LocalDateTime dueDateFrom, LocalDateTime dueDateTo,
-            int page, int size, String sortBy, String sortDir) {
+    public PageResponse<TaskListResponse> getAllTasks(TaskFilterRequest filter) {
 
-        String dbColumn = mapToColumnName(sortBy != null ? sortBy : "createdAt");
+        String dbColumn = mapToColumnName(filter.getSortBy() != null ? filter.getSortBy() : FIELD_CREATED_AT);
 
         Sort sort = Sort.by(
-                "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC,
+                "desc".equalsIgnoreCase(filter.getSortDir()) ? Sort.Direction.DESC : Sort.Direction.ASC,
                 dbColumn);
 
-        Pageable pageable = PageRequest.of(page, size, sort);
+        Pageable pageable = PageRequest.of(filter.getPage(), filter.getSize(), sort);
         Page<Task> taskPage = taskRepository.findAllWithFilters(
-                status, priority, assignedTo, dueDateFrom, dueDateTo, pageable);
+                filter.getStatus(), filter.getPriority(), filter.getAssignedTo(),
+                filter.getDueDateFrom(), filter.getDueDateTo(), pageable);
 
         return PageResponse.<TaskListResponse>builder()
                 .content(taskPage.getContent().stream()
@@ -137,9 +140,9 @@ public class TaskService {
 
     private String mapToColumnName(String sortBy) {
         return switch (sortBy) {
-            case "createdAt" -> "created_at";
-            case "updatedAt" -> "updated_at";
-            case "dueDate" -> "due_date";
+            case FIELD_CREATED_AT -> "created_at";
+            case FIELD_UPDATED_AT -> "updated_at";
+            case FIELD_DUE_DATE -> "due_date";
             case "completedAt" -> "completed_at";
             case "assignedTo" -> "assigned_to";
             case "estimatedHours" -> "estimated_hours";
@@ -157,7 +160,7 @@ public class TaskService {
         Task task = findTaskOrThrow(taskId);
 
         // EMPLOYEE can only view their own assigned tasks
-        if ("EMPLOYEE".equals(currentRole)) {
+        if (ROLE_EMPLOYEE.equals(currentRole)) {
             Employee employee = employeeRepository.findByUserIdAndIsDeletedFalse(currentUserId)
                     .orElseThrow(() -> new TaskAccessDeniedException("Employee record not found"));
             if (!task.getAssignedTo().equals(employee.getId())) {
@@ -248,7 +251,7 @@ public class TaskService {
         Task task = findTaskOrThrow(taskId);
 
         // EMPLOYEE can only update status of their own tasks
-        if ("EMPLOYEE".equals(currentRole)) {
+        if (ROLE_EMPLOYEE.equals(currentRole)) {
             Employee employee = employeeRepository.findByUserIdAndIsDeletedFalse(currentUserId)
                     .orElseThrow(() -> new TaskAccessDeniedException("Employee record not found"));
             if (!task.getAssignedTo().equals(employee.getId())) {
@@ -278,7 +281,7 @@ public class TaskService {
         }
 
         // Employees cannot cancel tasks
-        if ("EMPLOYEE".equals(currentRole) && newStatus == TaskStatus.CANCELLED) {
+        if (ROLE_EMPLOYEE.equals(currentRole) && newStatus == TaskStatus.CANCELLED) {
             throw new TaskAccessDeniedException("Employees are not allowed to cancel tasks");
         }
 
@@ -402,14 +405,14 @@ public class TaskService {
                 .orElseThrow(() -> new BusinessException("Employee record not found for current user"));
 
         // Map frontend camelCase field names to entity field names (Spring Data JPA uses entity fields)
-        String entityField = switch (sortBy != null ? sortBy : "dueDate") {
-            case "dueDate" -> "dueDate";
-            case "createdAt" -> "createdAt";
-            case "updatedAt" -> "updatedAt";
+        String entityField = switch (sortBy != null ? sortBy : FIELD_DUE_DATE) {
+            case FIELD_DUE_DATE -> FIELD_DUE_DATE;
+            case FIELD_CREATED_AT -> FIELD_CREATED_AT;
+            case FIELD_UPDATED_AT -> FIELD_UPDATED_AT;
             case "status" -> "status";
             case "priority" -> "priority";
             case "title" -> "title";
-            default -> "dueDate";
+            default -> FIELD_DUE_DATE;
         };
 
         Sort sort = Sort.by(
@@ -436,7 +439,7 @@ public class TaskService {
 
     @Transactional(readOnly = true)
     public PageResponse<TaskListResponse> getOverdueTasks(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "dueDate"));
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, FIELD_DUE_DATE));
         Page<Task> taskPage = taskRepository.findOverdueTasksPaged(LocalDateTime.now(), pageable);
 
         return PageResponse.<TaskListResponse>builder()
@@ -487,12 +490,10 @@ public class TaskService {
             task.setSubmittedAt(now);
 
             // Only set once — immutable after first flag
-            if (!Boolean.TRUE.equals(task.getIsLate()) && task.getDueDate() != null) {
-                if (now.isAfter(task.getDueDate())) {
-                    task.setIsLate(true);
-                    long minutes = ChronoUnit.MINUTES.between(task.getDueDate(), now);
-                    task.setLateByMinutes((int) minutes);
-                }
+            if (!Boolean.TRUE.equals(task.getIsLate()) && task.getDueDate() != null && now.isAfter(task.getDueDate())) {
+                task.setIsLate(true);
+                long minutes = ChronoUnit.MINUTES.between(task.getDueDate(), now);
+                task.setLateByMinutes((int) minutes);
             }
         }
     }

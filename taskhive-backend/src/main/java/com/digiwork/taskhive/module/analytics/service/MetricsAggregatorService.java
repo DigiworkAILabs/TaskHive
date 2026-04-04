@@ -32,7 +32,6 @@ public class MetricsAggregatorService {
         // ─── Calculate and upsert daily metrics ──────────────────────────────────
 
         @Transactional(propagation = Propagation.REQUIRES_NEW)
-        @SuppressWarnings("unchecked")
         public DailyMetrics calculateDailyMetrics(LocalDate date) {
                 log.info("Calculating daily metrics for date={}", date);
 
@@ -41,26 +40,26 @@ public class MetricsAggregatorService {
 
                 // Total non-deleted tasks
                 String totalSql = "SELECT COUNT(*) FROM tasks WHERE is_deleted = false";
-                int totalTasks = ((Number) entityManager.createNativeQuery(totalSql)
-                                .getSingleResult()).intValue();
+                long totalTasks = ((Number) entityManager.createNativeQuery(totalSql)
+                                .getSingleResult()).longValue();
 
-                // Active tasks (TODO, IN_PROGRESS, IN_REVIEW)
+                // Active tasks (To-Do, IN_PROGRESS, IN_REVIEW, PENDING_APPROVAL)
                 String activeSql = "SELECT COUNT(*) FROM tasks WHERE is_deleted = false " +
-                                "AND status IN ('TODO', 'IN_PROGRESS', 'IN_REVIEW')";
-                int activeTasks = ((Number) entityManager.createNativeQuery(activeSql)
-                                .getSingleResult()).intValue();
+                                "AND status IN ('TODO', 'IN_PROGRESS', 'IN_REVIEW', 'PENDING_APPROVAL')";
+                long activeTasks = ((Number) entityManager.createNativeQuery(activeSql)
+                                .getSingleResult()).longValue();
 
                 // Overdue tasks
                 String overdueSql = "SELECT COUNT(*) FROM tasks WHERE is_deleted = false " +
                                 "AND due_date < :now AND status NOT IN ('DONE', 'CANCELLED')";
-                int overdueTasks = ((Number) entityManager.createNativeQuery(overdueSql)
+                long overdueTasks = ((Number) entityManager.createNativeQuery(overdueSql)
                                 .setParameter("now", LocalDateTime.now())
-                                .getSingleResult()).intValue();
+                                .getSingleResult()).longValue();
 
                 // Completed tasks
                 String completedSql = "SELECT COUNT(*) FROM tasks WHERE is_deleted = false AND status = 'DONE'";
-                int completedTasks = ((Number) entityManager.createNativeQuery(completedSql)
-                                .getSingleResult()).intValue();
+                long completedTasks = ((Number) entityManager.createNativeQuery(completedSql)
+                                .getSingleResult()).longValue();
 
                 // Completion rate
                 BigDecimal completionRate = totalTasks > 0
@@ -86,17 +85,7 @@ public class MetricsAggregatorService {
                 int totalEmployees = ((Number) entityManager.createNativeQuery(empSql)
                                 .getSingleResult()).intValue();
 
-                // Upsert into daily_metrics
-                dailyMetricsRepository.upsertDailyMetrics(
-                                date, totalTasks, activeTasks, overdueTasks, completedTasks,
-                                completionRate, avgCompletionHours, totalEmployees);
-
-                log.info("Daily metrics upserted: date={}, total={}, active={}, overdue={}, completed={}, " +
-                                "rate={}%, avgHours={}, employees={}",
-                                date, totalTasks, activeTasks, overdueTasks, completedTasks,
-                                completionRate, avgCompletionHours, totalEmployees);
-
-                return DailyMetrics.builder()
+                DailyMetrics metrics = DailyMetrics.builder()
                                 .metricDate(date)
                                 .totalTasks(totalTasks)
                                 .activeTasks(activeTasks)
@@ -106,6 +95,16 @@ public class MetricsAggregatorService {
                                 .avgCompletionHours(avgCompletionHours)
                                 .totalEmployees(totalEmployees)
                                 .build();
+
+                // Upsert into daily_metrics
+                dailyMetricsRepository.upsertDailyMetrics(metrics);
+
+                log.info("Daily metrics upserted: date={}, total={}, active={}, overdue={}, completed={}, " +
+                                "rate={}%, avgHours={}, employees={}",
+                                date, totalTasks, activeTasks, overdueTasks, completedTasks,
+                                completionRate, avgCompletionHours, totalEmployees);
+
+                return metrics;
         }
 
         // ─── Calculate and upsert employee performance ───────────────────────────
