@@ -7,7 +7,6 @@ import com.digiwork.taskhive.module.task.model.Task;
 import com.digiwork.taskhive.module.task.model.TaskComment;
 import com.digiwork.taskhive.module.task.model.TaskAttachment;
 import com.digiwork.taskhive.module.task.model.TaskStatusHistory;
-import com.digiwork.taskhive.common.storage.StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -18,9 +17,11 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TaskMapper {
 
+    @org.springframework.beans.factory.annotation.Value("${app.backend.url:http://localhost:8080}")
+    private String backendUrl;
+
     private final EmployeeRepository employeeRepository;
     private final UserRepository userRepository;
-    private final StorageService storageService;
 
     public TaskResponse toTaskResponse(Task task) {
         return TaskResponse.builder()
@@ -80,7 +81,7 @@ public class TaskMapper {
                 .uploadedBy(attachment.getUploadedBy().toString())
                 .uploaderName(resolveUserName(attachment.getUploadedBy()))
                 .fileName(attachment.getFileName())
-                .fileUrl(storageService.getUrl(attachment.getFileUrl()))
+                .fileUrl(backendUrl + "/api/v1/tasks/" + attachment.getTaskId() + "/attachments/" + attachment.getId() + "/download")
                 .fileSize(attachment.getFileSize())
                 .mimeType(attachment.getMimeType())
                 .attachmentPurpose(                                    // P1.1 fix

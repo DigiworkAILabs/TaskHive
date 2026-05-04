@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -21,6 +22,7 @@ public class TaskCommentController {
     private final TaskCommentService commentService;
 
     @PostMapping
+    @PreAuthorize("@taskSecurity.canAccessTask(#taskId)")
     public ResponseEntity<ApiResponse<TaskCommentResponse>> addComment(
             @PathVariable UUID taskId,
             @Valid @RequestBody TaskCommentRequest request) {
@@ -30,6 +32,7 @@ public class TaskCommentController {
     }
 
     @GetMapping
+    @PreAuthorize("@taskSecurity.canAccessTask(#taskId)")
     public ResponseEntity<ApiResponse<PageResponse<TaskCommentResponse>>> getComments(
             @PathVariable UUID taskId,
             @RequestParam(defaultValue = "0") int page,

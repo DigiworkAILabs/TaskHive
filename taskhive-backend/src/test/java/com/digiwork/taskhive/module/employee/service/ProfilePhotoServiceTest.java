@@ -64,19 +64,23 @@ class ProfilePhotoServiceTest {
             MultipartFile file = mock(MultipartFile.class);
             when(file.isEmpty()).thenReturn(false);
             when(file.getSize()).thenReturn(1024L);
-            when(file.getContentType()).thenReturn("image/jpeg");
 
             when(employeeRepository.findByIdAndIsDeletedFalse(employeeId))
                     .thenReturn(Optional.of(testEmployee));
-            when(storageService.store(file, "employees/photos", employeeId.toString()))
+            when(storageService.store(eq(file), eq("employees/photos"), eq(employeeId.toString()), anyString()))
                     .thenReturn("employees/photos/" + employeeId);
             when(storageService.getUrl("employees/photos/" + employeeId))
                     .thenReturn("http://localhost/photos/" + employeeId);
 
-            String url = profilePhotoService.uploadPhoto(employeeId, file);
+            try (org.mockito.MockedStatic<com.digiwork.taskhive.common.util.FileValidationUtil> utilities = org.mockito.Mockito.mockStatic(com.digiwork.taskhive.common.util.FileValidationUtil.class)) {
+                utilities.when(() -> com.digiwork.taskhive.common.util.FileValidationUtil.validateContentType(any(), anyList())).thenAnswer(i -> null);
+                utilities.when(() -> com.digiwork.taskhive.common.util.FileValidationUtil.getSafeExtension(any(), anyList())).thenReturn("jpg");
 
-            assertThat(url).isEqualTo("http://localhost/photos/" + employeeId);
-            verify(employeeRepository).save(testEmployee);
+                String url = profilePhotoService.uploadPhoto(employeeId, file);
+
+                assertThat(url).isEqualTo("http://localhost/photos/" + employeeId);
+                verify(employeeRepository).save(testEmployee);
+            }
         }
 
         @Test
@@ -86,17 +90,21 @@ class ProfilePhotoServiceTest {
             MultipartFile file = mock(MultipartFile.class);
             when(file.isEmpty()).thenReturn(false);
             when(file.getSize()).thenReturn(1024L);
-            when(file.getContentType()).thenReturn("image/png");
 
             when(employeeRepository.findByIdAndIsDeletedFalse(employeeId))
                     .thenReturn(Optional.of(testEmployee));
-            when(storageService.store(file, "employees/photos", employeeId.toString()))
+            when(storageService.store(eq(file), eq("employees/photos"), eq(employeeId.toString()), anyString()))
                     .thenReturn("employees/photos/" + employeeId);
             when(storageService.getUrl(any())).thenReturn("http://localhost/photo");
 
-            profilePhotoService.uploadPhoto(employeeId, file);
+            try (org.mockito.MockedStatic<com.digiwork.taskhive.common.util.FileValidationUtil> utilities = org.mockito.Mockito.mockStatic(com.digiwork.taskhive.common.util.FileValidationUtil.class)) {
+                utilities.when(() -> com.digiwork.taskhive.common.util.FileValidationUtil.validateContentType(any(), anyList())).thenAnswer(i -> null);
+                utilities.when(() -> com.digiwork.taskhive.common.util.FileValidationUtil.getSafeExtension(any(), anyList())).thenReturn("png");
 
-            verify(storageService).delete("employees/photos/oldphoto");
+                profilePhotoService.uploadPhoto(employeeId, file);
+
+                verify(storageService).delete("employees/photos/oldphoto");
+            }
         }
 
         @Test
@@ -105,13 +113,17 @@ class ProfilePhotoServiceTest {
             MultipartFile file = mock(MultipartFile.class);
             when(file.isEmpty()).thenReturn(false);
             when(file.getSize()).thenReturn(1024L);
-            when(file.getContentType()).thenReturn("image/jpeg");
 
             when(employeeRepository.findByIdAndIsDeletedFalse(employeeId))
                     .thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> profilePhotoService.uploadPhoto(employeeId, file))
-                    .isInstanceOf(EmployeeNotFoundException.class);
+            try (org.mockito.MockedStatic<com.digiwork.taskhive.common.util.FileValidationUtil> utilities = org.mockito.Mockito.mockStatic(com.digiwork.taskhive.common.util.FileValidationUtil.class)) {
+                utilities.when(() -> com.digiwork.taskhive.common.util.FileValidationUtil.validateContentType(any(), anyList())).thenAnswer(i -> null);
+                utilities.when(() -> com.digiwork.taskhive.common.util.FileValidationUtil.getSafeExtension(any(), anyList())).thenReturn("jpg");
+
+                assertThatThrownBy(() -> profilePhotoService.uploadPhoto(employeeId, file))
+                        .isInstanceOf(EmployeeNotFoundException.class);
+            }
         }
     }
 
@@ -160,11 +172,15 @@ class ProfilePhotoServiceTest {
             MultipartFile file = mock(MultipartFile.class);
             when(file.isEmpty()).thenReturn(false);
             when(file.getSize()).thenReturn(1024L);
-            when(file.getContentType()).thenReturn("application/pdf");
 
-            assertThatThrownBy(() -> profilePhotoService.uploadPhoto(employeeId, file))
-                    .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("JPG, PNG, and WebP");
+            try (org.mockito.MockedStatic<com.digiwork.taskhive.common.util.FileValidationUtil> utilities = org.mockito.Mockito.mockStatic(com.digiwork.taskhive.common.util.FileValidationUtil.class)) {
+                utilities.when(() -> com.digiwork.taskhive.common.util.FileValidationUtil.validateContentType(any(), anyList()))
+                        .thenThrow(new BusinessException("Only JPG, PNG, and WebP files are allowed"));
+
+                assertThatThrownBy(() -> profilePhotoService.uploadPhoto(employeeId, file))
+                        .isInstanceOf(BusinessException.class)
+                        .hasMessageContaining("JPG, PNG, and WebP");
+            }
         }
     }
 

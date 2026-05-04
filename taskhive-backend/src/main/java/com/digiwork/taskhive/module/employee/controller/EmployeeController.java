@@ -8,6 +8,8 @@ import com.digiwork.taskhive.module.employee.service.EmployeeService;
 import com.digiwork.taskhive.module.employee.service.ProfilePhotoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -125,5 +127,28 @@ public class EmployeeController {
     public ResponseEntity<ApiResponse<String>> getPhoto(@PathVariable UUID id) {
         String photoUrl = profilePhotoService.getPhotoUrl(id);
         return ResponseEntity.ok(ApiResponse.success("Photo URL retrieved", photoUrl));
+    }
+
+    // ─── GET /api/v1/employees/{id}/photo/download ────────────────────────────
+    @GetMapping("/{id}/photo/download")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Resource> downloadPhoto(@PathVariable UUID id) {
+        Resource file = profilePhotoService.loadPhotoAsResource(id);
+        
+        // Profile photos are typically images. 
+        // A generic extension-based check or default image/jpeg is fine.
+        String filename = file.getFilename() != null ? file.getFilename() : "photo.jpg";
+        String mimeType = MediaType.IMAGE_JPEG_VALUE;
+        if (filename.toLowerCase().endsWith(".png")) {
+            mimeType = MediaType.IMAGE_PNG_VALUE;
+        } else if (filename.toLowerCase().endsWith(".webp")) {
+            mimeType = "image/webp";
+        }
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+                .header("X-Content-Type-Options", "nosniff")
+                .contentType(MediaType.parseMediaType(mimeType))
+                .body(file);
     }
 }

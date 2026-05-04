@@ -78,7 +78,7 @@ public class AuthService {
         String primaryRole = roles.isEmpty() ? "EMPLOYEE" : roles.get(0);
 
         // Generate tokens
-        String accessToken = tokenService.generateAccessToken(user.getId(), user.getEmail(), primaryRole);
+        String accessToken = tokenService.generateAccessToken(user.getId(), user.getEmail(), primaryRole, user.getTokenVersion());
         String refreshToken = tokenService.generateRefreshToken(user.getId());
 
         // Set cookies
@@ -127,7 +127,7 @@ public class AuthService {
         String primaryRole = roles.isEmpty() ? "EMPLOYEE" : roles.get(0);
 
         // Generate new access token
-        String newAccessToken = tokenService.generateAccessToken(user.getId(), user.getEmail(), primaryRole);
+        String newAccessToken = tokenService.generateAccessToken(user.getId(), user.getEmail(), primaryRole, user.getTokenVersion());
 
         // Set new access token cookie
         cookieUtil.addAccessTokenCookie(response, newAccessToken);
@@ -161,6 +161,8 @@ public class AuthService {
 
         // Update password
         user.setPasswordHash(passwordService.encode(request.getNewPassword()));
+        // Increment token version to invalidate existing access tokens
+        user.setTokenVersion(user.getTokenVersion() + 1);
         userRepository.save(user);
 
         // Revoke all refresh tokens

@@ -2,9 +2,12 @@ package com.digiwork.taskhive.common.storage;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -22,8 +25,8 @@ public class LocalStorageService implements StorageService {
     private String baseUrl;
 
     @Override
-    public String store(MultipartFile file, String directory, String filename) throws IOException {
-        String extension = getExtension(file.getOriginalFilename());
+    public String store(MultipartFile file, String directory, String filename, String safeExtension) throws IOException {
+        String extension = (safeExtension != null && !safeExtension.isBlank()) ? safeExtension : "bin";
         String fullFilename = filename + "." + extension;
 
         Path dirPath = Paths.get(uploadDir, directory);
@@ -55,10 +58,22 @@ public class LocalStorageService implements StorageService {
         return baseUrl + "/" + filePath;
     }
 
-    private String getExtension(String filename) {
-        if (filename == null)
-            return "jpg";
-        int lastDot = filename.lastIndexOf('.');
-        return lastDot > 0 ? filename.substring(lastDot + 1).toLowerCase() : "jpg";
+    @Override
+    public Resource loadAsResource(String filePath) throws IOException {
+        if (filePath == null) {
+            throw new FileNotFoundException("File path is null");
+        }
+        try {
+            Path file = Paths.get(uploadDir).resolve(filePath).normalize();
+            Resource resource = new UrlResource(file.toUri());
+
+            if (resource.exists() || resource.isReadable()) {
+                return resource;
+            } else {
+                throw new FileNotFoundException("Could not read file: " + filePath);
+            }
+        } catch (Exception e) {
+            throw new FileNotFoundException("Could not read file: " + filePath);
+        }
     }
 }

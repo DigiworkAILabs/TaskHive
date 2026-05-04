@@ -13,6 +13,12 @@ import com.digiwork.taskhive.module.auth.model.User;
 import com.digiwork.taskhive.module.auth.repository.PasswordResetTokenRepository;
 import com.digiwork.taskhive.module.auth.repository.UserRepository;
 import com.digiwork.taskhive.common.exception.ResourceNotFoundException;
+import com.digiwork.taskhive.common.exception.RateLimitExceededException;
+import com.digiwork.taskhive.common.service.RateLimitingService;
+import io.github.bucket4j.Bucket;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,6 +40,7 @@ public class PasswordResetService {
     private final PasswordService passwordService;
     private final TokenService tokenService;
     private final ApplicationEventPublisher eventPublisher;
+    private final RateLimitingService rateLimitingService;
 
     @Value("${app.auth.reset-token-expiry}")
     private long resetTokenExpiryMs;
@@ -44,6 +51,22 @@ public class PasswordResetService {
      */
     @Transactional
     public void forgotPassword(ForgotPasswordRequest request) {
+        String clientIp = getClientIp();
+        
+        // Target limit based on IP
+        Bucket ipBucket = rateLimitingService.resolveBucket("forgot-pwd-ip:" + clientIp);
+        if (!ipBucket.tryConsume(1)) {
+            log.warn("Rate limit exceeded for IP: {}", clientIp);
+            throw new RateLimitExceededException("Too many password reset requests. Please try again later.");
+        }
+
+        // Target limit based on Target Email
+        Bucket emailBucket = rateLimitingService.resolveBucket("forgot-pwd-email:" + request.getEmail());
+        if (!emailBucket.tryConsume(1)) {
+            log.warn("Rate limit exceeded for Email: {}", request.getEmail());
+            throw new RateLimitExceededException("Too many password reset requests. Please try again later.");
+        }
+
         Optional<User> userOpt = userRepository.findByEmailAndIsDeletedFalse(request.getEmail());
 
         if (userOpt.isEmpty()) {
@@ -113,5 +136,18 @@ public class PasswordResetService {
         eventPublisher.publishEvent(new PasswordChangedEvent(this, user.getId(), user.getEmail()));
 
         log.info("Password reset for user: {}", user.getEmail());
+    }
+
+    private String getClientIp() {
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attributes != null) {
+            HttpServletRequest request = attributes.getRequest();
+            String xrf = request.getHeader("X-Forwarded-For");
+            if (xrf != null && !xrf.isEmpty()) {
+                return xrf.split(",")[0].trim();
+            }
+            return request.getRemoteAddr();
+        }
+        return "UNKNOWN";
     }
 }

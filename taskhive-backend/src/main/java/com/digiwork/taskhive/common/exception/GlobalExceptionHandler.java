@@ -154,6 +154,13 @@ public class GlobalExceptionHandler {
                                 .body(ErrorResponse.of(ex.getMessage(), request.getRequestURI()));
         }
 
+        @ExceptionHandler(RateLimitExceededException.class)
+        public ResponseEntity<ErrorResponse> handleRateLimitExceeded(RateLimitExceededException ex,
+                        HttpServletRequest request) {
+                return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                                .body(ErrorResponse.of(ex.getMessage(), request.getRequestURI()));
+        }
+
         @ExceptionHandler(Exception.class)
         public ResponseEntity<ErrorResponse> handleGeneral(Exception ex, HttpServletRequest request) {
                 log.error("Unexpected error: ", ex);

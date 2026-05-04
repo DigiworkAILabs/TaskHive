@@ -11,3 +11,8 @@ env/
 __pycache__/
 *.py[cod]
 .env
+
+# Test and build artifacts
+taskhive-backend/*.txt
+taskhive-backend/test_output*
+taskhive-backend/compile_output.txt

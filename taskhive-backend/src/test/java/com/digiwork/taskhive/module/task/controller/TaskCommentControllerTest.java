@@ -7,6 +7,7 @@ import com.digiwork.taskhive.module.task.dto.TaskCommentRequest;
 import com.digiwork.taskhive.module.task.dto.TaskCommentResponse;
 import com.digiwork.taskhive.module.task.service.TaskCommentService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -57,6 +58,11 @@ class TaskCommentControllerTest {
                                                         new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)));
                         return http.build();
                 }
+
+                @Bean(name = "taskSecurity")
+                public com.digiwork.taskhive.module.task.security.TaskSecurity taskSecurityMock() {
+                        return org.mockito.Mockito.mock(com.digiwork.taskhive.module.task.security.TaskSecurity.class);
+                }
         }
 
         @Autowired
@@ -70,6 +76,14 @@ class TaskCommentControllerTest {
 
         @MockitoBean
         private com.digiwork.taskhive.module.audit.service.AuditService auditService;
+
+        @Autowired
+        private com.digiwork.taskhive.module.task.security.TaskSecurity taskSecurity;
+
+        @BeforeEach
+        void setUp() {
+                when(taskSecurity.canAccessTask(any())).thenReturn(true);
+        }
 
         // ── Auth helpers ──────────────────────────────────────────────────────────
 

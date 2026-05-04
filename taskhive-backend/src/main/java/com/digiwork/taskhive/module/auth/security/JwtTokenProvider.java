@@ -23,7 +23,7 @@ public class JwtTokenProvider {
                 java.util.Base64.getEncoder().encodeToString(jwtConfig.getSecret().getBytes())));
     }
 
-    public String generateAccessToken(UUID userId, String email, String role) {
+    public String generateAccessToken(UUID userId, String email, String role, Long tokenVersion) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtConfig.getAccessTokenExpiry());
 
@@ -31,6 +31,7 @@ public class JwtTokenProvider {
                 .subject(userId.toString())
                 .claim("email", email)
                 .claim("role", role)
+                .claim("tokenVersion", tokenVersion)
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(secretKey)
@@ -50,6 +51,11 @@ public class JwtTokenProvider {
     public String getRoleFromToken(String token) {
         Claims claims = parseClaims(token);
         return claims.get("role", String.class);
+    }
+
+    public Long getTokenVersionFromToken(String token) {
+        Claims claims = parseClaims(token);
+        return claims.get("tokenVersion", Long.class);
     }
 
     public boolean validateToken(String token) {

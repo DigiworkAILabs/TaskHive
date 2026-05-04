@@ -118,7 +118,7 @@ class AuthServiceTest {
                     .thenReturn(Optional.of(testUser));
             when(passwordService.matches("password123", "encodedPassword")).thenReturn(true);
             when(userRoleRepository.findRoleNamesByUserId(testUserId)).thenReturn(List.of("EMPLOYEE"));
-            when(tokenService.generateAccessToken(testUserId, "test@example.com", "EMPLOYEE"))
+            when(tokenService.generateAccessToken(testUserId, "test@example.com", "EMPLOYEE", 0L))
                     .thenReturn("accessToken");
             when(tokenService.generateRefreshToken(testUserId)).thenReturn("refreshToken");
             when(userMapper.toUserInfoResponse(testUser, List.of("EMPLOYEE"))).thenReturn(userInfo);
@@ -264,7 +264,7 @@ class AuthServiceTest {
             when(tokenService.validateRefreshToken("rawToken")).thenReturn(refreshToken);
             when(userRepository.findByIdAndIsDeletedFalse(testUserId)).thenReturn(Optional.of(testUser));
             when(userRoleRepository.findRoleNamesByUserId(testUserId)).thenReturn(List.of("EMPLOYEE"));
-            when(tokenService.generateAccessToken(testUserId, "test@example.com", "EMPLOYEE"))
+            when(tokenService.generateAccessToken(testUserId, "test@example.com", "EMPLOYEE", 0L))
                     .thenReturn("newAccessToken");
 
             authService.refresh("rawToken", response);

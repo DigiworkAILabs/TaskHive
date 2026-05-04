@@ -8,7 +8,10 @@ import com.digiwork.taskhive.module.task.service.TaskStatusHistoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,6 +27,7 @@ public class TaskAttachmentController {
     private final TaskStatusHistoryService statusHistoryService;
 
     @PostMapping(value = "/attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("@taskSecurity.canAccessTask(#taskId)")
     public ResponseEntity<ApiResponse<TaskAttachmentResponse>> uploadAttachment(
             @PathVariable UUID taskId,
             @RequestParam("file") MultipartFile file,
@@ -34,13 +38,38 @@ public class TaskAttachmentController {
     }
 
     @GetMapping("/attachments")
+    @PreAuthorize("@taskSecurity.canAccessTask(#taskId)")
     public ResponseEntity<ApiResponse<List<TaskAttachmentResponse>>> getAttachments(
             @PathVariable UUID taskId) {
         List<TaskAttachmentResponse> attachments = attachmentService.getAttachments(taskId);
         return ResponseEntity.ok(ApiResponse.success("Attachments retrieved successfully", attachments));
     }
 
+    @GetMapping("/attachments/{attachmentId}/download")
+    @PreAuthorize("@taskSecurity.canAccessTask(#taskId)")
+    public ResponseEntity<Resource> downloadAttachment(
+            @PathVariable UUID taskId,
+            @PathVariable UUID attachmentId) {
+        Resource file = attachmentService.downloadAttachment(taskId, attachmentId);
+        
+        // Retrieve metadata for headers
+        TaskAttachmentResponse metadata = attachmentService.getAttachments(taskId).stream()
+                .filter(a -> a.getId().equals(attachmentId.toString()))
+                .findFirst()
+                .orElse(null);
+
+        String filename = (metadata != null) ? metadata.getFileName() : "attachment.bin";
+        String mimeType = (metadata != null && metadata.getMimeType() != null) ? metadata.getMimeType() : MediaType.APPLICATION_OCTET_STREAM_VALUE;
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+                .header("X-Content-Type-Options", "nosniff")
+                .contentType(MediaType.parseMediaType(mimeType))
+                .body(file);
+    }
+
     @GetMapping("/history")
+    @PreAuthorize("@taskSecurity.canAccessTask(#taskId)")
     public ResponseEntity<ApiResponse<List<TaskStatusHistoryResponse>>> getStatusHistory(
             @PathVariable UUID taskId) {
         List<TaskStatusHistoryResponse> history = statusHistoryService.getHistory(taskId);

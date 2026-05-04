@@ -28,8 +28,8 @@ public class TokenService {
     private final JwtConfig jwtConfig;
     private final RefreshTokenRepository refreshTokenRepository;
 
-    public String generateAccessToken(UUID userId, String email, String role) {
-        return jwtTokenProvider.generateAccessToken(userId, email, role);
+    public String generateAccessToken(UUID userId, String email, String role, Long tokenVersion) {
+        return jwtTokenProvider.generateAccessToken(userId, email, role, tokenVersion);
     }
 
     public boolean validateAccessToken(String token) {

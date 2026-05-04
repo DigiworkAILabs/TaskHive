@@ -26,9 +26,11 @@ public class SecurityConfig {
 
         private final JwtAuthenticationFilter jwtAuthenticationFilter;
         private final CorsConfigurationSource corsConfigurationSource;
+        private final com.digiwork.taskhive.module.auth.security.CsrfCookieFilter csrfCookieFilter;
 
         private static final String[] PUBLIC_ENDPOINTS = {
                         "/api/v1/auth/login",
+                        "/api/v1/auth/logout",
                         "/api/v1/auth/activate-account",
                         "/api/v1/auth/forgot-password",
                         "/api/v1/auth/reset-password",
@@ -36,17 +38,28 @@ public class SecurityConfig {
                         "/swagger-ui/**",
                         "/v3/api-docs/**",
                         "/swagger-ui.html",
-                        "/ws/**",
-                        // Monitoring (NFR-OPS-05, NFR-OPS-06)
-                        "/actuator/health/**",
-                        "/actuator/prometheus"
+                        "/ws/**"
+        };
+
+        // Kubernetes liveness/readiness probes must remain unauthenticated
+        private static final String[] ACTUATOR_PROBE_ENDPOINTS = {
+                        "/actuator/health/liveness",
+                        "/actuator/health/readiness"
         };
 
         @Bean
         public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+                org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler requestHandler = new org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler();
+                requestHandler.setCsrfRequestAttributeName("_csrf");
+
                 http
                                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
-                                .csrf(AbstractHttpConfigurer::disable)
+                                .csrf(csrf -> csrf
+                                                .csrfTokenRepository(org.springframework.security.web.csrf.CookieCsrfTokenRepository.withHttpOnlyFalse())
+                                                .csrfTokenRequestHandler(requestHandler)
+                                                .ignoringRequestMatchers(PUBLIC_ENDPOINTS)
+                                                .ignoringRequestMatchers(ACTUATOR_PROBE_ENDPOINTS)
+                                )
 
                                 // ── Security Headers (NFR-SEC-14) ────────────────────────────────
                                 .headers(headers -> headers
@@ -81,7 +94,10 @@ public class SecurityConfig {
                                                 .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                                 .authorizeHttpRequests(auth -> auth
                                                 .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+                                                .requestMatchers(ACTUATOR_PROBE_ENDPOINTS).permitAll()
+                                                .requestMatchers("/actuator/**").hasRole("ADMIN")
                                                 .anyRequest().authenticated())
+                                .addFilterAfter(csrfCookieFilter, org.springframework.security.web.authentication.www.BasicAuthenticationFilter.class)
                                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
                 return http.build();

@@ -56,13 +56,13 @@ class TokenServiceTest {
         @Test
         @DisplayName("should generate an access token by delegating to JwtTokenProvider")
         void shouldGenerateAccessToken() {
-            when(jwtTokenProvider.generateAccessToken(testUserId, "user@test.com", "ADMIN"))
+            when(jwtTokenProvider.generateAccessToken(testUserId, "user@test.com", "ADMIN", 0L))
                     .thenReturn("jwt-token");
 
-            String token = tokenService.generateAccessToken(testUserId, "user@test.com", "ADMIN");
+            String token = tokenService.generateAccessToken(testUserId, "user@test.com", "ADMIN", 0L);
 
             assertThat(token).isEqualTo("jwt-token");
-            verify(jwtTokenProvider).generateAccessToken(testUserId, "user@test.com", "ADMIN");
+            verify(jwtTokenProvider).generateAccessToken(testUserId, "user@test.com", "ADMIN", 0L);
         }
 
         @Test
