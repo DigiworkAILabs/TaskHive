@@ -36,6 +36,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String email = jwtTokenProvider.getEmailFromToken(token);
                 UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
+                if (!userDetails.isEnabled() || !userDetails.isAccountNonLocked()) {
+                    log.warn("Blocked ghost session for user: {} (enabled={}, nonLocked={})",
+                            email, userDetails.isEnabled(), userDetails.isAccountNonLocked());
+                    SecurityContextHolder.clearContext();
+                    filterChain.doFilter(request, response);
+                    return;
+                }
+
+                if (userDetails instanceof CustomUserDetails customUserDetails) {
+                    Long tokenVersion = jwtTokenProvider.getTokenVersionFromToken(token);
+                    if (tokenVersion == null || !tokenVersion.equals(customUserDetails.getTokenVersion())) {
+                        log.warn("Invalid token version for user: {}. Token version: {}, DB version: {}",
+                                email, tokenVersion, customUserDetails.getTokenVersion());
+                        SecurityContextHolder.clearContext();
+                        filterChain.doFilter(request, response);
+                        return;
+                    }
+                }
+
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

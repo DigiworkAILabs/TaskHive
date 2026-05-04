@@ -116,6 +116,21 @@ class SecurityConfigTest {
         public ResponseEntity<String> healthCheck() {
             return ResponseEntity.ok("healthy");
         }
+
+        @GetMapping("/actuator/health/liveness")
+        public ResponseEntity<String> livenessProbe() {
+            return ResponseEntity.ok("live");
+        }
+
+        @GetMapping("/actuator/health/readiness")
+        public ResponseEntity<String> readinessProbe() {
+            return ResponseEntity.ok("ready");
+        }
+
+        @GetMapping("/actuator/prometheus")
+        public ResponseEntity<String> prometheus() {
+            return ResponseEntity.ok("metrics");
+        }
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -165,10 +180,75 @@ class SecurityConfigTest {
         }
 
         @Test
-        @DisplayName("Actuator health endpoint is accessible without authentication")
-        void actuatorHealthIsPublic() throws Exception {
+        @DisplayName("K8s liveness probe is accessible without authentication")
+        void actuatorLivenessProbeIsPublic() throws Exception {
+            clearAuth();
+            mockMvc.perform(get("/actuator/health/liveness"))
+                    .andExpect(status().isOk());
+        }
+
+        @Test
+        @DisplayName("K8s readiness probe is accessible without authentication")
+        void actuatorReadinessProbeIsPublic() throws Exception {
+            clearAuth();
+            mockMvc.perform(get("/actuator/health/readiness"))
+                    .andExpect(status().isOk());
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Actuator Endpoints (ADMIN only)
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    @Nested
+    @DisplayName("Actuator Endpoints – ADMIN restricted")
+    class ActuatorEndpoints {
+
+        @Test
+        @DisplayName("GET /actuator/health without auth → 401 UNAUTHORIZED")
+        void actuatorHealthBlockedWithoutAuth() throws Exception {
             clearAuth();
             mockMvc.perform(get("/actuator/health"))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        @DisplayName("GET /actuator/prometheus without auth → 401 UNAUTHORIZED")
+        void actuatorPrometheusBlockedWithoutAuth() throws Exception {
+            clearAuth();
+            mockMvc.perform(get("/actuator/prometheus"))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        @DisplayName("GET /actuator/health as EMPLOYEE → 403 FORBIDDEN")
+        void actuatorHealthBlockedForEmployee() throws Exception {
+            authenticateAs("EMPLOYEE");
+            mockMvc.perform(get("/actuator/health"))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("GET /actuator/prometheus as EMPLOYEE → 403 FORBIDDEN")
+        void actuatorPrometheusBlockedForEmployee() throws Exception {
+            authenticateAs("EMPLOYEE");
+            mockMvc.perform(get("/actuator/prometheus"))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("GET /actuator/health as ADMIN → 200 OK")
+        void actuatorHealthAccessibleForAdmin() throws Exception {
+            authenticateAs("ADMIN");
+            mockMvc.perform(get("/actuator/health"))
+                    .andExpect(status().isOk());
+        }
+
+        @Test
+        @DisplayName("GET /actuator/prometheus as ADMIN → 200 OK")
+        void actuatorPrometheusAccessibleForAdmin() throws Exception {
+            authenticateAs("ADMIN");
+            mockMvc.perform(get("/actuator/prometheus"))
                     .andExpect(status().isOk());
         }
     }

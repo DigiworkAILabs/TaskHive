@@ -132,6 +132,12 @@ public class ComplianceReportService {
         if (value == null)
             return "";
         String str = value.toString();
+        
+        // Prevent CSV Formula Injection
+        if (str.startsWith("=") || str.startsWith("+") || str.startsWith("-") || str.startsWith("@")) {
+            str = "'" + str;
+        }
+        
         if (str.contains(",") || str.contains("\"") || str.contains("\n")) {
             return "\"" + str.replace("\"", "\"\"") + "\"";
         }

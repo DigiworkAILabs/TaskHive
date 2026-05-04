@@ -99,7 +99,6 @@ class TaskAttachmentServiceTest {
                         MultipartFile file = mock(MultipartFile.class);
                         when(file.isEmpty()).thenReturn(false);
                         when(file.getSize()).thenReturn(1024L);
-                        when(file.getContentType()).thenReturn("application/pdf");
                         when(file.getOriginalFilename()).thenReturn("doc.pdf");
 
                         TaskAttachment saved = TaskAttachment.builder().id(UUID.randomUUID()).taskId(taskId).build();
@@ -107,14 +106,20 @@ class TaskAttachmentServiceTest {
                                         .id(saved.getId().toString()).build();
 
                         when(taskRepository.findByIdAndIsDeletedFalse(taskId)).thenReturn(Optional.of(testTask));
-                        when(storageService.store(eq(file), eq("tasks/attachments"), anyString()))
+                        when(storageService.store(eq(file), eq("tasks/attachments"), anyString(), anyString()))
                                         .thenReturn("tasks/attachments/file");
                         when(attachmentRepository.save(any(TaskAttachment.class))).thenReturn(saved);
                         when(taskMapper.toTaskAttachmentResponse(saved)).thenReturn(expectedResponse);
 
-                        TaskAttachmentResponse result = taskAttachmentService.uploadAttachment(taskId, file, "GENERAL");
+                        try (org.mockito.MockedStatic<com.digiwork.taskhive.common.util.FileValidationUtil> utilities = org.mockito.Mockito.mockStatic(com.digiwork.taskhive.common.util.FileValidationUtil.class)) {
+                                utilities.when(() -> com.digiwork.taskhive.common.util.FileValidationUtil.validateContentType(any(), anyList())).thenAnswer(i -> null);
+                                utilities.when(() -> com.digiwork.taskhive.common.util.FileValidationUtil.getSafeExtension(any(), anyList())).thenReturn("pdf");
+                                utilities.when(() -> com.digiwork.taskhive.common.util.FileValidationUtil.detectMimeType(any())).thenReturn("application/pdf");
 
-                        assertThat(result).isEqualTo(expectedResponse);
+                                TaskAttachmentResponse result = taskAttachmentService.uploadAttachment(taskId, file, "GENERAL");
+
+                                assertThat(result).isEqualTo(expectedResponse);
+                        }
                 }
 
                 @Test
@@ -220,13 +225,17 @@ class TaskAttachmentServiceTest {
                         MultipartFile file = mock(MultipartFile.class);
                         when(file.isEmpty()).thenReturn(false);
                         when(file.getSize()).thenReturn(1024L);
-                        when(file.getContentType()).thenReturn("application/x-executable");
 
                         when(taskRepository.findByIdAndIsDeletedFalse(taskId)).thenReturn(Optional.of(testTask));
 
-                        assertThatThrownBy(() -> taskAttachmentService.uploadAttachment(taskId, file, "GENERAL"))
+                        try (org.mockito.MockedStatic<com.digiwork.taskhive.common.util.FileValidationUtil> utilities = org.mockito.Mockito.mockStatic(com.digiwork.taskhive.common.util.FileValidationUtil.class)) {
+                                utilities.when(() -> com.digiwork.taskhive.common.util.FileValidationUtil.validateContentType(any(), anyList()))
+                                        .thenThrow(new BusinessException("File type not allowed"));
+
+                                assertThatThrownBy(() -> taskAttachmentService.uploadAttachment(taskId, file, "GENERAL"))
                                         .isInstanceOf(BusinessException.class)
                                         .hasMessageContaining("File type not allowed");
+                        }
                 }
         }
 }

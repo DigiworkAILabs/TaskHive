@@ -9,6 +9,9 @@ import com.digiwork.taskhive.module.auth.model.User;
 import com.digiwork.taskhive.module.auth.repository.PasswordResetTokenRepository;
 import com.digiwork.taskhive.module.auth.repository.UserRepository;
 import com.digiwork.taskhive.common.exception.BusinessException;
+import com.digiwork.taskhive.common.service.RateLimitingService;
+import io.github.bucket4j.Bandwidth;
+import io.github.bucket4j.Bucket;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -43,6 +46,8 @@ class PasswordResetServiceTest {
     private TokenService tokenService;
     @Mock
     private ApplicationEventPublisher eventPublisher;
+    @Mock
+    private RateLimitingService rateLimitingService;
 
     @InjectMocks
     private PasswordResetService passwordResetService;
@@ -76,6 +81,11 @@ class PasswordResetServiceTest {
             ForgotPasswordRequest request = new ForgotPasswordRequest();
             request.setEmail("test@example.com");
 
+            Bucket mockBucket = Bucket.builder()
+                    .addLimit(Bandwidth.builder().capacity(10).refillGreedy(10, java.time.Duration.ofMinutes(1)).build())
+                    .build();
+            when(rateLimitingService.resolveBucket(anyString())).thenReturn(mockBucket);
+
             when(userRepository.findByEmailAndIsDeletedFalse("test@example.com"))
                     .thenReturn(Optional.of(testUser));
             when(tokenService.hashToken(anyString())).thenReturn("hashedToken");
@@ -91,6 +101,11 @@ class PasswordResetServiceTest {
         void shouldSilentlyReturn_whenEmailDoesNotExist() {
             ForgotPasswordRequest request = new ForgotPasswordRequest();
             request.setEmail("unknown@example.com");
+
+            Bucket mockBucket = Bucket.builder()
+                    .addLimit(Bandwidth.builder().capacity(10).refillGreedy(10, java.time.Duration.ofMinutes(1)).build())
+                    .build();
+            when(rateLimitingService.resolveBucket(anyString())).thenReturn(mockBucket);
 
             when(userRepository.findByEmailAndIsDeletedFalse("unknown@example.com"))
                     .thenReturn(Optional.empty());

@@ -53,6 +53,8 @@ class JwtAuthenticationFilterTest {
 
         UserDetails userDetails = mock(UserDetails.class);
         when(userDetails.getAuthorities()).thenReturn(java.util.List.of());
+        when(userDetails.isEnabled()).thenReturn(true);
+        when(userDetails.isAccountNonLocked()).thenReturn(true);
         when(userDetailsService.loadUserByUsername("user@test.com")).thenReturn(userDetails);
 
         // when
@@ -93,6 +95,43 @@ class JwtAuthenticationFilterTest {
     void shouldContinueFilterChain_evenWhenExceptionOccurs() throws Exception {
         when(cookieUtil.extractCookieValue(request, CookieConstants.ACCESS_TOKEN_COOKIE))
                 .thenThrow(new RuntimeException("Cookie parsing error"));
+
+        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
+
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        verify(filterChain).doFilter(request, response);
+    }
+
+    @Test
+    @DisplayName("should not set authentication when account is disabled")
+    void shouldNotSetAuthentication_whenAccountDisabled() throws Exception {
+        when(cookieUtil.extractCookieValue(request, CookieConstants.ACCESS_TOKEN_COOKIE))
+                .thenReturn("valid-jwt-token");
+        when(jwtTokenProvider.validateToken("valid-jwt-token")).thenReturn(true);
+        when(jwtTokenProvider.getEmailFromToken("valid-jwt-token")).thenReturn("user@test.com");
+
+        UserDetails userDetails = mock(UserDetails.class);
+        when(userDetails.isEnabled()).thenReturn(false);
+        when(userDetailsService.loadUserByUsername("user@test.com")).thenReturn(userDetails);
+
+        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
+
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        verify(filterChain).doFilter(request, response);
+    }
+
+    @Test
+    @DisplayName("should not set authentication when account is locked")
+    void shouldNotSetAuthentication_whenAccountLocked() throws Exception {
+        when(cookieUtil.extractCookieValue(request, CookieConstants.ACCESS_TOKEN_COOKIE))
+                .thenReturn("valid-jwt-token");
+        when(jwtTokenProvider.validateToken("valid-jwt-token")).thenReturn(true);
+        when(jwtTokenProvider.getEmailFromToken("valid-jwt-token")).thenReturn("user@test.com");
+
+        UserDetails userDetails = mock(UserDetails.class);
+        when(userDetails.isEnabled()).thenReturn(true);
+        when(userDetails.isAccountNonLocked()).thenReturn(false);
+        when(userDetailsService.loadUserByUsername("user@test.com")).thenReturn(userDetails);
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 

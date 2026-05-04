@@ -37,7 +37,7 @@ class LocalStorageServiceTest {
         MockMultipartFile file = new MockMultipartFile(
                 "file", "test.png", "image/png", "test content".getBytes());
         
-        String relativePath = storageService.store(file, "avatars", "user-1");
+        String relativePath = storageService.store(file, "avatars", "user-1", "png");
 
         assertThat(relativePath).isEqualTo("avatars/user-1.png");
         assertThat(Files.exists(tempDir.resolve("avatars/user-1.png"))).isTrue();
@@ -78,18 +78,18 @@ class LocalStorageServiceTest {
     }
 
     @Test
-    @DisplayName("should extract extension correctly")
-    void shouldExtractExtension() throws IOException {
+    @DisplayName("should handle extension appropriately")
+    void shouldHandleExtension() throws IOException {
         MockMultipartFile f1 = new MockMultipartFile("f", "image.PNG", "image/png", "c".getBytes());
-        String p1 = storageService.store(f1, "t", "n1");
+        String p1 = storageService.store(f1, "t", "n1", "png");
         assertThat(p1).endsWith(".png");
 
         MockMultipartFile f2 = new MockMultipartFile("f", "noextension", "image/jpeg", "c".getBytes());
-        String p2 = storageService.store(f2, "t", "n2");
-        assertThat(p2).endsWith(".jpg"); // Default extension
+        String p2 = storageService.store(f2, "t", "n2", null);
+        assertThat(p2).endsWith(".bin"); // Default extension
 
         MockMultipartFile f3 = new MockMultipartFile("f", null, "image/jpeg", "c".getBytes());
-        String p3 = storageService.store(f3, "t", "n3");
-        assertThat(p3).endsWith(".jpg"); // Handle null original filename
+        String p3 = storageService.store(f3, "t", "n3", "   ");
+        assertThat(p3).endsWith(".bin"); // Handle blank extension fallback
     }
 }

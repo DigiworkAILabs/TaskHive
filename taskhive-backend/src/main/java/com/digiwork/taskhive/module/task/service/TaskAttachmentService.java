@@ -14,6 +14,7 @@ import com.digiwork.taskhive.module.task.repository.TaskAttachmentRepository;
 import com.digiwork.taskhive.module.task.repository.TaskRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -78,6 +79,8 @@ public class TaskAttachmentService {
 
         // Validate file
         validateFile(file);
+        String safeExtension = com.digiwork.taskhive.common.util.FileValidationUtil.getSafeExtension(file, ALLOWED_CONTENT_TYPES);
+        String detectedMimeType = com.digiwork.taskhive.common.util.FileValidationUtil.detectMimeType(file);
 
         // Resolve purpose — default to GENERAL if not supplied or unrecognised
         AttachmentPurpose purpose;
@@ -92,7 +95,7 @@ public class TaskAttachmentService {
         try {
             // Store file
             String filename = UUID.randomUUID().toString();
-            String storedPath = storageService.store(file, ATTACHMENT_DIRECTORY, filename);
+            String storedPath = storageService.store(file, ATTACHMENT_DIRECTORY, filename, safeExtension);
 
             // Create attachment record — purpose is persisted here (P1.1 fix)
             TaskAttachment attachment = TaskAttachment.builder()
@@ -101,7 +104,7 @@ public class TaskAttachmentService {
                     .fileName(file.getOriginalFilename())
                     .fileUrl(storedPath)
                     .fileSize(file.getSize())
-                    .mimeType(file.getContentType())
+                    .mimeType(detectedMimeType)
                     .attachmentPurpose(purpose)   // ← was MISSING, causing proof check to always fail
                     .build();
 
@@ -140,6 +143,38 @@ public class TaskAttachmentService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public Resource downloadAttachment(UUID taskId, UUID attachmentId) {
+        UUID currentUserId = SecurityUtils.getCurrentUserId();
+        String currentRole = SecurityUtils.getCurrentUserRole();
+
+        Task task = taskRepository.findByIdAndIsDeletedFalse(taskId)
+                .orElseThrow(() -> new TaskNotFoundException("Task not found with id: " + taskId));
+
+        // EMPLOYEE can only download attachments of their assigned tasks
+        if ("EMPLOYEE".equals(currentRole)) {
+            var employee = employeeRepository.findByUserIdAndIsDeletedFalse(currentUserId)
+                    .orElseThrow(() -> new TaskAccessDeniedException("Employee record not found"));
+            if (!task.getAssignedTo().equals(employee.getId())) {
+                throw new TaskAccessDeniedException("You can only download attachments of tasks assigned to you");
+            }
+        }
+
+        TaskAttachment attachment = attachmentRepository.findById(attachmentId)
+                .orElseThrow(() -> new TaskNotFoundException("Attachment not found with id: " + attachmentId));
+
+        if (!attachment.getTaskId().equals(taskId)) {
+            throw new BusinessException("Attachment does not belong to the given task");
+        }
+
+        try {
+            return storageService.loadAsResource(attachment.getFileUrl());
+        } catch (IOException e) {
+            log.error("Error reading file for attachment: {}", attachmentId, e);
+            throw new BusinessException("Could not read attachment file");
+        }
+    }
+
     private void validateFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new BusinessException("File is required");
@@ -149,9 +184,6 @@ public class TaskAttachmentService {
             throw new BusinessException("File size exceeds maximum limit of 20MB");
         }
 
-        if (!ALLOWED_CONTENT_TYPES.contains(file.getContentType())) {
-            throw new BusinessException(
-                    "File type not allowed. Supported: images, PDF, Office documents, text, CSV, ZIP, RAR");
-        }
+        com.digiwork.taskhive.common.util.FileValidationUtil.validateContentType(file, ALLOWED_CONTENT_TYPES);
     }
 }

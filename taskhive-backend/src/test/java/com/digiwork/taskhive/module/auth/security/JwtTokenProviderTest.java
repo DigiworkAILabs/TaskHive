@@ -37,7 +37,7 @@ class JwtTokenProviderTest {
         @Test
         @DisplayName("should generate a valid non-empty JWT token")
         void shouldGenerateValidAccessToken() {
-            String token = jwtTokenProvider.generateAccessToken(testUserId, "user@test.com", "ADMIN");
+            String token = jwtTokenProvider.generateAccessToken(testUserId, "user@test.com", "ADMIN", 0L);
 
             assertThat(token).isNotNull().isNotEmpty();
             // JWT tokens have 3 parts separated by dots
@@ -56,7 +56,7 @@ class JwtTokenProviderTest {
         @Test
         @DisplayName("should extract userId from token")
         void shouldExtractUserIdFromToken() {
-            String token = jwtTokenProvider.generateAccessToken(testUserId, "user@test.com", "ADMIN");
+            String token = jwtTokenProvider.generateAccessToken(testUserId, "user@test.com", "ADMIN", 0L);
 
             UUID extracted = jwtTokenProvider.getUserIdFromToken(token);
 
@@ -66,7 +66,7 @@ class JwtTokenProviderTest {
         @Test
         @DisplayName("should extract email from token")
         void shouldExtractEmailFromToken() {
-            String token = jwtTokenProvider.generateAccessToken(testUserId, "user@test.com", "ADMIN");
+            String token = jwtTokenProvider.generateAccessToken(testUserId, "user@test.com", "ADMIN", 0L);
 
             String email = jwtTokenProvider.getEmailFromToken(token);
 
@@ -76,7 +76,7 @@ class JwtTokenProviderTest {
         @Test
         @DisplayName("should extract role from token")
         void shouldExtractRoleFromToken() {
-            String token = jwtTokenProvider.generateAccessToken(testUserId, "user@test.com", "ADMIN");
+            String token = jwtTokenProvider.generateAccessToken(testUserId, "user@test.com", "ADMIN", 0L);
 
             String role = jwtTokenProvider.getRoleFromToken(token);
 
@@ -95,7 +95,7 @@ class JwtTokenProviderTest {
         @Test
         @DisplayName("should return true for a valid token")
         void shouldReturnTrue_whenTokenIsValid() {
-            String token = jwtTokenProvider.generateAccessToken(testUserId, "user@test.com", "ADMIN");
+            String token = jwtTokenProvider.generateAccessToken(testUserId, "user@test.com", "ADMIN", 0L);
 
             assertThat(jwtTokenProvider.validateToken(token)).isTrue();
         }
@@ -122,7 +122,7 @@ class JwtTokenProviderTest {
             shortConfig.setRefreshTokenExpiry(0L);
 
             JwtTokenProvider shortProvider = new JwtTokenProvider(shortConfig);
-            String token = shortProvider.generateAccessToken(testUserId, "user@test.com", "ADMIN");
+            String token = shortProvider.generateAccessToken(testUserId, "user@test.com", "ADMIN", 0L);
 
 
 

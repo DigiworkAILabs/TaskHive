@@ -7,6 +7,7 @@ import com.digiwork.taskhive.module.employee.model.Employee;
 import com.digiwork.taskhive.module.employee.repository.EmployeeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,6 +21,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ProfilePhotoService {
 
+    @org.springframework.beans.factory.annotation.Value("${app.backend.url:http://localhost:8080}")
+    private String backendUrl;
+
     private final EmployeeRepository employeeRepository;
     private final StorageService storageService;
 
@@ -32,6 +36,7 @@ public class ProfilePhotoService {
     public String uploadPhoto(UUID employeeId, MultipartFile file) {
         // Validate file
         validateFile(file);
+        String safeExtension = com.digiwork.taskhive.common.util.FileValidationUtil.getSafeExtension(file, ALLOWED_CONTENT_TYPES);
 
         Employee employee = employeeRepository.findByIdAndIsDeletedFalse(employeeId)
                 .orElseThrow(() -> new EmployeeNotFoundException("Employee not found with id: " + employeeId));
@@ -43,7 +48,7 @@ public class ProfilePhotoService {
             }
 
             // Store new photo using employeeId as filename
-            String storedPath = storageService.store(file, PHOTO_DIRECTORY, employeeId.toString());
+            String storedPath = storageService.store(file, PHOTO_DIRECTORY, employeeId.toString(), safeExtension);
 
             // Update employee record
             employee.setPhotoUrl(storedPath);
@@ -64,8 +69,24 @@ public class ProfilePhotoService {
                 .orElseThrow(() -> new EmployeeNotFoundException("Employee not found with id: " + employeeId));
 
         return employee.getPhotoUrl() != null
-                ? storageService.getUrl(employee.getPhotoUrl())
+                ? backendUrl + "/api/v1/employees/" + employeeId + "/photo/download"
                 : null;
+    }
+
+    public Resource loadPhotoAsResource(UUID employeeId) {
+        Employee employee = employeeRepository.findByIdAndIsDeletedFalse(employeeId)
+                .orElseThrow(() -> new EmployeeNotFoundException("Employee not found with id: " + employeeId));
+
+        if (employee.getPhotoUrl() == null) {
+            throw new BusinessException("Employee does not have a profile photo");
+        }
+
+        try {
+            return storageService.loadAsResource(employee.getPhotoUrl());
+        } catch (IOException e) {
+            log.error("Failed to load photo for employee: {}", employeeId, e);
+            throw new BusinessException("Could not read profile photo");
+        }
     }
 
     private void validateFile(MultipartFile file) {
@@ -77,8 +98,6 @@ public class ProfilePhotoService {
             throw new BusinessException("File size exceeds maximum limit of 5MB");
         }
 
-        if (!ALLOWED_CONTENT_TYPES.contains(file.getContentType())) {
-            throw new BusinessException("Only JPG, PNG, and WebP files are allowed");
-        }
+        com.digiwork.taskhive.common.util.FileValidationUtil.validateContentType(file, ALLOWED_CONTENT_TYPES);
     }
 }
